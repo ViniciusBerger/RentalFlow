@@ -8,18 +8,7 @@ The system is designed to isolate business logic (The Core) from external infras
 - Adapters: Implementation of the Ports (Express, Auth, ORM).
 
 ## 2. Directory Structure
-src/
-├── domain/              # The Hexagon (Core Logic)
-│   ├── entities/        # Rental.entity.ts (Profit Math & Validation)
-│   └── use-cases/       # CreateRental.usecase.ts (Workflow Coordination)
-├── ports/               # Interfaces (The Contracts)
-│   ├── db.port.ts       # IDatabasePort (save, find, checkAvailability)
-│   └── auth.port.ts     # IAuthPort (verifyToken, getUser)
-├── adapters/            # Infrastructure (External Tools)
-│   ├── db/              # SQL Implementation (Postgres/Prisma)
-│   ├── auth/            # Identity Provider Implementation
-│   └── http/            # Express.js Controllers & Middleware
-└── main.ts              # Composition Root (Dependency Injection)
+<img width="677" height="312" alt="image" src="https://github.com/user-attachments/assets/c185eaf3-6975-4067-a174-2f2717d4949f" />
 
 ## 3. Data Model & Logic
 Table Name: rentals
