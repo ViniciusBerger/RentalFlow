@@ -8,17 +8,19 @@ The system is designed to isolate business logic (The Core) from external infras
 - Adapters: Implementation of the Ports (Express, Auth, ORM).
 
 ## 2. Directory Structure
-<img width="677" height="312" alt="image" src="https://github.com/user-attachments/assets/c185eaf3-6975-4067-a174-2f2717d4949f" />
+<img width="870" height="382" alt="image" src="https://github.com/user-attachments/assets/712f0eda-2ded-4363-ae73-8bc6d944c6d0" />
+
+
 
 ## 3. Data Model & Logic
 Table Name: rentals
 
 - id: UUID (Primary Key)
-- customer_name: String
+- customer_first_name: String
+- customer_last_name: String
 - start_date: Date
 - end_date: Date
-- gross_revenue: Decimal
-- profit: Decimal (Calculated before persistence)
+- revenue: Decimal
 
 Business Logic (Domain Entity):
 Profit = Gross - (Gross * 0.10) - 250.00 
