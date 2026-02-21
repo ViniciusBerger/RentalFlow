@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, MaxLength, MinLength, IsDate, ValidateIf} from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, MaxLength, MinLength, IsDate, ValidateIf, IsISO8601} from 'class-validator';
 import { Type } from 'class-transformer'
 export class CreateRentalDto {
 
@@ -15,17 +15,15 @@ export class CreateRentalDto {
     @MinLength(3)
     clientLastName: string;
 
-    // check both start and end dates; check if its valid date; check if "start date" is before "end date"
+    // check both start and end dates; check if its valid date
     @IsNotEmpty()
-    @Type(()=> Date)
-    @IsDate()
-    startDate: Date
+    @IsISO8601()
+    startDate: string;
 
     @IsNotEmpty()
-    @Type(()=> Date)
-    @IsDate()
-    @ValidateIf(o => o.startDate < o.endDate, {message: "End date must be after starting date."})
-    endDate: Date
+    @IsNotEmpty()
+    @IsISO8601()
+    endDate: string;
 
     @IsNotEmpty()
     @IsNumber()

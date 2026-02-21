@@ -11,7 +11,7 @@ export interface IRentalRepository {
      * @param data - The Rental domain entity to be saved.
      * @returns Promise resolving to true if saved, false if no rows were affected.
      */
-    save(data: Rental): Promise<boolean>;
+    save(data: Rental);
     
     /**
      * Retrieves all rental records and maps them back to Domain Entities.
@@ -22,7 +22,7 @@ export interface IRentalRepository {
      * Finds a specific rental record by its exact start and end dates.
      * @returns The Rental entity if found, or null/undefined.
      */
-    findOne(startDate: Date, endDate: Date): Promise<Rental | null>;
+    findOne(startDate: string, endDate: string): Promise<Rental>;
 
     /**
      * Removes a rental record from the system by its unique identifier.
@@ -41,5 +41,5 @@ export interface IRentalRepository {
      * Business Rule check: Determines if a car is already booked within a specific timeframe.
      * Uses the logic: (ExistingStart < NewEnd) AND (ExistingEnd > NewStart).
      */
-    checkOverlapDate(startDate: Date, endDate: Date): Promise<boolean>;
+    checkOverlapDate(startDate: string, endDate: string): Promise<boolean>;
 }

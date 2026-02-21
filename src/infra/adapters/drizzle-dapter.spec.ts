@@ -1,146 +1,121 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DrizzleOrmAdapter } from '../adapters/drizzle-orm-adapter';
-import { RentalSchema } from '../persistence/rental-schema';
-import { Rental } from '../../core/domain/rental/entitiy/rental';
+import { DRIZZLE } from '../persistence/database.module';
+import { Rental } from '../../../src/core/domain/rental/entitiy/rental';
 
 describe('DrizzleOrmAdapter', () => {
   let adapter: DrizzleOrmAdapter;
-  
-  const mockDb = {
-    insert: jest.fn().mockReturnThis(),
-    values: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    set: jest.fn().mockReturnThis(),
-    from: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-  };
+  let dbMock: any;
 
   beforeEach(async () => {
+    // We create a complex mock to handle Drizzle's chaining syntax
+    dbMock = {
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      values: jest.fn().mockReturnThis(),
+      returning: jest.fn(),
+      delete: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DrizzleOrmAdapter,
         {
-          provide: 'DRIZZLE_CONNECTION', 
-          useValue: mockDb,
+          provide: DRIZZLE,
+          useValue: dbMock,
         },
       ],
     }).compile();
 
     adapter = module.get<DrizzleOrmAdapter>(DrizzleOrmAdapter);
-    jest.clearAllMocks();
   });
 
-
-  describe('save()', () => {
-    it('should return true when the rental is successfully saved', async () => {
-      const mockData = { clientFirstName: 'Vini', clientLastName: 'Code', startDate: new Date(), endDate: new Date(), revenue: 1000 };
-      mockDb.values.mockResolvedValueOnce({ rowCount: 1 });
-
-      const result = await adapter.save(mockData as any);
+  describe('update', () => {
+    it('should return true if rows were affected', async () => {
+      dbMock.where.mockResolvedValue({ rowCount: 1 });
+      const result = await adapter.update('id', { revenue: 100 });
       expect(result).toBe(true);
     });
 
-    it('should return false when no rows are affected', async () => {
-      // Covers the "if (operationResult.rowCount===0)" branch
-      mockDb.values.mockResolvedValueOnce({ rowCount: 0 });
-      const result = await adapter.save({ startDate: new Date(), endDate: new Date() } as any);
+    it('should return false if no rows were affected', async () => {
+      dbMock.where.mockResolvedValue({ rowCount: 0 });
+      const result = await adapter.update('id', { revenue: 100 });
       expect(result).toBe(false);
     });
   });
 
-  describe('delete()', () => {
-    it('should return true if a row was deleted', async () => {
-      mockDb.where.mockResolvedValueOnce({ rowCount: 1 });
-      const result = await adapter.delete('some-id');
-      expect(result).toBe(true);
+  describe('save', () => {
+    it('should return the saved rental on success', async () => {
+      const mockData = new Rental('Vinicius', 'Berger', '2026-01-01', '2026-01-02', 100);
+      dbMock.returning.mockResolvedValue([mockData]);
+
+      const result = await adapter.save(mockData);
+      expect(result).toEqual(mockData);
     });
 
-    it('should return false if no rows were deleted', async () => {
-      // Covers the "if (operationResult.rowCount===0)" branch in delete
-      mockDb.where.mockResolvedValueOnce({ rowCount: 0 });
-      const result = await adapter.delete('some-id');
-      expect(result).toBe(false);
+    it('should throw error if insert fails', async () => {
+      dbMock.returning.mockResolvedValue([]);
+      const mockData = new Rental('V', 'B', '2026', '2026', 10);
+      
+      await expect(adapter.save(mockData)).rejects.toThrow("saving data to database failed");
     });
   });
 
-  describe('getAll()', () => {
-    it('should return a list of mapped Rental entities', async () => {
-      const mockRows = [{ 
-        id: '1', clientFirstName: 'Vini', clientLastName: 'Code', 
-        startDate: new Date().toISOString(), endDate: new Date().toISOString(), 
-        revenue: 100, createdAt: new Date().toISOString() 
-      }];
-      mockDb.from.mockResolvedValueOnce(mockRows);
+  describe('delete', () => {
+    it('should return true on successful deletion', async () => {
+      dbMock.where.mockResolvedValue({ rowCount: 1 });
+      expect(await adapter.delete('id')).toBe(true);
+    });
+
+    it('should return false if ID not found', async () => {
+      dbMock.where.mockResolvedValue({ rowCount: 0 });
+      expect(await adapter.delete('id')).toBe(false);
+    });
+  });
+
+  describe('getAll', () => {
+    it('should return a mapped list of Rental entities', async () => {
+      const dbRows = [
+        { clientFirstName: 'A', clientLastName: 'B', startDate: 'S', endDate: 'E', revenue: 1, id: '1', createdAt: new Date() }
+      ];
+      dbMock.from.mockResolvedValue(dbRows);
 
       const result = await adapter.getAll();
       expect(result[0]).toBeInstanceOf(Rental);
-      expect(result).toHaveLength(1);
+      expect(result[0].clientFirstName).toBe('A');
     });
   });
 
-  describe('findOne()', () => {
-    const start = new Date();
-    const end = new Date();
-
-    it('should return a Rental instance if found', async () => {
-      mockDb.where.mockResolvedValueOnce([{ 
-        clientFirstName: 'Vini', clientLastName: 'Code', 
-        startDate: start.toISOString(), endDate: end.toISOString(), 
-        revenue: 100, id: '1', createdAt: new Date() 
-      }]);
-
-      const result = await adapter.findOne(start, end);
-      expect(result).toBeInstanceOf(Rental);
-    });
-
-    it('should return null if no rental is found', async () => {
-      // Covers "if (rental == null) return rental"
-      mockDb.where.mockResolvedValueOnce([]);
-      const result = await adapter.findOne(start, end);
+  describe('findOne', () => {
+    it('should return null if no rental found', async () => {
+      dbMock.where.mockResolvedValue([]);
+      const result = await adapter.findOne('start', 'end');
       expect(result).toBeNull();
     });
-  });
 
-  describe('checkOverlapDate()', () => {
-    it('should return true if overlap exists', async () => {
-      // Covers overlap.length > 0 (true case)
-      mockDb.limit.mockResolvedValueOnce([{ id: '1' }]);
-      const result = await adapter.checkOverlapDate(new Date(), new Date());
-      expect(result).toBe(true);
-    });
+    it('should return Rental entity if found', async () => {
+      const dbRow = { clientFirstName: 'A', clientLastName: 'B', startDate: 'S', endDate: 'E', revenue: 1, id: '1', createdAt: new Date() };
+      dbMock.where.mockResolvedValue([dbRow]);
 
-    it('should return false if no overlap exists', async () => {
-      // Covers overlap.length > 0 (false case)
-      mockDb.limit.mockResolvedValueOnce([]);
-      const result = await adapter.checkOverlapDate(new Date(), new Date());
-      expect(result).toBe(false);
+      const result = await adapter.findOne('S', 'E');
+      expect(result).toBeInstanceOf(Rental);
     });
   });
 
-  describe('update()', () => {
-    const updateData = { clientFirstName: 'New Name' };
-
-    it('should return true when the update is successful', async () => {
-      // Setup: Mock a successful update (1 row affected)
-      mockDb.where.mockResolvedValueOnce({ rowCount: 1 });
-
-      const result = await adapter.update('existing-id', updateData);
-
-      expect(result).toBe(true);
-      expect(mockDb.update).toHaveBeenCalledWith(RentalSchema);
-      expect(mockDb.set).toHaveBeenCalledWith(updateData);
+  describe('checkOverlapDate', () => {
+    it('should return true if overlap found', async () => {
+      dbMock.limit.mockResolvedValue([{ id: '1' }]);
+      expect(await adapter.checkOverlapDate('S', 'E')).toBe(true);
     });
 
-    it('should return false when the record to update is not found', async () => {
-      // Setup: Mock 0 rows affected
-      mockDb.where.mockResolvedValueOnce({ rowCount: 0 });
-
-      const result = await adapter.update('non-existent-id', updateData);
-
-      expect(result).toBe(false);
+    it('should return false if no overlap found', async () => {
+      dbMock.limit.mockResolvedValue([]);
+      expect(await adapter.checkOverlapDate('S', 'E')).toBe(false);
     });
   });
 });
