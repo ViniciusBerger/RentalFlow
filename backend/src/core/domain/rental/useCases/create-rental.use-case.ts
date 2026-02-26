@@ -11,15 +11,17 @@ export class CreateRentalUseCase {
     constructor(private readonly rentalRepository: IRentalRepository) {}
 
     //validate if start-date and end-date are free before booking a rental
-   async createRental(clientFirstName: string, clientLastName: string, startDate: string, endDate: string, revenue: number): Promise<Rental> {
+   async createRental(clientFirstName: string, clientLastName: string, startDate: string, endDate: string, guests:number, revenue: number, fee: number): Promise<Rental> {
         await this.validate(startDate, endDate)    
 
         if (new Date(startDate) >= new Date(endDate)) {
             throw new Error("End date must be after start date");
         }
 
+        const profit = (revenue - fee)
+
         // create a domain Rental object 
-        const rental = new Rental(clientFirstName, clientLastName, startDate, endDate, revenue)    
+        const rental = new Rental(clientFirstName, clientLastName, startDate, endDate, guests, revenue, profit, fee)    
         return await this.rentalRepository.save(rental); 
     }
 

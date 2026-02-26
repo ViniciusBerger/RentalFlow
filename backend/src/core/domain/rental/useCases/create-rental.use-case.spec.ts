@@ -23,7 +23,10 @@ describe('CreateRentalUseCase', () => {
       lastName: 'Doe',
       start: '2026-03-01',
       end: '2026-03-05',
-      revenue: 500,
+      guests: 10,
+      revenue: 500, 
+      fee: 250,
+      profit: 250
     };
 
     it('should successfully create a rental when data is valid and dates are free', async () => {
@@ -36,7 +39,11 @@ describe('CreateRentalUseCase', () => {
         validData.lastName,
         validData.start,
         validData.end,
-        validData.revenue
+        validData.guests,
+        validData.revenue,
+        validData.fee,
+        validData.profit,
+
       );
       repository.save.mockResolvedValue(expectedRental);
 
@@ -46,7 +53,10 @@ describe('CreateRentalUseCase', () => {
         validData.lastName,
         validData.start,
         validData.end,
-        validData.revenue
+        validData.guests,
+        validData.revenue,
+        validData.fee,
+        validData.profit,
       );
 
       // THEN: Check the result and repository calls
@@ -67,7 +77,10 @@ describe('CreateRentalUseCase', () => {
           validData.lastName,
           validData.start,
           validData.end,
-          validData.revenue
+          validData.guests,
+          validData.revenue,
+          validData.fee,
+          validData.profit,
         )
       ).rejects.toThrow('Date already booked.');
 
@@ -76,7 +89,7 @@ describe('CreateRentalUseCase', () => {
     });
 
     it('should throw "End date must be after start date" when end date is before start date', async () => {
-      // GIVEN: Dates are free (to move past validation 1)
+      // GIVEN: Dates are free
       repository.checkOverlapDate.mockResolvedValue(false);
 
       const invalidDates = {
@@ -91,7 +104,10 @@ describe('CreateRentalUseCase', () => {
           validData.lastName,
           invalidDates.start,
           invalidDates.end,
-          validData.revenue
+          validData.guests,
+          validData.revenue,
+          validData.fee,
+          validData.profit,
         )
       ).rejects.toThrow('End date must be after start date');
     });
@@ -109,7 +125,10 @@ describe('CreateRentalUseCase', () => {
           validData.lastName,
           sameDate,
           sameDate,
-          validData.revenue
+          validData.guests,
+          validData.revenue,
+          validData.fee,
+          validData.profit,
         )
       ).rejects.toThrow('End date must be after start date');
     });

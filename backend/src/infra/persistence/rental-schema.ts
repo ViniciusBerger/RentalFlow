@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, doublePrecision, timestamp, date, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, doublePrecision, timestamp, date, index, boolean, integer } from "drizzle-orm/pg-core";
 
 // Define the table
 export const RentalSchema = pgTable("rentals", {
@@ -7,8 +7,12 @@ export const RentalSchema = pgTable("rentals", {
   clientLastName: varchar("customer_last_name", { length: 255 }).notNull(),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
+  guests: integer("number_of_guests").notNull(),
   revenue: doublePrecision("total_revenue").notNull(),
+  profit: doublePrecision('profit').notNull(),
+  fee: doublePrecision("fee").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
 },(table)=> ({
   startDateidx: index("start_date_idx").on(table.startDate)
 }));

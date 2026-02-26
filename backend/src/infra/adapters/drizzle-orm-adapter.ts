@@ -44,7 +44,10 @@ export class DrizzleOrmAdapter implements IRentalRepository {
       clientLastName: data.clientLastName,
       startDate: data.startDate,
       endDate: data.endDate,
-      revenue: data.revenue
+      guests: data.guests,
+      revenue: data.revenue,
+      profit: data.profit,
+      fee: data.fee
     }).returning();
 
     if (!operationResult[0]) throw new Error("saving data to database failed")
@@ -71,8 +74,20 @@ export class DrizzleOrmAdapter implements IRentalRepository {
   async getAll(): Promise<Rental[]> {
     const operationResult: RentalRow[] = await this.db.select().from(RentalSchema);
 
-    const rentalsList: Rental[] = operationResult.map((r) =>
-      new Rental(r.clientFirstName, r.clientLastName, r.startDate, r.endDate, r.revenue, r.id, new Date(r.createdAt)))
+    const rentalsList: Rental[] = operationResult.map((rental) =>
+      new Rental(
+          rental.clientFirstName,
+          rental.clientLastName,
+          rental.startDate,
+          rental.endDate,
+          rental.guests,
+          rental.revenue,
+          rental.profit,
+          rental.fee,
+          rental.id, 
+          rental.createdAt.toISOString(), 
+          rental.isActive
+      ))
 
     return rentalsList
   }
@@ -91,9 +106,21 @@ export class DrizzleOrmAdapter implements IRentalRepository {
         ))
 
     const rental = operationResult[0] ?? null
-    if (rental == null) return rental
+    if (rental === null) return rental
 
-    return new Rental(rental.clientFirstName, rental.clientLastName, rental.startDate, rental.endDate, rental.revenue, rental.id, rental.createdAt)
+    return new Rental(
+    rental.clientFirstName,
+    rental.clientLastName,
+    rental.startDate,
+    rental.endDate,
+    rental.guests,
+    rental.revenue,
+    rental.profit,
+    rental.fee,
+    rental.id, 
+    rental.createdAt.toISOString(), 
+    rental.isActive
+);
   }
 
   /**
@@ -116,11 +143,12 @@ export class DrizzleOrmAdapter implements IRentalRepository {
    * @returns A promise resolving to an array of objects for each month 
    * in the current year. Format: { label: "2026-02", totalRevenue: 12500 }
    */
-  async getMonthlyRevenueCurrentYear() {
+  async getMonthlyBalanceCurrentYear() {
     return await this.db
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY-MM')`.as('month_label'),
         totalRevenue: sum(RentalSchema.revenue).mapWith(Number),
+        totalProfit: sum(RentalSchema.profit).mapWith(Number)
       })
       .from(RentalSchema)
       .where(
@@ -135,11 +163,12 @@ export class DrizzleOrmAdapter implements IRentalRepository {
    * @returns A promise resolving to an array containing a single object 
    * for the current year. Format: { label: "2026", totalRevenue: 50000 }
    */
-  async getYearlyRevenueCurrentYear() {
+  async getYearlyBalanceCurrentYear() {
     return await this.db
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY')`.as('year_label'),
         totalRevenue: sum(RentalSchema.revenue).mapWith(Number),
+        totalProfit: sum(RentalSchema.profit).mapWith(Number)
       })
       .from(RentalSchema)
       .where(

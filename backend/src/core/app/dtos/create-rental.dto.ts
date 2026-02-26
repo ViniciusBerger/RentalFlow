@@ -1,5 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, MaxLength, MinLength, IsDate, ValidateIf, IsISO8601} from 'class-validator';
-import { Type } from 'class-transformer'
+import { IsString, IsNotEmpty, IsNumber, MaxLength, MinLength, IsISO8601} from 'class-validator';
 export class CreateRentalDto {
 
     // client name splitted in two to follow normalization rules for SQL databases
@@ -21,13 +20,20 @@ export class CreateRentalDto {
     startDate: string;
 
     @IsNotEmpty()
-    @IsNotEmpty()
     @IsISO8601()
     endDate: string;
 
     @IsNotEmpty()
     @IsNumber()
-    revenue: number;
+    guests: number;
+
+    @IsNotEmpty()
+    @IsNumber()
+    profit: number;
+
+    @IsNumber()
+    @IsNotEmpty()
+    fee: number ;
 
 }
 

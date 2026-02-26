@@ -45,18 +45,20 @@ export interface IRentalRepository {
 
 
     /**
-   * Calculates total revenue for the current calendar year only.
+   * Calculates total balance for the current calendar year only.
+   * balance consists on revenue and profit
    * 
    * @returns A promise resolving to an array containing a single object 
-   * for the current year. Format: { label: "2026", totalRevenue: 50000 }
+   * for the current year. Format: { label: "2026", totalRevenue: 50000, totalProfit: 42500 }
    */
-    getYearlyRevenueCurrentYear();
+    getYearlyBalanceCurrentYear();
 
     /**
-   * Calculates revenue grouped by month for the current calendar year.
+   * Calculates balance grouped by month for the current calendar year.
+   * balance consists on revenue and profit
    * 
    * @returns A promise resolving to an array of objects for each month 
-   * in the current year. Format: { label: "2026-02", totalRevenue: 12500 }
+   * in the current year. Format: { label: "2026-02", totalRevenue: 12500, totalProfit: 42500 }
    */
-    getMonthlyRevenueCurrentYear();
+    getMonthlyBalanceCurrentYear();
 }

@@ -6,7 +6,7 @@ import { DeleteRentalUseCase } from "../core/domain/rental/useCases/delete-renta
 import { FindRentalUseCase } from "../core/domain/rental/useCases/find-rental.use-case";
 import { UpdateRentalUseCase } from "../core/domain/rental/useCases/update-rental.use-case";
 import { FindAllRentalsUseCase } from "src/core/domain/rental/useCases/find-all.use-case";
-import { GetRevenueUseCase } from "src/core/domain/rental/useCases/get-revenue.use-case";
+import { GetBalanceUseCase } from "src/core/domain/rental/useCases/get-balance.use-case";
 import { CreateRentalWebDto } from "./dto-web/create-rental.web-dto";
 import { FindRentalWebDto } from "./dto-web/find-rental.web-dto";
 import { UpdateRentalWebDto } from "./dto-web/update-rental.web-dto";
@@ -19,7 +19,7 @@ export class RentalController {
         private readonly findRentalUseCase: FindRentalUseCase,
         private readonly updateRentalUseCase: UpdateRentalUseCase,
         private readonly findAllUseCase: FindAllRentalsUseCase,
-        private readonly getRevenueUseCase: GetRevenueUseCase ){}
+        private readonly getRevenueUseCase: GetBalanceUseCase ){}
 
     @Get("/")
     @ApiOperation({ summary: 'Health check' })
@@ -49,7 +49,7 @@ export class RentalController {
     @ApiOperation({ summary: 'Get total revenue for the current year' })
     @ApiResponse({ status: 200, description: 'Yearly revenue total' })
     async getYearlyRevenue(){
-        const revenue = await this.getRevenueUseCase.getYearlyRevenue()
+        const revenue = await this.getRevenueUseCase.getYearlyBalance()
         return revenue 
     }
 
@@ -57,7 +57,7 @@ export class RentalController {
     @ApiOperation({ summary: 'Get monthly revenue breakdown for the current year' })
     @ApiResponse({ status: 200, description: 'List of monthly revenue totals' })
     async getMonthlyRevenue(){
-        const revenue = await this.getRevenueUseCase.getMonthlyRevenue()
+        const revenue = await this.getRevenueUseCase.getMonthlyBalance()
         return revenue 
     }
 
@@ -65,8 +65,8 @@ export class RentalController {
     @ApiOperation({ summary: 'Create a new rental' })
     @ApiResponse({ status: 201, description: 'The rental has been successfully created' })
     async createRental(@Body() dto: CreateRentalWebDto): Promise<Rental>{
-        const {clientFirstName, clientLastName, startDate, endDate, revenue} = dto
-        const rental = await this.createRentalUseCase.createRental(clientFirstName, clientLastName, startDate, endDate, revenue)
+        const {clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee} = dto
+        const rental = await this.createRentalUseCase.createRental(clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee)
 
         return rental
     }

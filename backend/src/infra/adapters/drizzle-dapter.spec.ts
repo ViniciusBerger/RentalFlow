@@ -131,7 +131,7 @@ describe('DrizzleOrmAdapter', () => {
       // In Drizzle's chain, the last method (orderBy) is the one that resolves the promise
       dbMock.orderBy.mockResolvedValue(mockMonthlyData);
 
-      const result = await adapter.getMonthlyRevenueCurrentYear();
+      const result = await adapter.getMonthlyBalanceCurrentYear();
 
       expect(result).toEqual(mockMonthlyData);
       expect(dbMock.select).toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should return an empty array if no revenue exists for the current year', async () => {
       dbMock.orderBy.mockResolvedValue([]);
       
-      const result = await adapter.getMonthlyRevenueCurrentYear();
+      const result = await adapter.getMonthlyBalanceCurrentYear();
       
       expect(result).toEqual([]);
     });
@@ -156,7 +156,7 @@ describe('DrizzleOrmAdapter', () => {
 
       dbMock.orderBy.mockResolvedValue(mockYearlyData);
 
-      const result = await adapter.getYearlyRevenueCurrentYear();
+      const result = await adapter.getYearlyBalanceCurrentYear();
 
       expect(result).toEqual(mockYearlyData);
       expect(result[0].label).toBe('2026');
@@ -168,7 +168,7 @@ describe('DrizzleOrmAdapter', () => {
       const mockYearlyData = [{ label: '2026', totalRevenue: 150.50 }];
       dbMock.orderBy.mockResolvedValue(mockYearlyData);
 
-      const result = await adapter.getYearlyRevenueCurrentYear();
+      const result = await adapter.getYearlyBalanceCurrentYear();
 
       expect(typeof result[0].totalRevenue).toBe('number');
       expect(result[0].totalRevenue).toBe(150.50);
