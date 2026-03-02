@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { updateRentalDto } from '../../core/app/dtos/update-rental.dto';
+import { updateRentalDto } from '../../../core/app/dtos/rental/update-rental.dto';
 
 /**
  * Infrastructure version of updateRentalDto.

@@ -1,11 +1,11 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { IRentalRepository } from '../../core/app/ports/IRentalRepository';
-import { RentalRow, RentalSchema } from '../persistence/rental-schema';
-import * as schema from '../persistence/rental-schema';
+import type { IRentalRepository } from '../../../core/app/ports/IRentalRepository';
+import { RentalRow, RentalSchema } from '../../persistence/rental-schema';
+import * as schema from '../../persistence/rental-schema';
 import { and, desc, eq, gt, lt, sql, sum } from 'drizzle-orm';
 import { Inject } from '@nestjs/common';
-import { DRIZZLE } from '../persistence/database.module';
-import { Rental } from '../../core/domain/rental/entitiy/rental';
+import { DRIZZLE } from '../../persistence/database.module';
+import { Rental } from '../../../core/domain/rental/entitiy/rental';
 
 /**
  * Drizzle ORM implementation of the IRentalRepository.

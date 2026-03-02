@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { FindRentalDto } from '../../core/app/dtos/find-rental.dto';
+import { FindRentalDto } from '../../../core/app/dtos/rental/find-rental.dto';
 
 /**
  * Infrastructure version of FindRentalDto.

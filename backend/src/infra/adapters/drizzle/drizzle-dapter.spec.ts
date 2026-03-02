@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DrizzleOrmAdapter } from '../adapters/drizzle-orm-adapter';
-import { DRIZZLE } from '../persistence/database.module';
-import { Rental } from '../../../src/core/domain/rental/entitiy/rental';
+import { DrizzleOrmAdapter } from './drizzle-orm-adapter';
+import { DRIZZLE } from '../../persistence/database.module';
+import { Rental } from '../../../core/domain/rental/entitiy/rental';
 
 describe('DrizzleOrmAdapter', () => {
   let adapter: DrizzleOrmAdapter;
@@ -53,7 +53,7 @@ describe('DrizzleOrmAdapter', () => {
 
   describe('save', () => {
     it('should return the saved rental on success', async () => {
-      const mockData = new Rental('Vinicius', 'Berger', '2026-01-01', '2026-01-02', 100);
+      const mockData = new Rental('Vinicius', 'Berger', '2026-01-01', '2026-01-02', 15, 100, 50, 50);
       dbMock.returning.mockResolvedValue([mockData]);
 
       const result = await adapter.save(mockData);
@@ -62,7 +62,7 @@ describe('DrizzleOrmAdapter', () => {
 
     it('should throw error if insert fails', async () => {
       dbMock.returning.mockResolvedValue([]);
-      const mockData = new Rental('V', 'B', '2026', '2026', 10);
+      const mockData = new Rental('Vinicius', 'Berger', '2026-01-01', '2026-01-02', 15, 100, 50, 50);
       
       await expect(adapter.save(mockData)).rejects.toThrow("saving data to database failed");
     });

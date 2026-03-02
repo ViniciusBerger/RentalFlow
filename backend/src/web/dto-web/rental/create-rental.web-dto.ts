@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateRentalDto } from '../../core/app/dtos/create-rental.dto';
+import { CreateRentalDto } from '../../../core/app/dtos/rental/create-rental.dto';
 
 /**
  * Web-layer implementation of CreateRentalDto.
