@@ -15,4 +15,6 @@ export const RentalUseCaseProviders = [
   mapUseCase(UseCases.FindRentalUseCase),
   mapUseCase(UseCases.FindAllRentalsUseCase),
   mapUseCase(UseCases.GetBalanceUseCase),
+  mapUseCase(UseCases.FindNextThreeUseCase),
+  mapUseCase(UseCases.CancelRentalUseCase),
 ];

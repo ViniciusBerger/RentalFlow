@@ -17,6 +17,12 @@ export interface IAuthPort {
      * @returns The session tokens and basic user profile.
      */
     authenticate(email:string, password: string): Promise<AuthUserResponse>;
+
+    /**
+     * This invalidates all sessions for this user on the Firebase side
+     * @param uid 
+     */
+    logout(uid: string): Promise<void> 
 }
 
 /**

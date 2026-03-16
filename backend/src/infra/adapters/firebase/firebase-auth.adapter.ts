@@ -48,4 +48,8 @@ export class FirebaseAuthAdapter implements IAuthPort {
             email: response.data.email,
         };
     }
+
+    async logout(uid: string): Promise<void> {
+        await admin.auth().revokeRefreshTokens(uid);
+    }
 }

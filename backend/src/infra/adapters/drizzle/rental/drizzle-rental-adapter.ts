@@ -1,58 +1,52 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { IRentalRepository } from '../../../core/app/ports/IRentalRepository';
-import { RentalRow, RentalSchema } from '../../persistence/rental-schema';
-import * as schema from '../../persistence/rental-schema';
 import { and, desc, eq, gt, lt, sql, sum } from 'drizzle-orm';
 import { Inject } from '@nestjs/common';
-import { DRIZZLE } from '../../persistence/database.module';
-import { Rental } from '../../../core/domain/rental/entitiy/rental';
+
+import { RentalRow, RentalSchema } from '../../../persistence/schemas/rental-schema';
+import { DRIZZLE } from '../../../persistence/database.module';
+import * as rentalSchema from '../../../persistence/schemas/rental-schema';
+
+import { Rental } from '../../../../core/domain/rental/entity/rental';
+import type { IRentalRepository } from '../../../../core/app/ports/IRentalRepository';
+import { PersistenceError } from '../../../../core/app/errors/persistence.error';
 
 /**
  * Drizzle ORM implementation of the IRentalRepository.
  * Handles database operations for Rental entities using PostgreSQL.
  */
-export class DrizzleOrmAdapter implements IRentalRepository {
+export class DrizzleOrmRentalAdapter implements IRentalRepository {
 
-  constructor(
-    @Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof schema>,
-  ) {}
+  // inject database instance
+  constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof rentalSchema>) {}
 
-  /**
-   * Updates specific fields of a rental record by ID.
-   * @returns Promise resolving to true if a row was updated, false otherwise.
-   */
-  async update(id: string, toBeUpdated: Partial<RentalRow>): Promise<boolean> {
-    const operationResult = await this.db
-      .update(RentalSchema)
-      .set(toBeUpdated)
-      .where(eq(RentalSchema.id, id));
-
-    if (operationResult.rowCount === 0) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
+   /**
    * Inserts a new Rental record into the database.
    * @throws Error if the insert operation fails to return the saved row.
+   * @returns client first name, client last name, start and end date (as string)
    */
-  async save(data: Rental) {
+  async save(data: Rental): Promise<{startDate: string, endDate:string, guests: number, profit: number}> {
     const operationResult = await this.db.insert(RentalSchema).values({
-      clientFirstName: data.clientFirstName,
-      clientLastName: data.clientLastName,
+      userId: data.userId,
       startDate: data.startDate,
       endDate: data.endDate,
       guests: data.guests,
       revenue: data.revenue,
       profit: data.profit,
       fee: data.fee
-    }).returning();
+    }).returning({ startDate: RentalSchema.startDate, endDate: RentalSchema.endDate, guests: RentalSchema.guests, profit: RentalSchema.profit});
 
-    if (!operationResult[0]) throw new Error("saving data to database failed")
+    if (!operationResult[0]) throw new PersistenceError('error saving rental')
+    return operationResult[0] // rental added
+  }
 
-    return operationResult[0]
+  /**
+   * Updates specific fields of a rental record by ID.
+   * @returns Promise resolving to true if a row was updated, false otherwise.
+   */
+  async update(id: string, toBeUpdated: Partial<RentalRow>): Promise<boolean> {
+    const operationResult = await this.db.update(RentalSchema).set(toBeUpdated).where(eq(RentalSchema.id, id));
+    if (operationResult.rowCount === 0) throw new PersistenceError('cannot update item');
+    return true;
   }
 
   /**
@@ -61,35 +55,8 @@ export class DrizzleOrmAdapter implements IRentalRepository {
    */
   async delete(id: string): Promise<boolean> {
     const operationResult = await this.db.delete(RentalSchema).where(eq(RentalSchema.id, id))
-
-    if (operationResult.rowCount === 0) {
-      return false
-    }
+    if (operationResult.rowCount === 0) throw new PersistenceError('cannot delete item')
     return true;
-  }
-
-  /**
-   * Retrieves all rental records and maps them to Domain Rental entities.
-   */
-  async getAll(): Promise<Rental[]> {
-    const operationResult: RentalRow[] = await this.db.select().from(RentalSchema);
-
-    const rentalsList: Rental[] = operationResult.map((rental) =>
-      new Rental(
-          rental.clientFirstName,
-          rental.clientLastName,
-          rental.startDate,
-          rental.endDate,
-          rental.guests,
-          rental.revenue,
-          rental.profit,
-          rental.fee,
-          rental.id, 
-          rental.createdAt.toISOString(), 
-          rental.isActive
-      ))
-
-    return rentalsList
   }
 
   /**
@@ -99,8 +66,7 @@ export class DrizzleOrmAdapter implements IRentalRepository {
   async findOne(startDate: string, endDate: string): Promise<Rental> {
     const operationResult = await this.db.select().
       from(RentalSchema)
-      .where(
-        and(
+      .where(and(
           eq(RentalSchema.startDate, startDate),
           eq(RentalSchema.endDate, endDate)
         ))
@@ -108,19 +74,33 @@ export class DrizzleOrmAdapter implements IRentalRepository {
     const rental = operationResult[0] ?? null
     if (rental === null) return rental
 
-    return new Rental(
-    rental.clientFirstName,
-    rental.clientLastName,
-    rental.startDate,
-    rental.endDate,
-    rental.guests,
-    rental.revenue,
-    rental.profit,
-    rental.fee,
-    rental.id, 
-    rental.createdAt.toISOString(), 
-    rental.isActive
-);
+    return Rental.create(rental)
+  }
+
+  /**
+   * Retrieves all rental records and maps them to Domain Rental entities.
+   * @returns a list with all rentals
+   */
+  async findAll(userId: string): Promise<Rental[]> {
+    const operationResult: RentalRow[] = await this.db.select().from(RentalSchema).where(and(eq(RentalSchema.isActive, true), eq(RentalSchema.userId, userId)));
+
+    const rentalsList: Rental[] = operationResult.map((rental) => Rental.create(rental))
+    return rentalsList
+  }
+
+  /**
+   * It retrieves the next three rentals from today's date and on.
+   * @returns return a list with these three rentals
+   */
+  async findNextThree(): Promise<Rental[]> {
+    const operationResult:RentalRow[] = await this.db.select().from(RentalSchema).where(and(
+      sql`${RentalSchema.startDate} >=DATE_TRUNC('year', now())`, 
+      eq(RentalSchema.isActive, true)
+    )).limit(3);
+    
+    if (!operationResult[0]) throw new PersistenceError('Error fetching next rentals')
+    return operationResult.map(rental => Rental.create(rental))
+  
   }
 
   /**
@@ -151,9 +131,10 @@ export class DrizzleOrmAdapter implements IRentalRepository {
         totalProfit: sum(RentalSchema.profit).mapWith(Number)
       })
       .from(RentalSchema)
-      .where(
+      .where(and(
+        eq(RentalSchema.isActive, true),
         sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`
-      )
+      ))
       .groupBy(sql`month_label`)
       .orderBy(sql`month_label`);
   }
@@ -171,10 +152,12 @@ export class DrizzleOrmAdapter implements IRentalRepository {
         totalProfit: sum(RentalSchema.profit).mapWith(Number)
       })
       .from(RentalSchema)
-      .where(
+      .where(and(
+        eq(RentalSchema.isActive, true),
         sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`
-      )
+      ))
       .groupBy(sql`year_label`)
       .orderBy(desc(sql`year_label`));
   }
+
 }

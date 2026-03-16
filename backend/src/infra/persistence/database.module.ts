@@ -1,8 +1,8 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config'; // Add this
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import * as schema from './rental-schema';
+import * as schema from './schemas/rental-schema';
 
 export const DRIZZLE = 'DRIZZLE_CONNECTION';
 

@@ -1,4 +1,5 @@
-import { IRentalRepository } from "src/core/app/ports/IRentalRepository";
+import { ServiceError } from "../../../../app/errors/service.error";
+import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
 /**
  * This use case handle rental delete. 
  * Receive RentalRepository port and delegate database interaction to the respective adapter
@@ -12,7 +13,7 @@ export class DeleteRentalUseCase {
     async deleteRental(id: string): Promise<boolean> {
         const deleted = await this.rentalRepository.delete(id)
         // if couldnt delete throw an error
-        if (!deleted) throw new Error("Could not delete user")
+        if (!deleted) throw new ServiceError("Could not delete user")
         // do not pass error to keep controller clean
         return true;
     }

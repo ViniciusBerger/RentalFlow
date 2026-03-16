@@ -1,6 +1,6 @@
 import { FindAllRentalsUseCase } from './find-all.use-case';
-import { Rental } from '../entitiy/rental';
-import { IRentalRepository } from '../../../app/ports/IRentalRepository';
+import { Rental } from '../../entity/rental';
+import { IRentalRepository } from '../../../../app/ports/IRentalRepository';
 
 describe('FindAllRentalsUseCase', () => {
   let useCase: FindAllRentalsUseCase;
@@ -9,7 +9,7 @@ describe('FindAllRentalsUseCase', () => {
   beforeEach(() => {
     // Create a manual mock object
     repository = {
-      getAll: jest.fn(),
+      findAll: jest.fn(),
       // Add other methods as needed to satisfy the interface
     } as any;
 
@@ -21,28 +21,28 @@ describe('FindAllRentalsUseCase', () => {
     it('should return an array of rentals from the repository', async () => {
       // GIVEN
       const mockRentals: Rental[] = [
-        new Rental('John', 'Doe', '2026-01-01', '2026-01-05', 500),
+        Rental.create({clientFirstName:'John', clientLastName:'Doe', startDate:'2026-01-01', endDate:'2026-01-05', revenue:500, fee:100, profit: 300, guests: 10, isActive: true }),
       ];
-      repository.getAll.mockResolvedValue(mockRentals);
+      repository.findAll.mockResolvedValue(mockRentals);
 
       // WHEN
       const result = await useCase.findAll();
 
       // THEN
       expect(result).toEqual(mockRentals);
-      expect(repository.getAll).toHaveBeenCalledTimes(1);
+      expect(repository.findAll).toHaveBeenCalledTimes(1);
     });
 
     it('should return an empty array if no rentals exist', async () => {
       // GIVEN
-      repository.getAll.mockResolvedValue([]);
+      repository.findAll.mockResolvedValue([]);
 
       // WHEN
       const result = await useCase.findAll();
 
       // THEN
       expect(result).toEqual([]);
-      expect(repository.getAll).toHaveBeenCalled();
+      expect(repository.findAll).toHaveBeenCalled();
     });
   });
 });

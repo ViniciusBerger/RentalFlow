@@ -1,4 +1,4 @@
-import { IRentalRepository } from "src/core/app/ports/IRentalRepository";
+import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
 
 /**
  * This use case handle basic search. 

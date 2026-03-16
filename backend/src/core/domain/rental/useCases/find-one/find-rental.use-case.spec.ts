@@ -1,6 +1,6 @@
 import { FindRentalUseCase } from './find-rental.use-case';
-import { Rental } from '../entitiy/rental';
-import { IRentalRepository } from '../../../app/ports/IRentalRepository';
+import { Rental } from '../../entity/rental';
+import { IRentalRepository } from '../../../../app/ports/IRentalRepository';
 
 describe('FindRentalUseCase (Pure Unit Test)', () => {
   let useCase: FindRentalUseCase;
@@ -23,7 +23,7 @@ describe('FindRentalUseCase (Pure Unit Test)', () => {
 
     it('should return a rental when valid dates are provided and a record exists', async () => {
       // GIVEN
-      const mockRental = new Rental('Vinicius', 'Berger', startDate, endDate, 1000);
+      const mockRental = Rental.create({clientFirstName:'John', clientLastName:'Doe', startDate:'2026-01-01', endDate:'2026-01-05', revenue:500, fee:100, profit: 300, guests: 10, isActive: true });
       repository.findOne.mockResolvedValue(mockRental);
 
       // WHEN

@@ -1,28 +1,25 @@
 import { Global, Module } from "@nestjs/common";
 import { AuthController } from "../../../web/controller/auth.controller";
-import { AuthenticateUseCase, ValidateTokenUseCase } from "src/core/domain/auth/useCase";
+import { AuthenticateUseCase } from "../../../core/domain/auth/useCase/authenticate.use-case";
 import { IAuthPort } from "src/core/app/ports/IAuthPort";
 import { FirebaseAuthAdapter } from "src/infra/adapters/firebase/firebase-auth.adapter";
 import { FirebaseModule } from "./firebase.module";
-
 @Global()
 @Module({
-  imports:[FirebaseModule],
+  imports: [FirebaseModule],
   controllers: [AuthController],
-  providers: [{
-    provide: AuthenticateUseCase,
-    useFactory: (authPort: IAuthPort) => new AuthenticateUseCase(authPort),
-    inject:['IAuthPort']
-
-  },{
-    provide: ValidateTokenUseCase,
-    useFactory: (authPort: IAuthPort) => new ValidateTokenUseCase(authPort),
-    inject:['IAuthPort']
-  },{
-    provide: 'IAuthPort',
-    useClass: FirebaseAuthAdapter
-  }],
-
-  exports: [ValidateTokenUseCase],
+  providers: [
+    {
+      provide: AuthenticateUseCase,
+      // Remove 'async' and just return the new instance
+      useFactory: (authPort: IAuthPort) => {return new AuthenticateUseCase(authPort)},
+      inject: ['IAuthPort'],
+    },
+    {
+      provide: 'IAuthPort',
+      useClass: FirebaseAuthAdapter,
+    },
+  ],
+  exports: ['IAuthPort', AuthenticateUseCase], // Export both so Guards and Controllers can use them
 })
 export class AuthModule {}

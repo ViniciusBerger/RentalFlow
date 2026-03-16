@@ -1,4 +1,4 @@
-import { Rental } from "../../domain/rental/entitiy/rental";
+import { Rental } from "../../domain/rental/entity/rental";
 
 /**
  * Port: IRentalRepository
@@ -9,20 +9,26 @@ export interface IRentalRepository {
     /**
      * Persists a new rental entity to the database.
      * @param data - The Rental domain entity to be saved.
-     * @returns Promise resolving to true if saved, false if no rows were affected.
+     * @returns client first name, client last name, start date and end date (as string)
      */
-    save(data: Rental);
+    save(data: Rental): Promise<{startDate: string, endDate:string, guests: number, profit: number}>;
     
     /**
      * Retrieves all rental records and maps them back to Domain Entities.
      */
-    getAll(): Promise<Rental[]>;
+    findAll(userId: string): Promise<Rental[]>;
     
     /**
      * Finds a specific rental record by its exact start and end dates.
      * @returns The Rental entity if found, or null/undefined.
      */
     findOne(startDate: string, endDate: string): Promise<Rental>;
+
+    /**
+     * Finds next three rentals based on today's date. 
+     * @returns a list with three rentals
+     */
+    findNextThree(): Promise<Rental[]>
 
     /**
      * Removes a rental record from the system by its unique identifier.
@@ -34,6 +40,7 @@ export interface IRentalRepository {
      * Updates an existing rental's properties.
      * @param id - The ID of the rental to update.
      * @param toBeUpdated - Partial data containing the fields to change.
+     * @returns Promise resolving to true if a row was updated, false otherwise.
      */
     update(id: string, toBeUpdated: any): Promise<boolean>; 
 

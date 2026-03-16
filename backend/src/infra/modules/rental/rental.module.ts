@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { RentalController } from "../../../web/controller/rental.controller";
 import { RentalUseCaseProviders } from "./rental.use-case.provider";
-import { DrizzleOrmAdapter } from "../../adapters/drizzle/drizzle-orm-adapter";
+import { DrizzleOrmRentalAdapter } from "../../adapters/drizzle/rental/drizzle-rental-adapter";
 import { BalanceController } from "src/web/controller/balance.controller";
 
 @Module({
@@ -10,7 +10,7 @@ import { BalanceController } from "src/web/controller/balance.controller";
     ...RentalUseCaseProviders, 
     {
       provide: 'IRentalRepository',
-      useClass: DrizzleOrmAdapter,
+      useClass: DrizzleOrmRentalAdapter,
     },
   ]
 })

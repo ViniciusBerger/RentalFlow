@@ -1,6 +1,6 @@
 import { CreateRentalUseCase } from './create-rental.use-case';
 import { IRentalRepository } from 'src/core/app/ports/IRentalRepository';
-import { Rental } from '../entitiy/rental';
+import { Rental } from '../../entity/rental';
 
 describe('CreateRentalUseCase', () => {
   let useCase: CreateRentalUseCase;
@@ -19,10 +19,10 @@ describe('CreateRentalUseCase', () => {
 
   describe('createRental', () => {
     const validData = {
-      firstName: 'John',
-      lastName: 'Doe',
-      start: '2026-03-01',
-      end: '2026-03-05',
+      clientFirstName: 'John',
+      clientLastName: 'Doe',
+      startDate: '2026-03-01',
+      endDate: '2026-03-05',
       guests: 10,
       revenue: 500, 
       fee: 250,
@@ -30,39 +30,26 @@ describe('CreateRentalUseCase', () => {
     };
 
     it('should successfully create a rental when data is valid and dates are free', async () => {
-      // GIVEN: The repository says the dates are NOT overlapping
-      repository.checkOverlapDate.mockResolvedValue(false);
-      
-      // GIVEN: The repository returns the saved rental object
-      const expectedRental = new Rental(
-        validData.firstName,
-        validData.lastName,
-        validData.start,
-        validData.end,
-        validData.guests,
-        validData.revenue,
-        validData.fee,
-        validData.profit,
-
-      );
-      repository.save.mockResolvedValue(expectedRental);
+      // GIVEN: The repository says the dates are NOT overlapping and the repository returns the saved rental object
+      repository.checkOverlapDate.mockResolvedValue(false); 
+      const expectedRental = Rental.create(validData)
+      repository.save.mockResolvedValue(expectedRental); 
 
       // WHEN: We execute the use case
       const result = await useCase.createRental(
-        validData.firstName,
-        validData.lastName,
-        validData.start,
-        validData.end,
+        validData.clientFirstName,
+        validData.clientLastName,
+        validData.startDate,
+        validData.endDate,
         validData.guests,
         validData.revenue,
         validData.fee,
-        validData.profit,
       );
 
       // THEN: Check the result and repository calls
       expect(result).toBeInstanceOf(Rental);
-      expect(result.clientFirstName).toBe(validData.firstName);
-      expect(repository.checkOverlapDate).toHaveBeenCalledWith(validData.start, validData.end);
+      expect(result.clientFirstName).toBe(validData.clientFirstName);
+      expect(repository.checkOverlapDate).toHaveBeenCalledWith(validData.startDate, validData.endDate);
       expect(repository.save).toHaveBeenCalled();
     });
 
@@ -73,14 +60,13 @@ describe('CreateRentalUseCase', () => {
       // WHEN & THEN: It should reject before saving
       await expect(
         useCase.createRental(
-          validData.firstName,
-          validData.lastName,
-          validData.start,
-          validData.end,
+          validData.clientFirstName,
+          validData.clientLastName,
+          validData.startDate,
+          validData.endDate,
           validData.guests,
           validData.revenue,
           validData.fee,
-          validData.profit,
         )
       ).rejects.toThrow('Date already booked.');
 
@@ -100,14 +86,13 @@ describe('CreateRentalUseCase', () => {
       // WHEN & THEN:
       await expect(
         useCase.createRental(
-          validData.firstName,
-          validData.lastName,
+          validData.clientFirstName,
+          validData.clientLastName,
           invalidDates.start,
           invalidDates.end,
           validData.guests,
           validData.revenue,
           validData.fee,
-          validData.profit,
         )
       ).rejects.toThrow('End date must be after start date');
     });
@@ -121,15 +106,14 @@ describe('CreateRentalUseCase', () => {
       // WHEN & THEN:
       await expect(
         useCase.createRental(
-          validData.firstName,
-          validData.lastName,
+          validData.clientFirstName,
+          validData.clientLastName,
           sameDate,
           sameDate,
           validData.guests,
           validData.revenue,
-          validData.fee,
-          validData.profit,
-        )
+          validData.fee
+                )
       ).rejects.toThrow('End date must be after start date');
     });
   });

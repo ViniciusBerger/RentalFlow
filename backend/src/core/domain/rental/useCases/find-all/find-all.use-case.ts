@@ -1,5 +1,5 @@
-import { IRentalRepository } from "src/core/app/ports/IRentalRepository";
-import { Rental } from "../entitiy/rental";
+import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
+import { Rental } from "../../entity/rental";
 
 /**
  * This use case handle full search. 
@@ -17,7 +17,7 @@ export class FindAllRentalsUseCase {
 
     // find all records in rentals table
     async findAll(): Promise<Rental[]> {
-        const rentals: Rental[] = await this.rentalRepository.getAll()
+        const rentals: Rental[] = await this.rentalRepository.findAll()
         return rentals
     }
 }

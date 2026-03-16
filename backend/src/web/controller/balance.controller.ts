@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { GetBalanceUseCase } from "../../core/domain/rental/useCases/get-balance.use-case";
+import { GetBalanceUseCase } from "../../core/domain/rental/useCases/get-balance/get-balance.use-case";
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
 
 @ApiTags('balance module')

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards} from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
-import { Rental } from "../../core/domain/rental/entitiy/rental";
+import { Rental } from "../../core/domain/rental/entity/rental";
 import { CreateRentalWebDto } from "../dto-web/rental/create-rental.web-dto";
 import { FindRentalWebDto } from "../dto-web/rental/find-rental.web-dto";
 import { UpdateRentalWebDto } from "../dto-web/rental/update-rental.web-dto";
@@ -9,12 +9,15 @@ import {
         DeleteRentalUseCase, 
         FindRentalUseCase, 
         UpdateRentalUseCase, 
-        FindAllRentalsUseCase } from "../../core/domain/rental/useCases";
+        FindAllRentalsUseCase, 
+        FindNextThreeUseCase,
+        CancelRentalUseCase} from "../../core/domain/rental/useCases";
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
+import { ICreateRentalResponse } from "src/core/domain/rental/useCases/create-rental/ICreateRentalResponse";
 
 
 @ApiTags('Rentals module')
-@UseGuards(AuthGuard)
+//@UseGuards(AuthGuard)
 @Controller('rental')
 export class RentalController {
     constructor(
@@ -22,7 +25,9 @@ export class RentalController {
         private readonly deletRentalUseCase:  DeleteRentalUseCase,
         private readonly findRentalUseCase:   FindRentalUseCase,
         private readonly updateRentalUseCase: UpdateRentalUseCase,
-        private readonly findAllUseCase:      FindAllRentalsUseCase){}
+        private readonly findAllUseCase:      FindAllRentalsUseCase,
+        private readonly findNextThreeUseCase:FindNextThreeUseCase,
+        private readonly cancelRentalUseCase: CancelRentalUseCase){}
 
 
     @Get('find')
@@ -43,10 +48,19 @@ export class RentalController {
         return rentals
     }
 
+
+    @Get('findnext')
+    @ApiOperation({ summary: 'Get next three rentals from today' })
+    @ApiResponse({ status: 200, description: 'List next three rentals' })
+    async getNextRentals(): Promise<Rental[]> {
+        const rentals = await this.findNextThreeUseCase.find()
+        return rentals
+    }
+
     @Post('add')
     @ApiOperation({ summary: 'Create a new rental' })
     @ApiResponse({ status: 201, description: 'The rental has been successfully created' })
-    async createRental(@Body() dto: CreateRentalWebDto): Promise<Rental>{
+    async createRental(@Body() dto: CreateRentalWebDto): Promise<ICreateRentalResponse>{
         const {clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee} = dto
         const rental = await this.createRentalUseCase.createRental(clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee)
 
@@ -59,6 +73,13 @@ export class RentalController {
     async updateRental(@Body() dto: UpdateRentalWebDto) {
         const {id, toBeUpdated} = dto
         return await this.updateRentalUseCase.updateRental(id, toBeUpdated) 
+    }
+
+    @Patch('cancel') 
+    @ApiOperation({ summary: 'Update an existing rental' })
+    @ApiResponse({ status: 200, description: 'Boolean indicating if update was successful' })
+    async cancelRental(@Body('id') id: string) {
+        return await this.cancelRentalUseCase.cancelRental(id) 
     }
 
     @Delete('delete/:id')

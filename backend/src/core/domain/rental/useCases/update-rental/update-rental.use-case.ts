@@ -1,4 +1,5 @@
-import { IRentalRepository } from "src/core/app/ports/IRentalRepository";
+import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
+import { ServiceError } from "../../../../app/errors/service.error";
 
 export class UpdateRentalUseCase {
      // inject rental repository
@@ -7,7 +8,7 @@ export class UpdateRentalUseCase {
     async updateRental(id: string, toBeUpdated: any) {
         const rental = await this.rentalRepository.update(id, toBeUpdated)
         
-        if (!rental) throw new Error("Could not update user")
+        if (!rental) throw new ServiceError("Could not update user")
         return true;
     }
 }

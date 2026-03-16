@@ -1,32 +1,22 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { FirebaseAuthAdapter } from '../firebase/firebase-auth.adapter';
+import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { type IAuthPort } from '../../../core/app/ports/IAuthPort';
+
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authAdapter: FirebaseAuthAdapter) {}
+  constructor(@Inject('IAuthPort') private readonly authPort: IAuthPort) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
-
+    
+    //access token is saved in cookies to avoid js injection
+    const token = request.cookies['access_token'] 
+    
     if (!token) throw new UnauthorizedException('Missing token');
 
-    try {
-      // Delegate to domain useCase
-      const authStatus = await this.authAdapter.validateJWT(token);
-
-      // Attach the user to the request so controllers can use it
-      request['user'] = authStatus; 
+    const authStatus = await this.authPort.validateJWT(token);
+    request['user'] = authStatus; // Attach the user to the request so controllers can use it
       
-      return true;
-
-    } catch {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
-  }
-
-  private extractTokenFromHeader(request: any): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    return true;
   }
 }
