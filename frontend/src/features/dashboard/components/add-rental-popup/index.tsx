@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { useState, } from 'react'
 import { AddRentalForm } from './add-rental-form';
 import { CloseButton } from '../../../../components/buttons/close-button';

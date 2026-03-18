@@ -3,8 +3,12 @@
  * 
  * @returns { label: string, totalRevenue: number, totalProfit: number}
  */
+const baseurl = "http://localhost:3000/"
 const fetchYearlyBalance = async()=> {
-    const response = await fetch('http://127.0.0.1:3000/revenue/yearly')
+    const response = await fetch( baseurl +'balance/yearly', {
+    method: "GET",
+    credentials: "include",
+  })
     if (!response.ok) throw new Error("network response was not okay")
     
     const data = await response.json()
@@ -14,7 +18,10 @@ const fetchYearlyBalance = async()=> {
 }
 
 const fetchMonthlyBalance = async()=> {
-    const response = await fetch('http://127.0.0.1:3000/revenue/monthly')
+    const response = await fetch(baseurl + 'balance/monthly', {
+    method: "GET",
+    credentials: "include", 
+  })
     if (!response.ok) throw new Error("network response was not okay")
     
     const data = await response.json()

@@ -1,16 +1,18 @@
 import { Main } from "./components/main";
-import { DesktopNavBar } from "../../components/nav-bar/desktop-navbar";
-import { MobileNavBar } from "../../components/nav-bar/mobile-navbar";
 import { useDashboard } from "./hooks/useDashboard";
 import { useState } from "react";
 import AddRentalPopUp from "./components/add-rental-popup";
-import { DashboardErrorState } from "./components/dashboard-error-state";
+import { DashboardErrorState } from "../../components/error-state";
 import RentalDetailPopUp from "./components/rental-detail-popup";
+import { useRentalActions } from "../../hooks/rental-actions/useRentalActions";
+import { LoadingState } from "../../components/loading-state";
 
 
 
 export const Dashboard =()=> {
-  const { balances, isLoading, isSaving, error, threeNextRentals, resetError, createAndRefresh, deleteAndRefresh} = useDashboard()
+  const { balances, nextRentals, isLoading, error: dashBoardError, loadData} = useDashboard()
+  const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh } = useRentalActions(loadData)
+
   const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false);
   const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
   const [selectedRental, setSelectedRental] = useState(null)
@@ -18,42 +20,36 @@ export const Dashboard =()=> {
   const yearlyBalance = balances[0]
   const monthlyBalance = balances[1]
 
-  if(isLoading) return <div>Loading dashboard...</div>
-
-  if(error) return <DashboardErrorState message={error} onRetry={()=> {resetError()}}/>
-
+  if(isLoading) return <LoadingState/>
+  if(dashBoardError) return <DashboardErrorState message={dashBoardError} onRetry={()=> {loadData()}}/>
   
 
-  
-
-  
   return (
-    <div className="flex h-screen bg-sage-50 font-sans text-slate-900">
-      
+    <> 
       {/* Main content */}
       <Main 
-        onOpenCreateRentalPopUp={()=> setIsCreateRentalPopUpOpen(true)}
+        onOpenCreateRentalPopUp={() => setIsCreateRentalPopUpOpen(true)}
         onSelectRental={(rental) => setSelectedRental(rental)}
-        onOpenPopUp={()=>setIsRentalDetailPopUpOpen(true)}
-
-        props={{yearly: yearlyBalance, monthly: monthlyBalance}}
-        threeNextRentals = {threeNextRentals}/>
+        onOpenPopUp={() => setIsRentalDetailPopUpOpen(true)}
+        props={{ yearly: yearlyBalance, monthly: monthlyBalance }}
+        threeNextRentals={nextRentals} 
+      />
       
+      {/* Popups stay here, they are absolute/fixed anyway */}
       <AddRentalPopUp 
         isOpen={isCreateRentalPopUpOpen} 
         onClose={() => setIsCreateRentalPopUpOpen(false)} 
-        onSubmit={createAndRefresh}
+        onSubmit={createRentalAndRefresh}
         isSaving={isSaving}
-        error={error}
+        error={dashBoardError}
       />
 
       <RentalDetailPopUp
         isOpen={isRentalDetailsPopUpOpen}
-        onClose={()=> setIsRentalDetailPopUpOpen(false)}
+        onClose={() => setIsRentalDetailPopUpOpen(false)}
         rental={selectedRental}
-        onDelete={deleteAndRefresh}
+        onDelete={deleteRentalAndRefresh}
       />
-
-    </div>
-  )
+    </>
+  );
 }

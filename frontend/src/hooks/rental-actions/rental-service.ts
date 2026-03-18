@@ -1,8 +1,9 @@
-const baseUrl = "http://127.0.0.1:3000/" 
+const baseUrl = "http://localhost:3000/rental/" 
 
 export const addRental = async (rentalData: any)=> {
-    const response = await fetch(baseUrl + 'rental', {
+    const response = await fetch(baseUrl + 'add', {
     method: 'POST',
+    credentials: "include",
     headers: {
       'Content-Type': 'application/json',
     },
@@ -19,8 +20,11 @@ export const addRental = async (rentalData: any)=> {
 }
 
 
-export const getNextThreeRentals = async() => {
-  const response = await fetch('http://localhost:3000/all')
+export const getNextRentals = async() => {
+  const response = await fetch(baseUrl + 'findall', {
+    method: 'GET',
+    credentials: "include",
+  })
 
   if (!response.ok) {
     const errorData = await response.json()
@@ -35,8 +39,9 @@ export const getNextThreeRentals = async() => {
 
 export const deleteRental = async(id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${baseUrl}rental/${id}`, {
+    const response = await fetch(`${baseUrl}delete/${id}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         // Include Authorization headers here if your API requires them

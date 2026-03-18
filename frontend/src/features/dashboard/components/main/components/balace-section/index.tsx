@@ -4,7 +4,7 @@ interface IncomeProps {
     monthly?: {label:string , totalRevenue: number, totalProfit:number} | null
   }
 }
-export const IncomeSection = ({props}: IncomeProps)=> (
+export const BalanceSection = ({props}: IncomeProps)=> (
     <div className="grid grid-cols-2 gap-4 mb-10">
           <div className="bg-white p-5 text-center rounded-2xl border border-sage-100 shadow-sm shadow-sage-100/50">
             <p className="text-[10px] uppercase tracking-widest text-sage-600 font-black mb-1">Yearly Income</p>

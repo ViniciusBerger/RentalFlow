@@ -1,4 +1,4 @@
-import { addRental, getNextThreeRentals } from "./rental-service";
+import { addRental, getNextRentals } from "../../../hooks/rental-actions/rental-service";
 import { loadBalance } from "./balance-service"
 
 // fetch and return both yearly and monthly revenue
@@ -19,7 +19,7 @@ export const loadDashboardAddRental = async(rentalData: any)=> {
 }
 
 export const loadDashboardThreeNextRentals = async() => {
-    const rentalsList:any[] = await getNextThreeRentals();
+    const rentalsList:any[] = await getNextRentals();
 
     return rentalsList
 }
