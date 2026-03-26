@@ -4,7 +4,9 @@ import { UserSchema } from "./user-schema";
 // Define the table
 export const RentalSchema = pgTable("rentals", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().unique().references(()=> UserSchema.id),
+  userId: varchar('user_id').notNull().references(()=> UserSchema.firebaseUid, { onDelete: "cascade" }),
+  clientFirstName: varchar('first_name', {length:255}).notNull(),
+  clientLastName: varchar('last_name', {length:255}).notNull(), 
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   guests: integer("number_of_guests").notNull(),

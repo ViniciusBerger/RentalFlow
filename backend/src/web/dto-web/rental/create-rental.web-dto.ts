@@ -6,7 +6,14 @@ import { CreateRentalDto } from '../../../core/app/dtos/rental/create-rental.dto
  * Extends the domain DTO to add Swagger documentation without polluting the core logic.
  */
 export class CreateRentalWebDto extends CreateRentalDto {
-  
+  @ApiProperty({ 
+    example: 'userId', 
+    description: 'FirebaseUid',
+    minLength: 28,
+    maxLength: 128 
+  })
+  declare userId: string;
+
   @ApiProperty({ 
     example: 'Vinicius', 
     description: 'First name of the client',

@@ -2,10 +2,11 @@ import { Controller, Get, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { GetBalanceUseCase } from "../../core/domain/rental/useCases/get-balance/get-balance.use-case";
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
+import { OnboardingGuard } from "src/infra/adapters/guards/onboarding.guard";
 
 @ApiTags('balance module')
 @Controller('balance')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, OnboardingGuard)
 export class BalanceController {
     constructor (private readonly getRevenueUseCase:   GetBalanceUseCase){}
 

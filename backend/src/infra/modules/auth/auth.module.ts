@@ -1,12 +1,15 @@
 import { Global, Module } from "@nestjs/common";
 import { AuthController } from "../../../web/controller/auth.controller";
-import { AuthenticateUseCase } from "../../../core/domain/auth/useCase/authenticate.use-case";
+import { AuthenticateUseCase } from "../../../core/domain/auth/useCase/authenticate/authenticate.use-case";
 import { IAuthPort } from "src/core/app/ports/IAuthPort";
+import { IUserRepository } from "src/core/app/ports/IUserRepository";
 import { FirebaseAuthAdapter } from "src/infra/adapters/firebase/firebase-auth.adapter";
 import { FirebaseModule } from "./firebase.module";
+import { UserModule } from "../user/user.module";
+import { CompleteProfileUseCase } from "src/core/domain/user/useCases/complete-profile/complete-profile.use-case";
 @Global()
 @Module({
-  imports: [FirebaseModule],
+  imports: [FirebaseModule, UserModule],
   controllers: [AuthController],
   providers: [
     {

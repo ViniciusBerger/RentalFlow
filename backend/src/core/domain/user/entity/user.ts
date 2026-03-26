@@ -1,6 +1,8 @@
 import { IUserParams, UserRole } from "./IUserParams";
 
+// Domain object for user. 
 export class User{
+    firebaseUid: string;
     firstName:string;
     lastName: string;
     email: string;
@@ -18,6 +20,7 @@ export class User{
         this.role = data.role;
     }
 
+    //Instantiate a new user converting date from date object to string
     static create(data: any) {
         return new User ({...data,
             createdAt: data.createdAt instanceof Date ? data.createdAt.toISOString() : data.createdAt,

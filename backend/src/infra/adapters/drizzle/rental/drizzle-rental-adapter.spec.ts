@@ -54,6 +54,8 @@ describe('DrizzleOrmAdapter', () => {
   describe('save', () => {
     const mockRental = new Rental({
       userId: 'testid123456',
+      clientFirstName: 'firstname',
+      clientLastName: 'lastname',
       startDate: '2026-01-01',
       endDate: '2026-01-02',
       guests: 15,
@@ -65,7 +67,8 @@ describe('DrizzleOrmAdapter', () => {
 
     it('should return the partial saved data on success', async () => {
       const dbReturn = {
-        userId: 'testid123456',
+        clientFirstName: 'firstname',
+        clientLastName: 'lastname',
         startDate: '2026-01-01',
         endDate: '2026-01-02'
       };

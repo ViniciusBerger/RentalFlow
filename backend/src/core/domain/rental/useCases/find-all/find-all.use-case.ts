@@ -16,8 +16,8 @@ export class FindAllRentalsUseCase {
     constructor( private readonly rentalRepository: IRentalRepository){}
 
     // find all records in rentals table
-    async findAll(): Promise<Rental[]> {
-        const rentals: Rental[] = await this.rentalRepository.findAll()
+    async findAll(userId:string): Promise<Rental[]> {
+        const rentals: Rental[] = await this.rentalRepository.findAll(userId)
         return rentals
     }
 }

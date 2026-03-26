@@ -1,4 +1,4 @@
-import { AuthUserResponse, IAuthPort } from "../../../app/ports/IAuthPort";
+import { AuthUserResponse, IAuthPort } from "../../../../app/ports/IAuthPort";
 
 interface IAuthCredentials {
     email: string;

@@ -20,8 +20,11 @@ export const DRIZZLE = 'DRIZZLE_CONNECTION';
         const host = configService.get('DB_HOST');
         const port = configService.get('DB_PORT');
         const name = configService.get('DB_NAME');
+        const db_url = configService.get('DATABASE_URL')
 
-        const connectionString = `postgresql://${user}:${pass}@${host}:${port}/${name}`;
+        console.log('CREDENTIALS => ' + user, pass, host, port, name)
+
+        const connectionString = db_url //`postgresql://${user}:${pass}@${host}:${port}/${name}`;
 
         const pool = new Pool({
           connectionString,

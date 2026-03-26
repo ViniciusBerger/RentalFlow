@@ -2,6 +2,8 @@ import { AuthStatus, AuthUserResponse, IAuthPort } from "../../../core/app/ports
 import * as admin from 'firebase-admin';
 import axios from 'axios';
 import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
+import { CreateUserUseCase } from "../../../core/domain/user/useCases/create-user/create-user.use-case";
+import { NewUserUseCase } from "../../../core/domain/user/useCases/new-user-process/new-user.use-case";
 
 /**
  * Adapter implementation for Firebase Authentication.
@@ -11,22 +13,25 @@ import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 export class FirebaseAuthAdapter implements IAuthPort {
     constructor(
         @Inject('FIREBASE_AUTH') private readonly firebaseApp: admin.auth.Auth, 
-        @Inject('FIREBASE_API_KEY') private readonly apiKey: string
-    ) {}
+        @Inject('FIREBASE_API_KEY') private readonly apiKey: string,
+        private readonly newUserProcessUseCase: NewUserUseCase) {}
     
     /**
      * Verifies the integrity of a Firebase ID Token (JWT).
      * Maps the decoded token to a domain-friendly AuthStatus.
      */
     async validateJWT(jwtToken: string): Promise<AuthStatus> {
-        const userAllowed = await this.firebaseApp.verifyIdToken(jwtToken);
-
-        if(!userAllowed || !userAllowed.email) throw new UnauthorizedException('user not allowed')
+        const decoded = await this.firebaseApp.verifyIdToken(jwtToken);
+        if(!decoded || !decoded.email) throw new UnauthorizedException('user not allowed')
         
+
+        const isRegistered = await this.newUserProcessUseCase.verifyUser(decoded.uid)
         return {
-            uid: userAllowed.uid,
-            email: userAllowed.email
-        };
+            uid: decoded.uid,
+            email: decoded.email,
+            role: isRegistered.success ? isRegistered.user?.role : undefined,
+            isRegistered: isRegistered.success,
+        }
     }
 
     /**

@@ -41,4 +41,5 @@ export interface AuthStatus {
     uid: string;    // Present only if the token is valid
     email: string;
     role?: string;
+    isRegistered: boolean,
 }

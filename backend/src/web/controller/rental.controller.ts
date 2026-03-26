@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards} from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards} from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { Rental } from "../../core/domain/rental/entity/rental";
 import { CreateRentalWebDto } from "../dto-web/rental/create-rental.web-dto";
@@ -14,10 +14,11 @@ import {
         CancelRentalUseCase} from "../../core/domain/rental/useCases";
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
 import { ICreateRentalResponse } from "src/core/domain/rental/useCases/create-rental/ICreateRentalResponse";
+import { OnboardingGuard } from "src/infra/adapters/guards/onboarding.guard";
 
 
 @ApiTags('Rentals module')
-//@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, OnboardingGuard)
 @Controller('rental')
 export class RentalController {
     constructor(
@@ -43,8 +44,9 @@ export class RentalController {
     @Get('findall')
     @ApiOperation({ summary: 'Get all rental records' })
     @ApiResponse({ status: 200, description: 'List of all rentals' })
-    async getRentals(): Promise<Rental[]> {
-        const rentals = await this.findAllUseCase.findAll()
+    async getRentals(@Req() req): Promise<Rental[]> {
+        const userUid = (req as any).user?.uid
+        const rentals = await this.findAllUseCase.findAll(userUid)
         return rentals
     }
 
@@ -60,9 +62,13 @@ export class RentalController {
     @Post('add')
     @ApiOperation({ summary: 'Create a new rental' })
     @ApiResponse({ status: 201, description: 'The rental has been successfully created' })
-    async createRental(@Body() dto: CreateRentalWebDto): Promise<ICreateRentalResponse>{
-        const {clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee} = dto
-        const rental = await this.createRentalUseCase.createRental(clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee)
+    async createRental(@Req() req:Request ,@Body() dto: CreateRentalWebDto): Promise<ICreateRentalResponse>{
+        const userId = (req as any).user?.uid;
+        console.log(userId)
+        console.log('REQ => '+ userId)
+        const { clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee} = dto
+        console.log("END DATE ==================> "+endDate)
+        const rental = await this.createRentalUseCase.createRental(userId, clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee)
 
         return rental
     }

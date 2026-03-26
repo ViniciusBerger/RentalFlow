@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
 import { Rental } from "../../entity/rental";
 import { ServiceError } from "../../../../app/errors/service.error";
@@ -12,14 +13,14 @@ import { ICreateRentalResponse } from "./ICreateRentalResponse";
 export class CreateRentalUseCase {
     constructor(private readonly rentalRepository: IRentalRepository) {}
 
-    async createRental(clientFirstName: string, clientLastName: string, startDate: string, endDate: string, guests:number, revenue: number, fee: number): Promise<ICreateRentalResponse> {
+    async createRental(userId:string, clientFirstName: string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number): Promise<ICreateRentalResponse> {
         //validate if start-date and end-date are free before booking a rental
         await this.validate(startDate, endDate)    
         const profit = (revenue - fee)
 
         // create a domain Rental object 
         const rental = Rental.create({
-            clientFirstName: clientFirstName, clientLastName: clientLastName, startDate: startDate, endtDate:endDate, guests:guests, revenue: revenue, profit: profit, fee: fee
+            userId: userId, clientFirstName:clientFirstName, clientLastName:clientLastName, startDate: startDate, endDate:endDate, guests:guests, revenue: revenue, profit: profit, fee: fee
         })  
 
         return await this.rentalRepository.save(rental); 
@@ -27,7 +28,7 @@ export class CreateRentalUseCase {
 
 
     // Check if date is available to be booked on database 
-    private async validate(startDate: string, endDate: string): Promise<boolean>{
+    private async validate(startDate: string, endDate: string): Promise<boolean> {
         if (new Date(startDate) >= new Date(endDate)) throw new ServiceError("End date must be after start date");
         
         // if date is already booked throw service error showing that date is booked

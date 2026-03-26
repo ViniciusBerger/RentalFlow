@@ -1,0 +1,1 @@
+ALTER TABLE "rentals" DROP CONSTRAINT "rentals_user_id_unique";

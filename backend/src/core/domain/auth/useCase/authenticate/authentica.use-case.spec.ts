@@ -1,5 +1,5 @@
-import { AuthenticateUseCase } from './authenticate.use-case';
-import { IAuthPort, AuthUserResponse } from '../../../app/ports/IAuthPort';
+import { AuthenticateUseCase } from '../../useCase/authenticate/authenticate.use-case';
+import { IAuthPort, AuthUserResponse } from '../../../../app/ports/IAuthPort';
 
 describe('AuthenticateUseCase', () => {
   let useCase: AuthenticateUseCase;

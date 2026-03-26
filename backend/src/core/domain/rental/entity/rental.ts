@@ -2,6 +2,8 @@ import { IRentalParams } from "./IRentalParams";
 
 export class Rental implements IRentalParams {
     userId!: string;
+    clientFirstName:string;
+    clientLastName:string;
     startDate!: string;
     endDate!: string;
     guests!: number;

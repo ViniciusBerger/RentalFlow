@@ -3,10 +3,9 @@ import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
   dialect: 'postgresql',
-  schema: './src/infra/persistence/rental-schema.ts',
+  schema: ['./src/infra/persistence/schemas/rental-schema.ts', './src/infra/persistence/schemas/user-schema.ts'],
   out: './drizzle',
   dbCredentials: {
-    // Switch to individual properties since your debug log shows they are loading
     host: process.env.DB_HOST!,
     port: Number(process.env.DB_PORT) || 5433,
     user: process.env.DB_USER!,
