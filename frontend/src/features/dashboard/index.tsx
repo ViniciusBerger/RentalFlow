@@ -1,16 +1,16 @@
 import { Main } from "./components/main";
-import { useDashboard } from "./hooks/useDashboard";
 import { useState } from "react";
 import AddRentalPopUp from "./components/add-rental-popup";
 import { DashboardErrorState } from "../../components/error-state";
 import RentalDetailPopUp from "./components/rental-detail-popup";
 import { useRentalActions } from "../../hooks/rental-actions/useRentalActions";
 import { LoadingState } from "../../components/loading-state";
+import { UseLoadData } from "../../hooks/load-data/useLoadData";
 
 
 
 export const Dashboard =()=> {
-  const { balances, nextRentals, isLoading, error: dashBoardError, loadData} = useDashboard()
+  const { balances, nextRentals, isLoading, loadingError, loadData} = UseLoadData()
   const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh } = useRentalActions(loadData)
 
   const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false);
@@ -20,8 +20,9 @@ export const Dashboard =()=> {
   const yearlyBalance = balances[0]
   const monthlyBalance = balances[1]
 
+  
   if(isLoading) return <LoadingState/>
-  if(dashBoardError) return <DashboardErrorState message={dashBoardError} onRetry={()=> {loadData()}}/>
+  if(loadingError) return <DashboardErrorState message={loadingError} onRetry={()=> {loadData()}}/>
   
 
   return (
@@ -41,7 +42,7 @@ export const Dashboard =()=> {
         onClose={() => setIsCreateRentalPopUpOpen(false)} 
         onSubmit={createRentalAndRefresh}
         isSaving={isSaving}
-        error={dashBoardError}
+        error={loadingError}
       />
 
       <RentalDetailPopUp

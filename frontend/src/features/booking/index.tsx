@@ -4,7 +4,7 @@ import { useRentalActions } from '../../hooks/rental-actions/useRentalActions';
 import { BookingHeader } from './components/booking-header';
 import { BookingCalendar } from './components/booking-calendar';
 import { NextRentals } from '../../components/next-rentals';
-import { useDashboard } from '../dashboard/hooks/useDashboard';
+import { UseLoadData } from '../../hooks/load-data/useLoadData';
 
 export const BookingsPage = () => {
     const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, error } = useRentalActions()
@@ -13,7 +13,7 @@ export const BookingsPage = () => {
     const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
     const [selectedRental, setSelectedRental] = useState(null)
 
-    const {nextRentals} = useDashboard()
+    const {nextRentals} = UseLoadData()
 
     const [viewDate, setViewDate] = useState(new Date())
     const handleNext = ()=> setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))

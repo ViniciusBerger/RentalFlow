@@ -1,6 +1,6 @@
 import { Header } from './components/auth-header';
 import { AuthForm } from './components/auth-form';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from '../../hooks/auth/useAuth';
 import { Footer } from '../../components/footer';
 import { LoadingState } from '../../components/loading-state';
 

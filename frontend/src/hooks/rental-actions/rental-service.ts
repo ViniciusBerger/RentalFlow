@@ -20,23 +20,6 @@ export const addRental = async (rentalData: any)=> {
 }
 
 
-export const getNextRentals = async() => {
-  const response = await fetch(baseUrl + 'findall', {
-    method: 'GET',
-    credentials: "include",
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to retrieve data on service');
-  }
-
-  const rentalsList: Promise<any[]> = await response.json()
-
-  return await rentalsList
-}
-
-
 export const deleteRental = async(id: string): Promise<boolean> => {
   try {
     const response = await fetch(`${baseUrl}delete/${id}`, {
