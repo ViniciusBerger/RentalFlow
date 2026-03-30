@@ -32,4 +32,4 @@ RUN echo "=== RUNNER DIST FILES ===" && find /app/dist -maxdepth 5 -type f || tr
 
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+CMD ["npm", "run", "start:prod"]
