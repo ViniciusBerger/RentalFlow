@@ -28,6 +28,7 @@ async function bootstrap() {
   app.use(cookieParser())
   
   const port = Number(process.env.PORT) || 3000;
+  console.log('RAILWAY PORT =', process.env.PORT);
   await app.listen(port, '0.0.0.0');
 }
 bootstrap();
