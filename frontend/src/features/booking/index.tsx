@@ -6,13 +6,18 @@ import { BookingCalendar } from './components/booking-calendar';
 import { NextRentals } from '../../components/next-rentals';
 import { UseLoadData } from '../../hooks/load-data/useLoadData';
 import RentalDetailPopUp from '../../components/rental-detail-popup';
+import { DashboardErrorState } from '../../components/error-state';
 
 export const BookingsPage = () => {
-    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, error } = useRentalActions()
-
+    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions()
+    const {loadData } = UseLoadData()
     const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false)
     const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
-    const [selectedRental, setSelectedRental] = useState(null)
+    const [selectedRental, setSelectedRental] = useState<any>(null)
+
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [editError, setEditError] = useState<any>(null);
+
 
     const {nextRentals} = UseLoadData()
 
@@ -29,6 +34,29 @@ export const BookingsPage = () => {
 
         return startDate <= viewEnd && endDate >= viewStart;
     })
+
+    const handleEditRental = async (formData: any) => {
+    try {
+      setIsSavingEdit(true);
+      setEditError(null);
+
+      if (!selectedRental?.id) return false;
+
+      await updateRentalAndRefresh(selectedRental.id, formData);
+      setIsRentalDetailPopUpOpen(false);
+
+      return true;
+    } catch (err: any) {
+      setEditError(err?.message || "Failed to update rental");
+      return false;
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+    if (error) {
+        return <DashboardErrorState message={error.message} onRetry={() => { loadData(); }} />;
+      }
 
     return (
         <div>
@@ -53,13 +81,16 @@ export const BookingsPage = () => {
                     isSaving={isSaving}
                     error={error}
                   />
-
+            
             <RentalDetailPopUp
-                    isOpen={isRentalDetailsPopUpOpen}
-                    onClose={() => setIsRentalDetailPopUpOpen(false)}
-                    rental={selectedRental}
-                    onDelete={deleteRentalAndRefresh}
-                  />
+                isOpen={isRentalDetailsPopUpOpen}
+                onClose={() => setIsRentalDetailPopUpOpen(false)}
+                rental={selectedRental}
+                onDelete={deleteRentalAndRefresh}
+                onEditSubmit={handleEditRental}
+                isSavingEdit={isSavingEdit}
+                editError={editError}
+                />
 
         </div>
 

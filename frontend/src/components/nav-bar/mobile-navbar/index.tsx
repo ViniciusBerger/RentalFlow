@@ -1,4 +1,4 @@
-import { Calendar, LayoutDashboard, Plus, Settings, Wallet } from "lucide-react";
+import { Calendar, LayoutDashboard, Plus} from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 

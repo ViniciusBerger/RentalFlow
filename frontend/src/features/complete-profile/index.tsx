@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User, ArrowRight, Home } from "lucide-react";
+import { User, Home } from "lucide-react";
 import { useAuth } from "../../hooks/auth/useAuth";
 import { Footer } from "../../components/footer";
 import { SubmitButton } from "../../components/buttons/submit-button";

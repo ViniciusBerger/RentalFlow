@@ -4,7 +4,7 @@ import { loadNextRentals } from '../load-data/load-data.service';
 
 export const useRentalActions = (refresh?: () => Promise<void>) => {
   const [isSaving, setIsSaving] = useState(false); 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<any | null>(null);
 
 
   /**

@@ -3,9 +3,9 @@
  * 
  * @returns { label: string, totalRevenue: number, totalProfit: number}
  */
-const baseurl = "http://localhost:3000/"
+const baseUrl = import.meta.env.VITE_API_URL;
 const fetchYearlyBalance = async()=> {
-    const response = await fetch( baseurl +'balance/yearly', {
+    const response = await fetch( baseUrl +'balance/yearly', {
     method: "GET",
     credentials: "include",
   })
@@ -18,7 +18,7 @@ const fetchYearlyBalance = async()=> {
 }
 
 const fetchMonthlyBalance = async()=> {
-    const response = await fetch(baseurl + 'balance/monthly', {
+    const response = await fetch(baseUrl + 'balance/monthly', {
     method: "GET",
     credentials: "include", 
   })

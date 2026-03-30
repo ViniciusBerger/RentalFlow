@@ -8,7 +8,6 @@ import { useRentalActions } from "../hooks/rental-actions/useRentalActions";
 export const AppLayout = () => {
   const [isAddRentalOpen, setIsAddRentalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<any>(null);
   const {createRentalAndRefresh, error:rentalError} = useRentalActions()
 
   const handleOpenAddRental = () => {
@@ -17,19 +16,18 @@ export const AppLayout = () => {
 
   const handleCloseAddRental = () => {
     setIsAddRentalOpen(false);
-    setError(null);
   };
+
 
   const handleSubmitRental = async (formData: any) => {
     try {
       setIsSaving(true);
-      setError(null);
     
       await createRentalAndRefresh(formData)
       return true  
     } 
     catch (err) {
-      setError(err);
+      throw err
     } 
     finally {
       setIsSaving(false);

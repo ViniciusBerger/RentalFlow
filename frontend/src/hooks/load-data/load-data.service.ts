@@ -1,6 +1,6 @@
 import { loadBalance } from "./balance-service";
 
-const baseUrl = "http://localhost:3000/" 
+const baseUrl = import.meta.env.VITE_API_URL;
 // fetch and return both yearly and monthly revenue
 export const loadDashboardBalance = async ()=> {
     const balances = await loadBalance();

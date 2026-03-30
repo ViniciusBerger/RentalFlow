@@ -1,4 +1,4 @@
-import { Calendar, Home, LayoutDashboard, Settings, Wallet } from "lucide-react";
+import { Calendar, Home, LayoutDashboard} from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 export const DesktopNavBar = () => {
