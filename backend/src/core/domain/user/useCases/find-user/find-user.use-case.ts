@@ -1,17 +1,17 @@
 import { IUserRepository } from "src/core/app/ports/IUserRepository";
 
 /* 
- * This use case handle users select. 
+ * This use case handle user select. 
  * Receive userRepository port and delegate database interaction to the respective adapter
  * 
  * @returns boolean
  * 
  */
-export class findAllUsersUseCase {
+export class FindUserUseCase {
     constructor(private readonly userRepository: IUserRepository) {}
 
-    async findUsers() {
-        const users = await this.userRepository.findAll()
-        return users
+    async findUser(id: string) {
+        const user = await this.userRepository.select(id)
+        return user
     }
 }

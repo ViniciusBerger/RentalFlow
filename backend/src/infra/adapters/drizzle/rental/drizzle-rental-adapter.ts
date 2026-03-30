@@ -24,7 +24,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @throws Error if the insert operation fails to return the saved row.
    * @returns client first name, client last name, start and end date (as string)
    */
-  async save(data: Rental): Promise<{clientFirstName:string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number, profit:number}> {
+  async save(data: Rental): Promise<{userId: string, clientFirstName:string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number, profit:number}> {
     const operationResult = await this.db.insert(RentalSchema).values({
       userId: data.userId,
       clientFirstName: data.clientFirstName,

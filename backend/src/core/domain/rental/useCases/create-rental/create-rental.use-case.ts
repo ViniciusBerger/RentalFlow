@@ -31,6 +31,12 @@ export class CreateRentalUseCase {
     private async validate(startDate: string, endDate: string): Promise<boolean> {
         if (new Date(startDate) >= new Date(endDate)) throw new ServiceError("End date must be after start date");
         
+        const today = new Date().toISOString().split("T")[0];
+
+        if (startDate < today) {
+            throw new ServiceError("Start date must be today or a future date");
+        }
+
         // if date is already booked throw service error showing that date is booked
         const notValid = await this.rentalRepository.checkOverlapDate(startDate, endDate)
         if(notValid) throw new ServiceError('Date already booked.')

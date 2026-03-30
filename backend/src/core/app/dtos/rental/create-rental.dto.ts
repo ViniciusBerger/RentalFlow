@@ -1,39 +1,46 @@
-import { IsString, IsNotEmpty, IsNumber, MaxLength, MinLength, IsISO8601} from 'class-validator';
-export class CreateRentalDto {
+import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  MaxLength,
+  MinLength,
+  IsISO8601,
+} from 'class-validator';
 
-    // client name splitted in two to follow normalization rules for SQL databases
-    @IsNotEmpty()
-    @IsString()
-    @MaxLength(128)
-    @MinLength(3)
-    clientFirstName: string;
+export class CreateRentalWebDto {
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(128)
+  @MinLength(3)
+  clientFirstName: string;
 
-    @IsNotEmpty()
-    @IsString()
-    @MaxLength(128)
-    @MinLength(3)
-    clientLastName: string;
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(128)
+  @MinLength(3)
+  clientLastName: string;
 
-    // check both start and end dates; check if its valid date
-    @IsNotEmpty()
-    @IsISO8601()
-    startDate: string;
+  @IsNotEmpty()
+  @IsISO8601()
+  startDate: string;
 
-    @IsNotEmpty()
-    @IsISO8601()
-    endDate: string;
+  @IsNotEmpty()
+  @IsISO8601()
+  endDate: string;
 
-    @IsNotEmpty()
-    @IsNumber()
-    guests: number;
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsNumber()
+  guests: number;
 
-    @IsNotEmpty()
-    @IsNumber()
-    profit: number;
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsNumber()
+  revenue: number;
 
-    @IsNumber()
-    @IsNotEmpty()
-    fee: number ;
-
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsNumber()
+  fee: number;
 }
-

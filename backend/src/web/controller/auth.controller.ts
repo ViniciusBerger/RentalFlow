@@ -29,10 +29,12 @@ export class AuthController {
     async authenticate( @Body() credentials: AuthenticateWebDto, @Res({passthrough: true}) res: Response) {
 
         const result = await this.authenticateUseCase.authenticate(credentials)
+        const isProduction = process.env.NODE_ENV === 'production';
+
         res.cookie('access_token', result.idToken, {
             httpOnly: true,
-            sameSite: 'lax', // since frontend is on another origin
-            secure: false,   // set true in production with HTTPS
+            sameSite: isProduction ? 'lax' : 'lax',
+            secure: isProduction,
             path: '/',
             maxAge: 3600000,
         });
@@ -58,7 +60,6 @@ export class AuthController {
     @UseGuards(AuthGuard)
     @Get("me")
     getMe(@Req() req: Request & { user: RequestUser }) {
-    console.log("AUTH CONTROLLER =>>" + req.user.email + req.user.isRegistered + "   ID=> " + req.user.uid)
     return req.user;
     }
 

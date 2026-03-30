@@ -10,10 +10,10 @@ import { IUserRepository } from "src/core/app/ports/IUserRepository";
 export class CreateUserUseCase {
     constructor(private readonly userRepository: IUserRepository) {}
 
-    async createUser(userId: string, firstName: string, lastName:string, email: string, role: string) {
+    async createUser(userId: string, firstName: string, lastName:string,  email: string) {
         
         const user = await this.userRepository.create(
-            userId, firstName, lastName,email, role
+            userId, firstName, lastName, email
         )
 
         return user 

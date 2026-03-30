@@ -138,17 +138,19 @@ describe("DrizzleUsersOrmAdapter", () => {
 
       const result = await adapter.create(
         "firebase-123",
+        "john@example.com",
         "John",
         "Doe",
-        "john@example.com"
+        
       );
 
       expect(db.insert).toHaveBeenCalledWith(UserSchema);
       expect(valuesMock).toHaveBeenCalledWith({
         firebaseUid: "firebase-123",
+        email: "john@example.com",
         firstName: "John",
         lastName: "Doe",
-        email: "john@example.com",
+        
       });
       expect(result).toEqual(insertedResult);
     });

@@ -11,7 +11,7 @@ export interface IRentalRepository {
      * @param data - The Rental domain entity to be saved.
      * @returns client first name, client last name, start date and end date (as string)
      */
-    save(data: Rental): Promise<{clientFirstName:string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number, profit:number}>;
+    save(data: Rental): Promise<{userId: string, clientFirstName:string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number, profit:number}>;
     
     /**
      * Retrieves all rental records and maps them back to Domain Entities.

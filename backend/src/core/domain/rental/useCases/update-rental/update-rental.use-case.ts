@@ -5,7 +5,7 @@ export class UpdateRentalUseCase {
      // inject rental repository
     constructor(private readonly rentalRepository: IRentalRepository){}
 
-    async updateRental(id: string, toBeUpdated: any) {
+    async updateRental(id: string, toBeUpdated: any): Promise<Boolean> {
         const rental = await this.rentalRepository.update(id, toBeUpdated)
         
         if (!rental) throw new ServiceError("Could not update user")

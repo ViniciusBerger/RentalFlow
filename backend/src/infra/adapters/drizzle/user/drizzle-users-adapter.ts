@@ -30,12 +30,12 @@ export class DrizzleUsersOrmAdapter implements IUserRepository {
         return usersList
       }
 
-    async create(firebaseUid: string, firstName:string, lastName:string, email: string) {
+    async create(firebaseUid: string, email: string, firstName:string, lastName:string) {
         const user = await this.db.insert(UserSchema).values({
             firebaseUid: firebaseUid,
+            email: email,
             firstName:firstName,
-            lastName:lastName,
-            email: email
+            lastName:lastName
         })
 
         return user

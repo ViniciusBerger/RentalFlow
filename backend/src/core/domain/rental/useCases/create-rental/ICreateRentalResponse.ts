@@ -1,4 +1,5 @@
 export interface ICreateRentalResponse {
+    userId: string,
     clientFirstName: string;
     clientLastName: string;
     startDate: string; 

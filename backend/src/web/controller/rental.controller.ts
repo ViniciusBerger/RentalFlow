@@ -46,6 +46,7 @@ export class RentalController {
     @ApiResponse({ status: 200, description: 'List of all rentals' })
     async getRentals(@Req() req): Promise<Rental[]> {
         const userUid = (req as any).user?.uid
+        
         const rentals = await this.findAllUseCase.findAll(userUid)
         return rentals
     }
@@ -64,16 +65,13 @@ export class RentalController {
     @ApiResponse({ status: 201, description: 'The rental has been successfully created' })
     async createRental(@Req() req:Request ,@Body() dto: CreateRentalWebDto): Promise<ICreateRentalResponse>{
         const userId = (req as any).user?.uid;
-        console.log(userId)
-        console.log('REQ => '+ userId)
         const { clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee} = dto
-        console.log("END DATE ==================> "+endDate)
+        
         const rental = await this.createRentalUseCase.createRental(userId, clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee)
-
         return rental
     }
 
-    @Patch('rental') 
+    @Patch('update') 
     @ApiOperation({ summary: 'Update an existing rental' })
     @ApiResponse({ status: 200, description: 'Boolean indicating if update was successful' })
     async updateRental(@Body() dto: UpdateRentalWebDto) {

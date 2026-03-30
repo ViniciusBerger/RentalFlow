@@ -1,33 +1,28 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from "@nestjs/common";
-import { Response } from 'express';
+import { Response } from "express";
+import { ServiceError } from "src/core/app/errors/service.error";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();              // Get HTTP context from Nest
-    const request = ctx.getRequest();             // Access the request
-    const response = ctx.getResponse<Response>(); // Access Express response
+    const ctx = host.switchToHttp();
+    const request = ctx.getRequest();
+    const response = ctx.getResponse<Response>();
 
-    const isHttpException = exception instanceof HttpException;
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string | object = "Internal server error";
 
-    // Determine the HTTP status code
-    const status = isHttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    // Default message
-    let message: string | object = 'Internal server error';
-
-    // Log unexpected errors
-    if (!isHttpException) console.error(exception);
-
-    // Extract message from HttpException, preserving objects if provided
-    if (isHttpException) {
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
       const res = exception.getResponse();
-      message = typeof res === 'string' ? res : (res as any).message || res;
+      message = typeof res === "string" ? res : (res as any).message || res;
+    } else if (exception instanceof ServiceError) {
+      status = HttpStatus.BAD_REQUEST;
+      message = exception.message;
+    } else {
+      console.error(exception);
     }
 
-    // Send structured JSON response
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),

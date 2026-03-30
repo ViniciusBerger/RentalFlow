@@ -14,5 +14,6 @@ export const UserUseCaseProviders = [
   mapUseCase(UseCases.DeleteUserUseCase),
   mapUseCase(UseCases.NewUserUseCase),
   mapUseCase(UseCases.CompleteProfileUseCase),
+  mapUseCase(UseCases.FindUserUseCase),
   mapUseCase(UseCases.findAllUsersUseCase),
 ];

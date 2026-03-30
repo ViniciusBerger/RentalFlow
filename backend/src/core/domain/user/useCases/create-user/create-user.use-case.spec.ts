@@ -20,19 +20,19 @@ describe("CreateUserUseCase", () => {
 
     const result = await useCase.createUser(
       "user-123",
-      "John",
-      "Doe",
       "john@example.com",
-      "admin"
+      "John",
+      "Doe"
+      
     );
 
     expect(userRepository.create).toHaveBeenCalledTimes(1);
     expect(userRepository.create).toHaveBeenCalledWith(
       "user-123",
-      "John",
-      "Doe",
       "john@example.com",
-      "admin"
+      "John",
+      "Doe"
+      
     );
     expect(result).toBe(true);
   });
@@ -52,8 +52,7 @@ describe("CreateUserUseCase", () => {
       "user-123",
       "John",
       "Doe",
-      "john@example.com",
-      "admin"
+      "john@example.com"
     );
 
     expect(result).toEqual(createdUser);
@@ -67,8 +66,7 @@ describe("CreateUserUseCase", () => {
         "user-123",
         "John",
         "Doe",
-        "john@example.com",
-        "admin"
+        "john@example.com"
       )
     ).rejects.toThrow("create failed");
   });
@@ -76,9 +74,9 @@ describe("CreateUserUseCase", () => {
   it("should pass empty strings if provided", async () => {
     userRepository.create.mockResolvedValue(false);
 
-    const result = await useCase.createUser("", "", "", "", "");
+    const result = await useCase.createUser("", "", "", "");
 
-    expect(userRepository.create).toHaveBeenCalledWith("", "", "", "", "");
+    expect(userRepository.create).toHaveBeenCalledWith("", "", "", "");
     expect(result).toBe(false);
   });
 });
