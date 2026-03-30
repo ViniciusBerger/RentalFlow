@@ -9,7 +9,7 @@ export const loadDashboardBalance = async ()=> {
 
 // load all next rentals from today and on
 export const loadNextRentals = async() => {
-  const response = await fetch(baseUrl + 'rental/findall', {
+  const response = await fetch(`${baseUrl}/rental/findall`, {
     method: 'GET',
     credentials: "include",
   })
@@ -25,7 +25,7 @@ export const loadNextRentals = async() => {
 }
 
 export const loadUserData = async () => {
-  const response = await fetch(`${baseUrl}user/host`, {
+  const response = await fetch(`${baseUrl}/user/host`, {
     method: "GET",
     credentials: "include",
   });

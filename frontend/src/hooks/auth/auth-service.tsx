@@ -1,7 +1,7 @@
 const baseUrl = import.meta.env.VITE_API_URL;
 
 export const login = async (email: string, password: string) => {
-  const response = await fetch(baseUrl + "auth/login", {
+  const response = await fetch(`${baseUrl}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -16,7 +16,7 @@ export const login = async (email: string, password: string) => {
 };
 
 export const getMe = async () => {
-  const response = await fetch(baseUrl + "auth/me", {
+  const response = await fetch(`${baseUrl}/auth/me`, {
     method: "GET",
     credentials: "include",
   });
@@ -32,7 +32,7 @@ export const completeProfile = async (payload: {
   firstName: string;
   lastName: string;
 }) => {
-  const response = await fetch(baseUrl + "auth/complete-profile", {
+  const response = await fetch(`${baseUrl}/auth/complete-profile`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -47,7 +47,7 @@ export const completeProfile = async (payload: {
 };
 
 export const logout = async () => {
-  const response = await fetch(baseUrl + "auth/logout", {
+  const response = await fetch(`${baseUrl}/auth/logout`, {
     method: "POST",
     credentials: "include",
   });
