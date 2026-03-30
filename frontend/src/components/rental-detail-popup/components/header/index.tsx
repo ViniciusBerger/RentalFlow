@@ -1,5 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
-import { AvatarInitials } from "../../../../../../components/avatar-initials";
+import { AvatarInitials } from "../../../avatar-initials";
 
 export const RentalDetailHeader = ({rental}: any)=> (
     <div className="bg-sage-50 p-8 pt-12">

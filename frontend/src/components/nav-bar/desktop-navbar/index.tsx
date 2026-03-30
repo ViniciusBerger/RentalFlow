@@ -14,11 +14,11 @@ export const DesktopNavBar = () => {
         {/* Pass the 'to' prop to each item; 'active' is handled automatically now */}
         <NavItem to="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
         <NavItem to="/bookings" icon={<Calendar size={20} />} label="Bookings" />
-        <NavItem to="/earnings" icon={<Wallet size={20} />} label="Earnings" />
-        <NavItem to="/settings" icon={<Settings size={20} />} label="Settings" />
+        {/* <NavItem to="/earnings" icon={<Wallet size={20} />} label="Earnings" />
+        <NavItem to="/settings" icon={<Settings size={20} />} label="Settings" /> */}
       </nav>
 
-      <div className="pt-6 border-t border-sage-50">
+      {/* <div className="pt-6 border-t border-sage-50">
         <div className="flex items-center gap-3 p-2 bg-sage-50 rounded-xl">
           <div className="w-10 h-10 rounded-full bg-sage-200" />
           <div>
@@ -26,7 +26,7 @@ export const DesktopNavBar = () => {
             <p className="text-[10px] text-sage-600">Pro Account</p>
           </div>
         </div>
-      </div>
+      </div> */}
     </aside>
   );
 };

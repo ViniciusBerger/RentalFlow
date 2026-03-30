@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import AddRentalPopUp from '../dashboard/components/add-rental-popup';
+import AddRentalPopUp from '../../components/add-rental-popup';
 import { useRentalActions } from '../../hooks/rental-actions/useRentalActions';
 import { BookingHeader } from './components/booking-header';
 import { BookingCalendar } from './components/booking-calendar';
 import { NextRentals } from '../../components/next-rentals';
 import { UseLoadData } from '../../hooks/load-data/useLoadData';
+import RentalDetailPopUp from '../../components/rental-detail-popup';
 
 export const BookingsPage = () => {
     const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, error } = useRentalActions()
@@ -51,6 +52,13 @@ export const BookingsPage = () => {
                     onSubmit={createRentalAndRefresh}
                     isSaving={isSaving}
                     error={error}
+                  />
+
+            <RentalDetailPopUp
+                    isOpen={isRentalDetailsPopUpOpen}
+                    onClose={() => setIsRentalDetailPopUpOpen(false)}
+                    rental={selectedRental}
+                    onDelete={deleteRentalAndRefresh}
                   />
 
         </div>

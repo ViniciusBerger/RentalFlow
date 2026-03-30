@@ -1,4 +1,4 @@
-import { loadDashboardBalance, loadNextRentals } from './load-data.service';
+import { loadDashboardBalance, loadNextRentals, loadUserData } from './load-data.service';
 
 /**  
 * This class abstract the backend service to load data across app.
@@ -18,7 +18,8 @@ export const UseLoadData = ()=>{
   const [balances, setBalances] = useState<any[]>([]); // yearly and monthly balances (revenue and profit) 
   const [nextRentals, setNextRentals] = useState<any[]>([]); // list of all rental (from today and on)
   const [isLoading, setIsLoading] = useState(true); 
-  const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [loadingError, setLoadingError] = useState<{message:string, status:number} | null>(null);
+  const [userData, setUserData] = useState<any>(null)
   
   
   const resetError = () => setLoadingError(null); // fallback for error
@@ -28,12 +29,16 @@ export const UseLoadData = ()=>{
     try {
       setIsLoading(true);
       
-      const [balancesResult, rentalsResult] = await Promise.all([loadDashboardBalance(), loadNextRentals()]);
+      const [balancesResult, rentalsResult, userDataResult] = await Promise.all([loadDashboardBalance(), loadNextRentals(), loadUserData()]);
       setBalances(balancesResult);
       setNextRentals(rentalsResult);
+      setUserData(userDataResult)
     } 
     catch (err: any) {
-      setLoadingError(err.message ?? "error loading data");
+      setLoadingError({
+        message:err.message ?? "error loading data",
+        status: err.status
+      });
     } 
     finally {
       setIsLoading(false);
@@ -43,5 +48,5 @@ export const UseLoadData = ()=>{
   // run loadData once when app starts
   useEffect(() => { loadData() }, []);
 
-  return { balances, nextRentals, isLoading, loadingError, loadData, resetError};
+  return { balances, nextRentals, isLoading, loadingError, userData, loadData, resetError};
 };

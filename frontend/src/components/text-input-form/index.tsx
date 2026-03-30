@@ -22,6 +22,7 @@ export const TextInputFormDiv = ({value, onChange, type, placeholder, icon, name
                 <input
                     name={name}
                     type={type}
+                    value={value ?? ''}
                     placeholder={placeholder}
                     onChange={onChange} 
                     className="w-full pl-14 pr-6 py-4 bg-white/50 border border-sage-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-sage-500/10 focus:border-sage-300 transition-all placeholder:text-slate-300 shadow-sm"

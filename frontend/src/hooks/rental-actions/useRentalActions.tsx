@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addRental, deleteRental } from './rental-service';
+import { addRental, deleteRental, updateRental } from './rental-service';
 import { loadNextRentals } from '../load-data/load-data.service';
 
 export const useRentalActions = (refresh?: () => Promise<void>) => {
@@ -22,7 +22,7 @@ export const useRentalActions = (refresh?: () => Promise<void>) => {
       return true
     }
     catch (err: any) {
-      setError(err.message ?? 'Failed to create rental');
+      setError(err.message);
       return false    
     } 
     finally {
@@ -48,6 +48,24 @@ export const useRentalActions = (refresh?: () => Promise<void>) => {
     }
   };
 
+
+  const updateRentalAndRefresh = async (id: any, toBeUpdated:any):Promise<boolean> => {
+    try {
+      setIsSaving(true);
+      await updateRental(id, toBeUpdated);
+      
+      if (refresh) await refresh();
+      return true
+    } 
+    catch (err: any) {
+      setError(err.message ?? 'Failed to delete rental');
+      return false;
+    } 
+    finally {
+      setIsSaving(false);
+    }
+  };
+
   const getNextRentals = ()=> {
       const nextRentals = loadNextRentals()
       return nextRentals
@@ -56,5 +74,5 @@ export const useRentalActions = (refresh?: () => Promise<void>) => {
   //fallback for error
   const resetError = () => setError(null);
 
-  return { isSaving, error, resetError, createRentalAndRefresh, deleteRentalAndRefresh, getNextRentals};
+  return { isSaving, error, resetError, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, getNextRentals};
 };

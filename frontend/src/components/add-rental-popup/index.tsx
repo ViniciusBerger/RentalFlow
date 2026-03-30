@@ -1,6 +1,6 @@
 import { useState, } from 'react'
 import { AddRentalForm } from './add-rental-form';
-import { CloseButton } from '../../../../components/buttons/close-button';
+import { CloseButton } from '../buttons/close-button';
 
 export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, error }: { onSubmit: any,isSaving: boolean, error: any, isOpen: boolean, onClose: () => void }) {
 
@@ -9,9 +9,9 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
     clientLastName: '',
     startDate: '',
     endDate: '',
-    revenue: 0,
-    fee: 0,
-    profit: 0
+    revenue: '',
+    fee: '',
+    profit: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,13 +41,14 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
   const handleSubmit = async (e: React.BaseSyntheticEvent) => {
     e.preventDefault(); 
     
-    await onSubmit(formData); // Send the actual data!
+    const success = await onSubmit(formData); // Send the actual data!
+    if (!success) return;
     onClose();
   };
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+    <div translate="no" className=" fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
       {/* Backdrop */}
       <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
 
@@ -60,7 +61,7 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
           <CloseButton onClose={onClose}/>
         </div>
 
-        <AddRentalForm handleSubmit={handleSubmit} handleChange={handleChange} error={error} isSaving={isSaving}   />
+        <AddRentalForm handleSubmit={handleSubmit} handleChange={handleChange} error={error} isSaving={isSaving} formData={formData}   />
       </div>
     </div>
   );

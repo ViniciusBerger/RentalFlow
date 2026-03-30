@@ -1,48 +1,70 @@
-import { Main } from "./components/main";
+import { Main } from "./main";
 import { useState } from "react";
-import AddRentalPopUp from "./components/add-rental-popup";
+import AddRentalPopUp from "../../components/add-rental-popup";
 import { DashboardErrorState } from "../../components/error-state";
-import RentalDetailPopUp from "./components/rental-detail-popup";
+import RentalDetailPopUp from "../../components/rental-detail-popup";
 import { useRentalActions } from "../../hooks/rental-actions/useRentalActions";
 import { LoadingState } from "../../components/loading-state";
 import { UseLoadData } from "../../hooks/load-data/useLoadData";
+import { Navigate } from "react-router-dom";
 
-
-
-export const Dashboard =()=> {
-  const { balances, nextRentals, isLoading, loadingError, loadData} = UseLoadData()
-  const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh } = useRentalActions(loadData)
+export const Dashboard = () => {
+  const { balances, nextRentals, isLoading, loadingError, userData, loadData } = UseLoadData();
+  const { isSaving, error: actionError, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh } = // 
+    useRentalActions(loadData);
 
   const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false);
   const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
-  const [selectedRental, setSelectedRental] = useState(null)
-  
-  const yearlyBalance = balances[0]
-  const monthlyBalance = balances[1]
+  const [selectedRental, setSelectedRental] = useState<any>(null);
 
-  
-  if(isLoading) return <LoadingState/>
-  if(loadingError) return <DashboardErrorState message={loadingError} onRetry={()=> {loadData()}}/>
-  
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<any>(null);
+
+  const yearlyBalance = balances[0];
+  const monthlyBalance = balances[1];
+
+  const handleEditRental = async (formData: any) => {
+    try {
+      setIsSavingEdit(true);
+      setEditError(null);
+
+      if (!selectedRental?.id) return false;
+
+      await updateRentalAndRefresh(selectedRental.id, formData);
+      setIsRentalDetailPopUpOpen(false);
+
+      return true;
+    } catch (err: any) {
+      setEditError(err?.message || "Failed to update rental");
+      return false;
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  if (isLoading) return <LoadingState />;
+  if (loadingError?.status === 401) return <Navigate to="/auth" replace />;
+  if (loadingError) {
+    return <DashboardErrorState message={loadingError.message} onRetry={() => { loadData(); }} />;
+  }
 
   return (
-    <> 
-      {/* Main content */}
-      <Main 
+    <>
+      <Main
         onOpenCreateRentalPopUp={() => setIsCreateRentalPopUpOpen(true)}
         onSelectRental={(rental) => setSelectedRental(rental)}
         onOpenPopUp={() => setIsRentalDetailPopUpOpen(true)}
         props={{ yearly: yearlyBalance, monthly: monthlyBalance }}
-        threeNextRentals={nextRentals} 
+        threeNextRentals={nextRentals}
+        userData={userData}
       />
-      
-      {/* Popups stay here, they are absolute/fixed anyway */}
-      <AddRentalPopUp 
-        isOpen={isCreateRentalPopUpOpen} 
-        onClose={() => setIsCreateRentalPopUpOpen(false)} 
+
+      <AddRentalPopUp
+        isOpen={isCreateRentalPopUpOpen}
+        onClose={() => setIsCreateRentalPopUpOpen(false)}
         onSubmit={createRentalAndRefresh}
         isSaving={isSaving}
-        error={loadingError}
+        error={actionError}
       />
 
       <RentalDetailPopUp
@@ -50,7 +72,10 @@ export const Dashboard =()=> {
         onClose={() => setIsRentalDetailPopUpOpen(false)}
         rental={selectedRental}
         onDelete={deleteRentalAndRefresh}
+        onEditSubmit={handleEditRental}
+        isSavingEdit={isSavingEdit}
+        editError={editError}
       />
     </>
   );
-}
+};
