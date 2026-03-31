@@ -19,6 +19,6 @@ export class AuthenticateWebDto {
       })
     @IsString()
     @IsNotEmpty()
-    @Length(8, 128)
+    @Length(5, 128)
     password:string
 }
