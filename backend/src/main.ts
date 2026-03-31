@@ -18,13 +18,23 @@ async function bootstrap() {
   setupSwagger(app);
 
 
+  const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+].filter(Boolean);
+
   app.enableCors({
-  // Use the exact URL of your React app (no trailing slash)
-  origin: process.env.FRONTEND_URL, 
-  credentials: true,
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  allowedHeaders: 'Content-Type, Accept, Authorization',
-});
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+  });
+  
   app.use(cookieParser())
   
   const port = Number(process.env.PORT) || 3000;

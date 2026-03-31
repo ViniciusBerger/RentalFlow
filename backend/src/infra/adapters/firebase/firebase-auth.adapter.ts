@@ -40,7 +40,7 @@ export class FirebaseAuthAdapter implements IAuthPort {
      */
     async authenticate(email: string, password: string): Promise<AuthUserResponse> {
         const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${this.apiKey}`;
-        
+         try {
         const response = await axios.post(url, {
             email,
             password,
@@ -52,6 +52,10 @@ export class FirebaseAuthAdapter implements IAuthPort {
             uid: response.data.localId,
             email: response.data.email,
         };
+    } catch (error: any) {
+        console.log('FIREBASE AUTH ERROR:', error?.response?.data || error?.message || error);
+        throw error;
+    }
     }
 
     async logout(uid: string): Promise<void> {
