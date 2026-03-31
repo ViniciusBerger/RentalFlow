@@ -29,6 +29,8 @@ export class AuthController {
     async authenticate( @Body() credentials: AuthenticateWebDto, @Res({passthrough: true}) res: Response) {
         console.log('LOGIN BODY AUTHENTICATE HIT:', credentials);
         const result = await this.authenticateUseCase.authenticate(credentials)
+
+        
         const isProduction = process.env.NODE_ENV === 'production';
         
 
@@ -52,7 +54,7 @@ export class AuthController {
         res.clearCookie('access_token', {
             httpOnly: true,
             sameSite: 'none',
-            secure: false, 
+            secure: true, 
             path: '/',
         });
         return { message: 'Logged out successfully' };

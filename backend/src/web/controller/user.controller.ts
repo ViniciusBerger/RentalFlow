@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Query, Req, UseGuards } from "@nestjs/common";
+import { Controller, Delete, Get, NotFoundException, Param, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { DeleteUserUseCase, findAllUsersUseCase, FindUserUseCase } from "src/core/domain/user/useCases";
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
@@ -24,6 +24,8 @@ export class UserController {
     async getUser(@Req() req){
         const userId = (req as any).user?.uid;
         const user = await this.findUserUseCase.findUser(userId)
+        
+        if (!user) throw new NotFoundException("User profile not found");
         return user
 
     }
