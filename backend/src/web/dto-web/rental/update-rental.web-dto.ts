@@ -19,5 +19,5 @@ export class UpdateRentalWebDto extends updateRentalDto {
     type: 'object',
     additionalProperties: true
   })
-  declare toBeUpdated: any;
+  declare toBeUpdated: Record<string, any>;
 }

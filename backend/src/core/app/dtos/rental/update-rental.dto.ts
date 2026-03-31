@@ -11,5 +11,5 @@ export class updateRentalDto {
     
     @IsString()
     @IsNotEmpty()
-    toBeUpdated: any
+    toBeUpdated: Record<string, any>
 }
