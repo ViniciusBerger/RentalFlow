@@ -9,7 +9,6 @@ export class updateRentalDto {
     @IsNotEmpty()
     id: string 
     
-    @IsString()
     @IsNotEmpty()
     toBeUpdated: Record<string, any>
 }

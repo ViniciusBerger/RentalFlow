@@ -1,5 +1,5 @@
 import { UpdateRentalUseCase } from './update-rental.use-case';
-import { IRentalRepository } from '../../../app/ports/IRentalRepository';
+import { IRentalRepository } from '../../../../app/ports/IRentalRepository';
 
 describe('UpdateRentalUseCase (Manual Injection)', () => {
   let useCase: UpdateRentalUseCase;
