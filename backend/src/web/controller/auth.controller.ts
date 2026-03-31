@@ -51,7 +51,7 @@ export class AuthController {
         // Clear cookies
         res.clearCookie('access_token', {
             httpOnly: true,
-            sameSite: 'lax',
+            sameSite: 'none',
             secure: false, 
             path: '/',
         });
