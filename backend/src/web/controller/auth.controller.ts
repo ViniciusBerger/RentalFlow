@@ -30,6 +30,7 @@ export class AuthController {
 
         const result = await this.authenticateUseCase.authenticate(credentials)
         const isProduction = process.env.NODE_ENV === 'production';
+        console.log('LOGIN BODY:', credentials);
 
         res.cookie('access_token', result.idToken, {
             httpOnly: true,
