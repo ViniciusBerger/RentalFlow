@@ -23,8 +23,8 @@ export class GetBalanceUseCase {
      * Retrieves the total balance grouped by month
      * for the current year.
      */
-    async getYearlyBalance(){
-        const balance = await this.rentalRepository.getYearlyBalanceCurrentYear()
+    async getYearlyBalance(userUid:string){
+        const balance = await this.rentalRepository.getYearlyBalanceCurrentYear(userUid)
 
         return balance
     }
@@ -32,8 +32,8 @@ export class GetBalanceUseCase {
     /**
      * Retrieves the balance of the current month.
      */
-    async getMonthlyBalance(){
-        const balance = await this.rentalRepository.getMonthlyBalanceCurrentYear()
+    async getMonthlyBalance(userUid:string){
+        const balance = await this.rentalRepository.getMonthlyBalanceCurrentYear(userUid)
         return balance
     }
 }

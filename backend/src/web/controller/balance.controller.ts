@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, Req, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { GetBalanceUseCase } from "../../core/domain/rental/useCases/get-balance/get-balance.use-case";
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
@@ -13,16 +13,18 @@ export class BalanceController {
     @Get('yearly')
     @ApiOperation({ summary: 'Get total revenue for the current year' })
     @ApiResponse({ status: 200, description: 'Yearly revenue total' })
-    async getYearlyRevenue(){
-        const revenue = await this.getRevenueUseCase.getYearlyBalance()
+    async getYearlyRevenue(@Req() req){
+        const userUid = (req as any).user?.uid
+        const revenue = await this.getRevenueUseCase.getYearlyBalance(userUid)
         return revenue 
     }
     
     @Get('monthly')
     @ApiOperation({ summary: 'Get monthly revenue breakdown for the current year' })
     @ApiResponse({ status: 200, description: 'List of monthly revenue totals' })
-    async getMonthlyRevenue(){
-        const revenue = await this.getRevenueUseCase.getMonthlyBalance()
+    async getMonthlyRevenue(@Req() req){
+        const userUid = (req as any).user?.uid
+        const revenue = await this.getRevenueUseCase.getMonthlyBalance(userUid)
         return revenue 
     }
 }

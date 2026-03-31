@@ -125,7 +125,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @returns A promise resolving to an array of objects for each month 
    * in the current year. Format: { label: "2026-02", totalRevenue: 12500 }
    */
-  async getMonthlyBalanceCurrentYear() {
+  async getMonthlyBalanceCurrentYear(userUid:string) {
     return await this.db
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY-MM')`.as('month_label'),
@@ -135,6 +135,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
       .from(RentalSchema)
       .where(and(
         eq(RentalSchema.isActive, true),
+        eq(RentalSchema.userId, userUid),
         sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`
       ))
       .groupBy(sql`month_label`)
@@ -146,7 +147,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @returns A promise resolving to an array containing a single object 
    * for the current year. Format: { label: "2026", totalRevenue: 50000 }
    */
-  async getYearlyBalanceCurrentYear() {
+  async getYearlyBalanceCurrentYear(userUid:string) {
     return await this.db
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY')`.as('year_label'),
@@ -156,6 +157,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
       .from(RentalSchema)
       .where(and(
         eq(RentalSchema.isActive, true),
+        eq(RentalSchema.userId, userUid),
         sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`
       ))
       .groupBy(sql`year_label`)

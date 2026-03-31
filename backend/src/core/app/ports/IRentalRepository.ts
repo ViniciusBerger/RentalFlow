@@ -58,7 +58,7 @@ export interface IRentalRepository {
    * @returns A promise resolving to an array containing a single object 
    * for the current year. Format: { label: "2026", totalRevenue: 50000, totalProfit: 42500 }
    */
-    getYearlyBalanceCurrentYear();
+    getYearlyBalanceCurrentYear(userUid:string);
 
     /**
    * Calculates balance grouped by month for the current calendar year.
@@ -67,5 +67,5 @@ export interface IRentalRepository {
    * @returns A promise resolving to an array of objects for each month 
    * in the current year. Format: { label: "2026-02", totalRevenue: 12500, totalProfit: 42500 }
    */
-    getMonthlyBalanceCurrentYear();
+    getMonthlyBalanceCurrentYear(userUid:string);
 }
