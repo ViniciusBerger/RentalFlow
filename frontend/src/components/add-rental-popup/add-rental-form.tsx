@@ -9,7 +9,6 @@ const emptyFormData = {
   endDate: '',
   revenue: ' ',
   fee: ' ',
-  profit: ' ',
   guests: ' ',
 };
 

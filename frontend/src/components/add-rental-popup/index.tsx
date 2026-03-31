@@ -11,7 +11,7 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
     endDate: '',
     revenue: '',
     fee: '',
-    profit: ''
+    guests: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
