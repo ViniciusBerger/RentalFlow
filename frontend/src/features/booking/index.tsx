@@ -9,8 +9,9 @@ import RentalDetailPopUp from '../../components/rental-detail-popup';
 import { DashboardErrorState } from '../../components/error-state';
 
 export const BookingsPage = () => {
-    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions()
     const {loadData } = UseLoadData()
+    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions(loadData)
+    
     const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false)
     const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
     const [selectedRental, setSelectedRental] = useState<any>(null)
