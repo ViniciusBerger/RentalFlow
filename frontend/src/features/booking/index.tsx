@@ -7,10 +7,12 @@ import { NextRentals } from '../../components/next-rentals';
 import { UseLoadData } from '../../hooks/load-data/useLoadData';
 import RentalDetailPopUp from '../../components/rental-detail-popup';
 import { DashboardErrorState } from '../../components/error-state';
+import { LoadingState } from '../../components/loading-state';
+import { buildRentalDiff } from './service/calendar-service';
 
 export const BookingsPage = () => {
-    const {loadData } = UseLoadData()
-    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions(loadData)
+    const {nextRentals, isLoading, loadRentals } = UseLoadData()
+    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions(loadRentals)
     
     const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false)
     const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
@@ -18,9 +20,6 @@ export const BookingsPage = () => {
 
     const [isSavingEdit, setIsSavingEdit] = useState(false);
     const [editError, setEditError] = useState<any>(null);
-
-
-    const {nextRentals} = UseLoadData()
 
     const [viewDate, setViewDate] = useState(new Date())
     const handleNext = ()=> setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))
@@ -36,27 +35,42 @@ export const BookingsPage = () => {
         return startDate <= viewEnd && endDate >= viewStart;
     })
 
-    const handleEditRental = async (formData: any) => {
+  
+  const handleEditRental = async (formData: any) => {
     try {
       setIsSavingEdit(true);
       setEditError(null);
 
       if (!selectedRental?.id) return false;
 
-      await updateRentalAndRefresh(selectedRental.id, formData);
-      setIsRentalDetailPopUpOpen(false);
+      const changedFields = buildRentalDiff(selectedRental, formData);
 
+      if (Object.keys(changedFields).length === 0) {
+        setEditError("No changes to save");
+        return false;
+      }
+
+      const success = await updateRentalAndRefresh(selectedRental.id, changedFields);
+
+      if (!success) {
+        setEditError("Failed to update rental");
+        return false;
+      }
+
+      setIsRentalDetailPopUpOpen(false);
       return true;
     } catch (err: any) {
-      setEditError(err?.message || "Failed to update rental");
+      setEditError(err || "Failed to update rental");
       return false;
     } finally {
       setIsSavingEdit(false);
     }
-  };
+};
 
-    if (error) {
-        return <DashboardErrorState message={error.message} onRetry={() => { loadData(); }} />;
+
+  if (isLoading) return <LoadingState />;
+  if (error) {
+        return <DashboardErrorState message={error.message} onRetry={() => { loadRentals(); }} />;
       }
 
     return (

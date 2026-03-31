@@ -27,6 +27,18 @@ export const normalizeRentalDates = (rental: any) => ({
     endDate: toLocalMidnight(rental.endDate),
 })
 
+export const buildRentalDiff = (original: any, updated: any) => {
+  const diff: Record<string, any> = {};
+
+  for (const key of Object.keys(updated)) {
+    if (updated[key] !== original?.[key]) {
+      diff[key] = updated[key];
+    }
+  }
+
+  return diff;
+};
+
 
 
 // Calendar rental rendering logic 

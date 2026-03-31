@@ -9,7 +9,12 @@ const fetchYearlyBalance = async()=> {
     method: "GET",
     credentials: "include",
   })
-    if (!response.ok) throw new Error("network response was not okay")
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const error: any = new Error(errorData?.message || "Unable to fetch session");
+      error.status = response.status;
+      throw error;
+    }
     
     const data = await response.json()
 
@@ -22,7 +27,12 @@ const fetchMonthlyBalance = async()=> {
     method: "GET",
     credentials: "include", 
   })
-    if (!response.ok) throw new Error("network response was not okay")
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const error: any = new Error(errorData?.message || "Unable to fetch session");
+      error.status = response.status;
+      throw error;
+    }
     
     const data = await response.json()
 

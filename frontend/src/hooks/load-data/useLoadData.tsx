@@ -28,6 +28,7 @@ export const UseLoadData = ()=>{
   const loadData = async () => {
     try {
       setIsLoading(true);
+      setLoadingError(null);
       
       const [balancesResult, rentalsResult, userDataResult] = await Promise.all([loadDashboardBalance(), loadNextRentals(), loadUserData()]);
       setBalances(balancesResult);
@@ -45,8 +46,25 @@ export const UseLoadData = ()=>{
     }
   };
 
+
+  const loadRentals = async () => {
+  try {
+    setIsLoading(true);
+    setLoadingError(null);
+    const rentalsResult = await loadNextRentals();
+    setNextRentals(rentalsResult);
+  } 
+  catch (err: any) {
+    setLoadingError({
+      message: err.message ?? "error loading rentals",
+      status: err.status,
+    });
+    throw err;
+  }
+};
+
   // run loadData once when app starts
   useEffect(() => { loadData() }, []);
 
-  return { balances, nextRentals, isLoading, loadingError, userData, loadData, resetError};
+  return { balances, nextRentals, isLoading, loadingError, userData, loadData, loadRentals, resetError};
 };

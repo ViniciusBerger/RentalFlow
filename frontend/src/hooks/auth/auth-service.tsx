@@ -9,7 +9,10 @@ export const login = async (email: string, password: string) => {
   });
 
   if (!response.ok) {
-    throw new Error("Invalid credentials");
+    const errorData = await response.json().catch(() => null);
+    const error: any = new Error(errorData?.message || "Unable to login");
+    error.status = response.status;
+    throw error;
   }
 
   return await response.json();
@@ -22,7 +25,10 @@ export const getMe = async () => {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to fetch session");
+    const errorData = await response.json().catch(() => null);
+    const error: any = new Error(errorData?.message || "Unable to fetch session");
+    error.status = response.status;
+    throw error;
   }
 
   return await response.json();
@@ -40,7 +46,10 @@ export const completeProfile = async (payload: {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to complete profile");
+    const errorData = await response.json().catch(() => null);
+    const error: any = new Error(errorData?.message || "Unable to complete profile");
+    error.status = response.status;
+    throw error;
   }
 
   return await response.json();

@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { DesktopNavBar } from "../components/nav-bar/desktop-navbar";
 import { MobileNavBar } from "../components/nav-bar/mobile-navbar";
 import AddRentalPopUp from "../components/add-rental-popup";
 import { useRentalActions } from "../hooks/rental-actions/useRentalActions";
+import { UseLoadData } from "../hooks/load-data/useLoadData";
+import { DashboardErrorState } from "../components/error-state";
+import { LoadingState } from "../components/loading-state";
 
 export const AppLayout = () => {
   const [isAddRentalOpen, setIsAddRentalOpen] = useState(false);
+  const {loadingError, loadData, isLoading} = UseLoadData()
   const [isSaving, setIsSaving] = useState(false);
   const {createRentalAndRefresh, error:rentalError} = useRentalActions()
 
@@ -18,6 +22,11 @@ export const AppLayout = () => {
     setIsAddRentalOpen(false);
   };
 
+  if (isLoading) return <LoadingState />;
+  if (loadingError?.status === 401) return <Navigate to="/auth" replace />;
+  if (loadingError) {
+    return <DashboardErrorState message={loadingError.message} onRetry={() => { loadData(); }} />;
+  }
 
   const handleSubmitRental = async (formData: any) => {
     try {

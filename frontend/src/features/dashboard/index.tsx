@@ -4,12 +4,12 @@ import AddRentalPopUp from "../../components/add-rental-popup";
 import { DashboardErrorState } from "../../components/error-state";
 import RentalDetailPopUp from "../../components/rental-detail-popup";
 import { useRentalActions } from "../../hooks/rental-actions/useRentalActions";
-import { LoadingState } from "../../components/loading-state";
 import { UseLoadData } from "../../hooks/load-data/useLoadData";
-import { Navigate } from "react-router-dom";
+import { LoadingState } from "../../components/loading-state";
+
 
 export const Dashboard = () => {
-  const { balances, nextRentals, isLoading, loadingError, userData, loadData } = UseLoadData();
+  const { balances, nextRentals, isLoading, userData, loadData } = UseLoadData();
   const { isSaving, error: actionError, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh } = // 
     useRentalActions(loadData);
 
@@ -43,10 +43,17 @@ export const Dashboard = () => {
   };
 
   if (isLoading) return <LoadingState />;
-  if (loadingError?.status === 401) return <Navigate to="/auth" replace />;
-  if (loadingError) {
-    return <DashboardErrorState message={loadingError.message} onRetry={() => { loadData(); }} />;
-  }
+
+  if (!userData) {
+  return (
+    <DashboardErrorState
+      message="User profile could not be loaded."
+      onRetry={() => {
+        loadData();
+      }}
+    />
+  );
+}
 
   return (
     <>

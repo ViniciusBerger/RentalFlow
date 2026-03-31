@@ -12,8 +12,10 @@ export const addRental = async (rentalData: any)=> {
   })
 
     if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create rental');
+        const errorData = await response.json().catch(() => null);
+        const error: any = new Error(errorData?.message || "Unable to fetch session");
+        error.status = response.status;
+        throw error;
     }
 
     return response
@@ -32,8 +34,10 @@ export const deleteRental = async(id: string): Promise<boolean> => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete rental');
+      const errorData = await response.json().catch(() => null);
+      const error: any = new Error(errorData?.message || "Unable to fetch session");
+      error.status = response.status;
+      throw error;
     }
 
     // Based on documentation, the API returns a boolean
@@ -59,8 +63,10 @@ export const updateRental = async(id:string, toBeUpdated: any)=> {
     })
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to update rental');
+      const errorData = await response.json().catch(() => null);
+      const error: any = new Error(errorData || "Unable to fetch session");
+      error.status = response.status;
+      throw error;
     }
 
     const result = await response.json();

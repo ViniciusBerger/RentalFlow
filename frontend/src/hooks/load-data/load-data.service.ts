@@ -15,8 +15,10 @@ export const loadNextRentals = async() => {
   })
 
   if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to retrieve data on service');
+    const errorData = await response.json().catch(() => null);
+    const error: any = new Error(errorData?.message || "Unable to fetch session");
+    error.status = response.status;
+    throw error;
   }
 
   const rentalsList: Promise<any[]> = await response.json()
@@ -32,7 +34,9 @@ export const loadUserData = async () => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
-    throw new Error(errorData?.message || "Failed to load user data");
+    const error: any = new Error(errorData?.message || "Unable to fetch session");
+    error.status = response.status;
+    throw error;
   }
 
   const userData = await response.json();
