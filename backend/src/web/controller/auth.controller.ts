@@ -27,10 +27,10 @@ export class AuthController {
     @ApiResponse({status: 200, description:'login sucessful'})
     @Post('login')
     async authenticate( @Body() credentials: AuthenticateWebDto, @Res({passthrough: true}) res: Response) {
-
+        console.log('LOGIN BODY AUTHENTICATE HIT:', credentials);
         const result = await this.authenticateUseCase.authenticate(credentials)
         const isProduction = process.env.NODE_ENV === 'production';
-        console.log('LOGIN BODY:', credentials);
+        
 
         res.cookie('access_token', result.idToken, {
             httpOnly: true,
