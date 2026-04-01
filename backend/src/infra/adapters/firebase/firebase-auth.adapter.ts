@@ -21,17 +21,26 @@ export class FirebaseAuthAdapter implements IAuthPort {
      * Maps the decoded token to a domain-friendly AuthStatus.
      */
     async validateJWT(jwtToken: string): Promise<AuthStatus> {
-        const decoded = await this.firebaseApp.verifyIdToken(jwtToken);
-        if(!decoded || !decoded.email) throw new UnauthorizedException('user not allowed')
-        
+        let decoded: admin.auth.DecodedIdToken;
 
-        const isRegistered = await this.newUserProcessUseCase.verifyUser(decoded.uid)
+        try {
+            decoded = await this.firebaseApp.verifyIdToken(jwtToken);
+        } catch {
+            throw new UnauthorizedException('Invalid or expired token');
+        }
+
+        if (!decoded.email) {
+            throw new UnauthorizedException('user not allowed');
+        }
+
+        const isRegistered = await this.newUserProcessUseCase.verifyUser(decoded.uid);
+
         return {
             uid: decoded.uid,
             email: decoded.email,
             role: isRegistered.success ? isRegistered.user?.role : undefined,
             isRegistered: isRegistered.success,
-        }
+        };
     }
 
     /**

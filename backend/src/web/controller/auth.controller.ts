@@ -19,6 +19,9 @@ type RequestUser = {
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
+
+    cookieName = '__Host-access_token';
+    
     constructor(private readonly authenticateUseCase: AuthenticateUseCase,
                 private readonly completeProfileUseCase: CompleteProfileUseCase
     ) {}
@@ -34,7 +37,7 @@ export class AuthController {
         const isProduction = process.env.NODE_ENV === 'production';
         
 
-        res.cookie('access_token', result.idToken, {
+        res.cookie(this.cookieName, result.idToken, {
             httpOnly: true,
             sameSite: 'none',
             secure: isProduction,
@@ -51,11 +54,12 @@ export class AuthController {
     async logout(@Res({ passthrough: true }) res: Response) {
         
         // Clear cookies
-        res.clearCookie('access_token', {
+        res.clearCookie(this.cookieName, {
             httpOnly: true,
             sameSite: 'none',
             secure: true, 
             path: '/',
+            domain: '.rentalflow.club'
         });
         return { message: 'Logged out successfully' };
     }

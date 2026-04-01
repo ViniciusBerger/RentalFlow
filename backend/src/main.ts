@@ -19,6 +19,8 @@ async function bootstrap() {
 
 
   const allowedOrigins = [
+  'https://rentalflow.club',
+  'https://www.rentalflow.club',
   process.env.FRONTEND_URL,
   'http://localhost:5173',
 ].filter(Boolean);

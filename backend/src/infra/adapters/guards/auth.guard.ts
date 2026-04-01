@@ -10,7 +10,9 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     
     //access token is saved in cookies to avoid js injection
-    const token = request.cookies['access_token'] 
+    const token =
+          request.cookies['__Host-access_token'] ??
+          request.cookies['access_token'];
     
     if (!token) throw new UnauthorizedException('Missing token');
 
