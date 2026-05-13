@@ -1,5 +1,5 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { and, desc, eq, gt, lt, sql, sum } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, lt, sql, sum } from 'drizzle-orm';
 import { Inject } from '@nestjs/common';
 
 import { RentalRow, RentalSchema } from '../../../persistence/schemas/rental-schema';
@@ -84,7 +84,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @returns a list with all rentals
    */
   async findAll(userId: string): Promise<Rental[]> {
-    const operationResult: RentalRow[] = await this.db.select().from(RentalSchema).where(and(eq(RentalSchema.isActive, true), eq(RentalSchema.userId, userId)));
+    const operationResult: RentalRow[] = await this.db.select().from(RentalSchema).where(and(eq(RentalSchema.isActive, true), eq(RentalSchema.userId, userId))).orderBy(asc(RentalSchema.startDate));
 
     const rentalsList: Rental[] = operationResult.map((rental) => Rental.create(rental))
     return rentalsList
@@ -98,7 +98,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
     const operationResult:RentalRow[] = await this.db.select().from(RentalSchema).where(and(
       sql`${RentalSchema.startDate} >=DATE_TRUNC('year', now())`, 
       eq(RentalSchema.isActive, true)
-    )).limit(3);
+    )).orderBy(asc(RentalSchema.startDate)).limit(3);
     
     if (!operationResult[0]) throw new PersistenceError('Error fetching next rentals')
     return operationResult.map(rental => Rental.create(rental))
