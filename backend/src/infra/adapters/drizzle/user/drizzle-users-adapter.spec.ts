@@ -132,7 +132,6 @@ describe("DrizzleUsersOrmAdapter", () => {
       const insertedResult = { rowCount: 1 };
 
       const valuesMock = jest.fn().mockResolvedValue(insertedResult);
-      const insertIntoMock = jest.fn().mockReturnValue({ values: valuesMock });
       db.insert.mockReturnValue({ values: valuesMock });
       db.insert = jest.fn().mockReturnValue({ values: valuesMock });
 
@@ -152,7 +151,17 @@ describe("DrizzleUsersOrmAdapter", () => {
         lastName: "Doe",
         
       });
-      expect(result).toEqual(insertedResult);
+      expect(result).toBe(true);
+    });
+
+    it("should return false if insert affects no rows", async () => {
+      db.insert.mockReturnValue({ values: jest.fn().mockResolvedValue({ rowCount: 0 }) });
+      await expect(adapter.create("firebase-123", "john@example.com", "John", "Doe")).resolves.toBe(false);
+    });
+
+    it("must not report a successful insert when the database returns no rowCount", async () => {
+      db.insert.mockReturnValue({ values: jest.fn().mockResolvedValue({ rowCount: null }) });
+      await expect(adapter.create("uid", "email@test.com", "First", "Last")).resolves.toBe(false);
     });
 
     it("should propagate errors from db.insert", async () => {
@@ -160,7 +169,7 @@ describe("DrizzleUsersOrmAdapter", () => {
       db.insert.mockReturnValue({ values: valuesMock });
 
       await expect(
-        adapter.create("firebase-123", "John", "Doe", "john@example.com")
+        adapter.create("firebase-123", "john@example.com", "John", "Doe")
       ).rejects.toThrow("create failed");
     });
   });
@@ -187,13 +196,13 @@ describe("DrizzleUsersOrmAdapter", () => {
       expect(result).toBe(false);
     });
 
-    it("should still return true when rowCount is 0 because the implementation only checks for null", async () => {
+    it("should return false when rowCount is 0 (no user deleted)", async () => {
       const whereMock = jest.fn().mockResolvedValue({ rowCount: 0 });
       db.delete.mockReturnValue({ where: whereMock });
 
       const result = await adapter.delete("firebase-123");
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it("should propagate errors from db.delete", async () => {
@@ -205,10 +214,21 @@ describe("DrizzleUsersOrmAdapter", () => {
   });
 
   describe("update", () => {
-    it("should throw method not implemented", () => {
-      expect(() => adapter.update("firebase-123", { firstName: "Jane" })).toThrow(
-        "Method not implemented."
-      );
+    it("should update a user's name and return true when one row is updated", async () => {
+      const where = jest.fn().mockResolvedValue({ rowCount: 1 });
+      const set = jest.fn().mockReturnValue({ where });
+      db.update = jest.fn().mockReturnValue({ set });
+
+      await expect(adapter.update("firebase-123", { firstName: "Jane" })).resolves.toBe(true);
+      expect(db.update).toHaveBeenCalledWith(UserSchema);
+      expect(set).toHaveBeenCalledWith({ firstName: "Jane" });
+      expect(eq).toHaveBeenCalledWith(UserSchema.firebaseUid, "firebase-123");
+    });
+
+    it("should return false if no user matches the ID", async () => {
+      const where = jest.fn().mockResolvedValue({ rowCount: 0 });
+      db.update = jest.fn().mockReturnValue({ set: jest.fn().mockReturnValue({ where }) });
+      await expect(adapter.update("missing", { lastName: "Smith" })).resolves.toBe(false);
     });
   });
 });

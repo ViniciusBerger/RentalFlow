@@ -50,9 +50,9 @@ describe("CreateUserUseCase", () => {
 
     const result = await useCase.createUser(
       "user-123",
+      "john@example.com",
       "John",
-      "Doe",
-      "john@example.com"
+      "Doe"
     );
 
     expect(result).toEqual(createdUser);
@@ -64,9 +64,9 @@ describe("CreateUserUseCase", () => {
     await expect(
       useCase.createUser(
         "user-123",
+        "john@example.com",
         "John",
-        "Doe",
-        "john@example.com"
+        "Doe"
       )
     ).rejects.toThrow("create failed");
   });

@@ -5,6 +5,7 @@ export enum UserRole {
 }
 
 export interface IUserParams {
+    firebaseUid: string;
     firstName:string;
     lastName: string;
     email: string;

@@ -1,12 +1,11 @@
 import { Inject } from "@nestjs/common";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { DRIZZLE } from "../../../../infra/persistence/database.module";
-import { and, desc, eq, gt, lt, sql, sum } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import * as userSchema from '../../../persistence/schemas/user-schema';
 import { UserRow, UserSchema } from "../../../persistence/schemas/user-schema";
 import { IUserRepository } from "src/core/app/ports/IUserRepository";
 import { User } from "../../../../core/domain/user/entity/user";
-import { PersistenceError } from "src/core/app/errors/persistence.error";
 
 export class DrizzleUsersOrmAdapter implements IUserRepository {
     constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof userSchema>){}
@@ -38,16 +37,18 @@ export class DrizzleUsersOrmAdapter implements IUserRepository {
             lastName:lastName
         })
 
-        return user
+        return (user.rowCount ?? 0) > 0
     }
 
     async delete(firebaseUid: string) {
         const user = await this.db.delete(UserSchema).where(eq(UserSchema.firebaseUid, firebaseUid ))
 
-        if (user.rowCount == null) return false
-        return true
+        return (user.rowCount ?? 0) > 0
     }
-    update(id: string, toBeUpdated: any) {
-        throw new Error("Method not implemented.");
+    async update(id: string, toBeUpdated: { firstName?: string; lastName?: string }): Promise<boolean> {
+        const updated = await this.db.update(UserSchema)
+            .set(toBeUpdated)
+            .where(eq(UserSchema.firebaseUid, id));
+        return (updated.rowCount ?? 0) > 0;
     }
 }

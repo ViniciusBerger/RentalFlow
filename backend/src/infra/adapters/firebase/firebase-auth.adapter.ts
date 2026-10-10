@@ -2,7 +2,6 @@ import { AuthStatus, AuthUserResponse, IAuthPort } from "../../../core/app/ports
 import * as admin from 'firebase-admin';
 import axios from 'axios';
 import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
-import { CreateUserUseCase } from "../../../core/domain/user/useCases/create-user/create-user.use-case";
 import { NewUserUseCase } from "../../../core/domain/user/useCases/new-user-process/new-user.use-case";
 
 /**

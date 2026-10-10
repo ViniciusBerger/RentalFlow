@@ -34,7 +34,8 @@ export const useRentalActions = (refresh?: () => Promise<void>) => {
   const deleteRentalAndRefresh = async (data: any):Promise<boolean> => {
     try {
       setIsSaving(true);
-      await deleteRental(data);
+      const deleted = await deleteRental(data);
+      if (!deleted) throw new Error('Failed to delete rental');
       
       if (refresh) await refresh();
       return true
@@ -52,13 +53,14 @@ export const useRentalActions = (refresh?: () => Promise<void>) => {
   const updateRentalAndRefresh = async (id: any, toBeUpdated:any):Promise<boolean> => {
     try {
       setIsSaving(true);
-      await updateRental(id, toBeUpdated);
+      const updated = await updateRental(id, toBeUpdated);
+      if (!updated) throw new Error('Failed to update rental');
       
       if (refresh) await refresh();
       return true
     } 
     catch (err: any) {
-      setError(err.message ?? 'Failed to delete rental');
+      setError(err.message ?? 'Failed to update rental');
       return false;
     } 
     finally {

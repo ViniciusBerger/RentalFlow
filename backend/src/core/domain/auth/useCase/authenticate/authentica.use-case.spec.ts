@@ -38,6 +38,16 @@ describe('AuthenticateUseCase', () => {
     );
   });
 
+  it('delegates authentication without logging private credentials', async () => {
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const response: AuthUserResponse = { idToken: 'token', uid: 'user-x', email: 'host@example.com' };
+    authPortMock.authenticate.mockResolvedValue(response);
+    try {
+      expect(await useCase.authenticate({email: 'host@example.com', password: 'unique-secret'})).toEqual(response);
+      expect(spy).not.toHaveBeenCalled();
+    } finally { spy.mockRestore(); }
+  });
+
   it('should throw an error if the authPort fails', async () => {
     // Arrange
     authPortMock.authenticate.mockRejectedValue(new Error('Invalid credentials'));

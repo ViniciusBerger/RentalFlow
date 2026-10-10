@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { CalendarDays, LayoutDashboard, Plus } from "lucide-react";
 import { DesktopNavBar } from "../components/nav-bar/desktop-navbar";
 import { MobileNavBar } from "../components/nav-bar/mobile-navbar";
 import AddRentalPopUp from "../components/add-rental-popup";
@@ -9,6 +10,8 @@ import { DashboardErrorState } from "../components/error-state";
 import { LoadingState } from "../components/loading-state";
 
 export const AppLayout = () => {
+  const { pathname } = useLocation();
+  const isBookings = pathname.startsWith("/bookings");
   const [isAddRentalOpen, setIsAddRentalOpen] = useState(false);
   const {loadingError, loadData, isLoading} = UseLoadData()
   const [isSaving, setIsSaving] = useState(false);
@@ -31,24 +34,27 @@ export const AppLayout = () => {
   const handleSubmitRental = async (formData: any) => {
     try {
       setIsSaving(true);
-    
-      await createRentalAndRefresh(formData)
-      return true  
-    } 
-    catch (err) {
-      throw err
-    } 
-    finally {
+      return await createRentalAndRefresh(formData);
+    } finally {
       setIsSaving(false);
     }
   };
 
   return (
-     <div className="min-h-screen flex bg-sage-50 font-sans">
+     <div className="rf-app min-h-screen flex font-sans">
+      <a href="#main-content" className="rf-skip">Skip to content</a>
       <DesktopNavBar />
 
-      <main className="flex-1">
-        <Outlet />
+      <main className="rf-main flex-1 min-w-0" id="main-content">
+        <header className="rf-topbar">
+          <div><p className="rf-eyebrow">RentalFlow / Workspace</p><h1 className="rf-title">{isBookings ? "Bookings & calendar" : "Overview"}</h1><p className="rf-subtitle">{isBookings ? "Manage reservations and upcoming stays." : "Your rental business, at a glance."}</p></div>
+          <div className="rf-top-actions">
+            <Link to="/dashboard" className={'rf-pill '+(!isBookings?'selected':'')}><LayoutDashboard size={17}/> Overview</Link>
+            <Link to="/bookings" className={'rf-pill '+(isBookings?'selected':'')}><CalendarDays size={17}/> Bookings</Link>
+            <button className="rf-button" onClick={handleOpenAddRental}><Plus size={18}/> New booking</button>
+          </div>
+        </header>
+        <div className="rf-page"><Outlet /></div>
       </main>
 
       <MobileNavBar onCreateClick={handleOpenAddRental} />

@@ -11,7 +11,7 @@ interface IBookingCalendarProps {
 
 export const BookingCalendar = ({rentals, handlePrev, handleNext, viewDate}:IBookingCalendarProps)=> {
     return (    
-        <div className="mb-12">
+        <div className="rf-calendar-block">
             <CalendarHeader 
                 handlePrev={handlePrev} 
                 handleNext={handleNext} 

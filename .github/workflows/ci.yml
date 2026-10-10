@@ -1,0 +1,111 @@
+name: RentalFlow CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rentalflow-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend / lint, typecheck, tests, coverage, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Lint (non-mutating)
+        run: npm run lint
+
+      - name: TypeScript check (including tests)
+        run: npm run typecheck
+
+      - name: Backend coverage (95% business/adapters gate)
+        run: npm run test:cov -- --ci | tee coverage-summary.txt
+
+      - name: HTTP integration tests
+        run: npm run test:e2e -- --runInBand --ci
+
+      - name: Development auth source checks
+        run: node --test dev-auth.test.cjs
+
+      - name: Production build
+        run: npm run build
+
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            backend/coverage/
+            backend/coverage-summary.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+  frontend:
+    name: Frontend / lint, typecheck, tests, coverage, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Lint (non-mutating)
+        run: npm run lint
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Frontend coverage (95% exercised-modules gate)
+        run: npm run test:cov | tee coverage-summary.txt
+
+      - name: Frontend UI smoke checks
+        run: node --test ui-redesign.test.mjs
+
+      - name: Production build
+        run: npm run build
+
+      - name: Upload frontend coverage summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage-summary.txt
+          if-no-files-found: warn
+          retention-days: 14

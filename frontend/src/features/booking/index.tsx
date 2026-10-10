@@ -74,7 +74,7 @@ export const BookingsPage = () => {
       }
 
     return (
-        <div>
+        <div className="rf-bookings-page">
             <BookingHeader onOpenCreateRentalPopUp={() => setIsCreateRentalPopUpOpen(true)} />
             <BookingCalendar 
                 viewDate={viewDate} 

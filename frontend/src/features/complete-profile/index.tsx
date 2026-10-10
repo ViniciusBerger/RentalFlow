@@ -24,8 +24,8 @@ export default function CompleteProfilePage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#EEF2F1] flex items-center justify-center px-6 py-10 font-sans">
-      <div className="w-full max-w-[540px]">
+    <div className="rf-onboarding min-h-screen w-full bg-[#EEF2F1] flex items-center justify-center px-6 py-10 font-sans">
+      <div className="w-full max-w-[620px] rf-onboarding-card">
         <div className="mb-10 flex items-center gap-4">
           <div className="h-14 w-14 rounded-2xl bg-white shadow-[0_4px_14px_rgba(15,23,42,0.12)] border border-slate-100 flex items-center justify-center">
             <Home className="h-6 w-6 text-[#5DA88A] fill-[#5DA88A]" />

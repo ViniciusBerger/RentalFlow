@@ -96,11 +96,10 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    */
   async findNextThree(): Promise<Rental[]> {
     const operationResult:RentalRow[] = await this.db.select().from(RentalSchema).where(and(
-      sql`${RentalSchema.startDate} >=DATE_TRUNC('year', now())`, 
+      sql`${RentalSchema.startDate} >= CURRENT_DATE`, 
       eq(RentalSchema.isActive, true)
     )).orderBy(asc(RentalSchema.startDate)).limit(3);
     
-    if (!operationResult[0]) throw new PersistenceError('Error fetching next rentals')
     return operationResult.map(rental => Rental.create(rental))
   
   }

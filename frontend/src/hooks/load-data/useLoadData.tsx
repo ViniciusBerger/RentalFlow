@@ -60,6 +60,8 @@ export const UseLoadData = ()=>{
       status: err.status,
     });
     throw err;
+  } finally {
+    setIsLoading(false);
   }
 };
 

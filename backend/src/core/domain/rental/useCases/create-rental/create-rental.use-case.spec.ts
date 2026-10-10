@@ -16,6 +16,8 @@ describe('CreateRentalUseCase', () => {
   });
 
   describe('createRental', () => {
+    beforeEach(() => jest.useFakeTimers().setSystemTime(new Date('2026-07-01T12:00:00Z')));
+    afterEach(() => jest.useRealTimers());
     const validData = {
       userId: 'testid123',
       clientFirstName: 'Joao',
@@ -45,8 +47,7 @@ describe('CreateRentalUseCase', () => {
         validData.fee
       );
 
-      expect(result).toBeInstanceOf(Rental);
-      expect(result.userId).toBe(validData.userId);
+      expect(result).toEqual(expect.objectContaining({ userId: validData.userId, profit: 250 }));
       expect(repository.checkOverlapDate).toHaveBeenCalledWith(
         validData.startDate,
         validData.endDate
@@ -112,6 +113,35 @@ describe('CreateRentalUseCase', () => {
           validData.fee
         )
       ).rejects.toThrow('End date must be after start date');
+    });
+
+    it('should reject a past start date without querying the repository', async () => {
+      await expect(useCase.createRental(
+        validData.userId, 'Jane', 'Doe', '2026-06-30', '2026-07-03', 2, 500, 100
+      )).rejects.toThrow('Start date must be today or a future date');
+      expect(repository.checkOverlapDate).not.toHaveBeenCalled();
+      expect(repository.save).not.toHaveBeenCalled();
+    });
+
+    it('should reject invalid date strings before querying the repository', async () => {
+      await expect(useCase.createRental(
+        validData.userId, 'Jane', 'Doe', 'not-a-date', '2026-07-03', 2, 500, 100
+      )).rejects.toThrow('Invalid rental dates');
+      expect(repository.checkOverlapDate).not.toHaveBeenCalled();
+    });
+
+    it('should calculate profit as revenue minus fee on the saved entity', async () => {
+      repository.checkOverlapDate.mockResolvedValue(false);
+      repository.save.mockImplementation(async rental => ({
+        userId: rental.userId, clientFirstName: rental.clientFirstName,
+        clientLastName: rental.clientLastName, startDate: rental.startDate,
+        endDate: rental.endDate, guests: rental.guests,
+        revenue: rental.revenue, fee: rental.fee, profit: rental.profit,
+      }));
+      await useCase.createRental(validData.userId, 'Jane', 'Doe', '2026-08-01', '2026-08-03', 2, 700, 120);
+      expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({
+        userId: validData.userId, profit: 580, revenue: 700, fee: 120,
+      }));
     });
   });
 });

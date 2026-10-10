@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AddRentalForm } from '../add-rental-popup/add-rental-form';
 import { CloseButton } from '../buttons/close-button';
 
@@ -39,7 +39,13 @@ export default function EditRentalPopUp({
   guests: 0,
 });
 
-  useEffect(() => {
+  // React-supported render-time adjustment: reset form when the selected
+  // booking changes or the dialog reopens, before children receive stale data.
+  const [lastRental, setLastRental] = useState<typeof rental>(null);
+  const [lastIsOpen, setLastIsOpen] = useState(false);
+  if (rental !== lastRental || isOpen !== lastIsOpen) {
+    setLastRental(rental);
+    setLastIsOpen(isOpen);
     if (rental && isOpen) {
       setFormData({
         clientFirstName: rental.clientFirstName ?? '',
@@ -49,10 +55,10 @@ export default function EditRentalPopUp({
         revenue: rental.revenue ?? 0,
         fee: rental.fee ?? 0,
         profit: rental.profit ?? 0,
-        guests: rental.guests ?? 0
+        guests: rental.guests ?? 0,
       });
     }
-  }, [rental, isOpen]);
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

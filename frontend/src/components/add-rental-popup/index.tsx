@@ -53,11 +53,11 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
       <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal Content */}
-      <div className="relative bg-white w-full max-w-lg rounded-t-[32px] md:rounded-[32px] p-8 shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
+      <div className="relative bg-white w-full max-w-2xl max-h-[94vh] overflow-y-auto rounded-t-[28px] md:rounded-[28px] p-6 md:p-9 rf-dialog shadow-2xl animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-black text-slate-800">New Rental</h2>
+          <h2 className="text-2xl font-black text-slate-800">Create a booking</h2>
           <CloseButton onClose={onClose}/>
         </div>
 

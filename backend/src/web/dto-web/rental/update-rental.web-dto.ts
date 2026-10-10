@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { updateRentalDto } from '../../../core/app/dtos/rental/update-rental.dto';
 
 /**

@@ -1,5 +1,5 @@
-import { Controller, Delete, Get, NotFoundException, Param, Query, Req, UseGuards } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { Controller, Delete, Get, NotFoundException, Param, Req, UseGuards } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { DeleteUserUseCase, findAllUsersUseCase, FindUserUseCase } from "src/core/domain/user/useCases";
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
 import { OnboardingGuard } from "src/infra/adapters/guards/onboarding.guard";
@@ -33,8 +33,7 @@ export class UserController {
     @Delete('delete/:id')
     async DeleteUser(@Param('id')id: string) {
         const isDeleted = await this.deleteUserUseCase.deleteUser(id)
-        console.log(isDeleted)
-        return true
+        return isDeleted
     }
     
     

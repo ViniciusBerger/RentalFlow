@@ -1,25 +1,30 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../src/app.module';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+describe('GET / health check (HTTP e2e)', () => {
+  let app: INestApplication;
+  const previousEnv = { ...process.env };
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    process.env.NODE_ENV = 'development';
+    process.env.ENABLE_DEV_LOGIN = 'true';
+    process.env.DEV_AUTH_SECRET = 'development-test-secret-longer-than-thirty-two';
+    process.env.DATABASE_URL = 'postgresql://postgres:test@localhost:5432/rentalflow_test';
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-
     app = moduleFixture.createNestApplication();
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
+  afterAll(async () => { await app.close(); process.env = previousEnv; });
+
+  it('responds 200 with the current health response', async () => {
+    await request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect('Hello World!');
+      .expect({ status: 200, message: 'success' });
   });
 });

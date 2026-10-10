@@ -1,43 +1,5 @@
-import { Home } from "lucide-react"
-
-interface NexRentalsProps {
-    rentals: any[]
-    onOpenPopUp: ()=> void
-    onSelectRental: (rental: any)=> void
-    headerContent: string
-}
-export const NextRentals = ({onSelectRental, onOpenPopUp, rentals, headerContent}: NexRentalsProps)=> (
-    <section className="mb-12">
-        <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold">{headerContent}</h3>
-        </div>
-
-        <div className="space-y-3">
-            {rentals.map((r) => (
-                <div 
-                    onClick={() => {
-                            onSelectRental(r)
-                            onOpenPopUp()
-                        }} 
-
-                    key={r.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-4 group cursor-pointer hover:border-sage-200 transition-all">
-                    <div className="w-14 h-14 bg-white-100 hover:bg-sage-100 rounded-xl flex-shrink-0 flex items-center justify-center group-hover:scale-95 transition-transform duration-200 border border-white/50 shadow-sm">
-                        <Home 
-                            size={24} 
-                            className="text-sage-600 fill-sage-500/10 stroke-[2.5px]" 
-                        />
-                    </div>
-                   
-                    <div className="flex-1">
-                        <p className="font-bold text-sm">{r.clientFirstName + " " + r.clientLastName}</p>
-                        <p className="text-xs text-slate-400 font-medium tracking-tight">{r.startDate} - {r.endDate} • {r.guests}  Guests</p>
-                    </div>
-                  
-                    <div className="px-3 py-1 rounded-full bg-sage-50 text-sage-600 text-[10px] font-black uppercase">
-                        Confirmed
-                    </div>
-                </div>
-              ))}
-        </div>
-    </section>
-)
+import { ArrowRight, CalendarDays, ChevronRight, Home } from "lucide-react";
+import { Link } from "react-router-dom";
+interface Props {rentals:any[];onOpenPopUp:()=>void;onSelectRental:(rental:any)=>void;headerContent:string}
+const prettyDate=(value:string)=>{if(!value)return "—";const d=new Date(value+(/T/.test(value)?"":"T12:00:00"));return Number.isNaN(d.getTime())?value:d.toLocaleDateString("en-CA",{month:"short",day:"numeric"})};
+export const NextRentals=({rentals,onOpenPopUp,onSelectRental,headerContent}:Props)=><section className="rf-panel rf-rentals"><div className="rf-panel-header"><div><span className="rf-eyebrow">YOUR SCHEDULE</span><h2><CalendarDays size={20}/> {headerContent}</h2></div><Link to="/bookings" className="rf-viewall">View calendar <ArrowRight size={16}/></Link></div><div className="rf-rental-list">{rentals.length===0?<div className="rf-empty">No upcoming rentals yet. Create a booking to get started.</div>:rentals.map(r=><button key={r.id} type="button" className="rf-rental-row" onClick={()=>{onSelectRental(r);onOpenPopUp()}}><span className="rf-rental-thumb"><Home size={21}/></span><span className="rf-rental-description"><strong>{r.clientFirstName} {r.clientLastName}</strong><span>{prettyDate(r.startDate)} – {prettyDate(r.endDate)} · {r.guests??0} guests</span></span><span className="rf-status">{r.isActive===false?"Inactive":"Booked"}</span><ChevronRight size={18} className="rf-muted"/></button>)}</div></section>;

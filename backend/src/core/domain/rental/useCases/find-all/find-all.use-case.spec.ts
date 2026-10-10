@@ -21,16 +21,17 @@ describe('FindAllRentalsUseCase', () => {
     it('should return an array of rentals from the repository', async () => {
       // GIVEN
       const mockRentals: Rental[] = [
-        Rental.create({clientFirstName:'John', clientLastName:'Doe', startDate:'2026-01-01', endDate:'2026-01-05', revenue:500, fee:100, profit: 300, guests: 10, isActive: true }),
+        Rental.create({userId:'testid123', clientFirstName:'John', clientLastName:'Doe', startDate:'2026-01-01', endDate:'2026-01-05', revenue:500, fee:100, profit: 300, guests: 10, isActive: true }),
       ];
       repository.findAll.mockResolvedValue(mockRentals);
 
       // WHEN
-      const result = await useCase.findAll();
+      const result = await useCase.findAll('testid123');
 
       // THEN
       expect(result).toEqual(mockRentals);
       expect(repository.findAll).toHaveBeenCalledTimes(1);
+      expect(repository.findAll).toHaveBeenCalledWith('testid123');
     });
 
     it('should return an empty array if no rentals exist', async () => {
@@ -38,11 +39,11 @@ describe('FindAllRentalsUseCase', () => {
       repository.findAll.mockResolvedValue([]);
 
       // WHEN
-      const result = await useCase.findAll();
+      const result = await useCase.findAll('testid123');
 
       // THEN
       expect(result).toEqual([]);
-      expect(repository.findAll).toHaveBeenCalled();
+      expect(repository.findAll).toHaveBeenCalledWith('testid123');
     });
   });
 });

@@ -19,7 +19,6 @@ export const useAuth = () => {
       await login(email, password);
 
       const me = await getMe();
-      console.log(me)
 
       if (!me.isRegistered) {
         navigate("/complete-profile");

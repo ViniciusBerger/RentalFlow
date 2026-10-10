@@ -202,12 +202,25 @@ describe('DrizzleOrmAdapter', () => {
       expect(result[0]).toBeInstanceOf(Rental);
       expect(dbMock.orderBy).toHaveBeenCalledTimes(1);
       expect(dbMock.limit).toHaveBeenCalledWith(3);
+      // A booking from earlier this year must not be returned as 'upcoming'.
+      const queryFilter = dbMock.where.mock.calls[0][0];
+      // Read only SQL's literal chunks (not circular Drizzle table metadata).
+      const literals = (node: unknown): string => {
+        if (!node || typeof node !== 'object') return '';
+        if (Array.isArray(node)) return node.map(literals).join(' ');
+        if ('queryChunks' in node && Array.isArray(node.queryChunks)) return literals(node.queryChunks);
+        if ('value' in node && Array.isArray(node.value)) return node.value.filter((x): x is string => typeof x === 'string').join(' ');
+        return '';
+      };
+      const sqlFragments = literals(queryFilter);
+      expect(sqlFragments).toContain('CURRENT_DATE');
+      expect(sqlFragments).not.toContain("DATE_TRUNC('year'");
     });
 
-    it('should throw PersistenceError if no rentals are found', async () => {
+    it('should return an empty list if no rentals are found', async () => {
       dbMock.limit.mockResolvedValue([]);
 
-      await expect(adapter.findNextThree()).rejects.toThrow(PersistenceError);
+      await expect(adapter.findNextThree()).resolves.toEqual([]);
     });
   });
 
@@ -235,7 +248,7 @@ describe('DrizzleOrmAdapter', () => {
 
       const mockData = [
         {
-          month_label: '2026-01',
+          label: '2026-01',
           totalRevenue: 5000,
           totalProfit: 2000,
         },
@@ -255,7 +268,7 @@ describe('DrizzleOrmAdapter', () => {
 
       const mockData = [
         {
-          year_label: '2026',
+          label: '2026',
           totalRevenue: 10000,
           totalProfit: 4000,
         },
