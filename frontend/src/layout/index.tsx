@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { CalendarDays, LayoutDashboard, Plus } from "lucide-react";
 import { DesktopNavBar } from "../components/nav-bar/desktop-navbar";
 import { MobileNavBar } from "../components/nav-bar/mobile-navbar";
 import AddRentalPopUp from "../components/add-rental-popup";
@@ -10,52 +11,56 @@ import { LoadingState } from "../components/loading-state";
 
 export const AppLayout = () => {
   const [isAddRentalOpen, setIsAddRentalOpen] = useState(false);
-  const {loadingError, loadData, isLoading} = UseLoadData()
   const [isSaving, setIsSaving] = useState(false);
-  const {createRentalAndRefresh, error:rentalError} = useRentalActions()
+  const { pathname } = useLocation();
+  const { loadingError, loadData, isLoading } = UseLoadData();
+  const { createRentalAndRefresh, error: rentalError } = useRentalActions();
 
-  const handleOpenAddRental = () => {
-    setIsAddRentalOpen(true);
-  };
-
-  const handleCloseAddRental = () => {
-    setIsAddRentalOpen(false);
+  const isBookings = pathname.startsWith("/bookings");
+  const handleSubmitRental = async (formData: any) => {
+    setIsSaving(true);
+    try {
+      await createRentalAndRefresh(formData);
+      return true;
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) return <LoadingState />;
   if (loadingError?.status === 401) return <Navigate to="/auth" replace />;
   if (loadingError) {
-    return <DashboardErrorState message={loadingError.message} onRetry={() => { loadData(); }} />;
+    return <DashboardErrorState message={loadingError.message} onRetry={loadData} />;
   }
 
-  const handleSubmitRental = async (formData: any) => {
-    try {
-      setIsSaving(true);
-    
-      await createRentalAndRefresh(formData)
-      return true  
-    } 
-    catch (err) {
-      throw err
-    } 
-    finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
-     <div className="min-h-screen flex bg-sage-50 font-sans">
+    <div className="rf-app flex min-h-screen">
+      <a className="rf-skip" href="#rentalflow-content">Skip to content</a>
       <DesktopNavBar />
-
-      <main className="flex-1">
-        <Outlet />
+      <main className="rf-main flex-1" id="rentalflow-content">
+        <header className="rf-topbar">
+          <div>
+            <p className="rf-eyebrow">RentalFlow / Workspace</p>
+            <h1 className="rf-title">{isBookings ? "Bookings & calendar" : "Overview"}</h1>
+          </div>
+          <div className="rf-topbar-actions" aria-label="Workspace actions">
+            <Link to="/dashboard" className="rf-nav-link" aria-current={!isBookings ? "page" : undefined}>
+              <LayoutDashboard size={17} aria-hidden="true" /> Overview
+            </Link>
+            <Link to="/bookings" className="rf-nav-link" aria-current={isBookings ? "page" : undefined}>
+              <CalendarDays size={17} aria-hidden="true" /> Bookings
+            </Link>
+            <button type="button" className="rf-create" onClick={() => setIsAddRentalOpen(true)}>
+              <Plus size={18} aria-hidden="true" /> New booking
+            </button>
+          </div>
+        </header>
+        <div className="rf-content"><Outlet /></div>
       </main>
-
-      <MobileNavBar onCreateClick={handleOpenAddRental} />
-
+      <MobileNavBar onCreateClick={() => setIsAddRentalOpen(true)} />
       <AddRentalPopUp
         isOpen={isAddRentalOpen}
-        onClose={handleCloseAddRental}
+        onClose={() => setIsAddRentalOpen(false)}
         onSubmit={handleSubmitRental}
         isSaving={isSaving}
         error={rentalError}
