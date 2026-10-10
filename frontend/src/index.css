@@ -1,12 +1,61 @@
 @import "tailwindcss";
 
 @theme {
-  /* This is the v4 way to add your 'Summer' colors */
-  --color-sage-50: #f2f7f5;
-  --color-sage-100: #e1ede8;
+  --color-sage-50: #f5f7f5;
+  --color-sage-100: #e8efeb;
   --color-sage-500: #5da387;
-  --color-sage-600: #4a8a6f;
-  
+  --color-sage-600: #397b60;
   --color-sky-50: #f0f9ff;
   --color-sky-600: #0284c7;
+}
+
+/* RentalFlow's shared design foundation. Existing feature classes continue working. */
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #24352e;
+  background: #f5f7f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html { scroll-behavior: smooth; }
+body { min-width: 320px; margin: 0; }
+button, input, select, textarea { font: inherit; }
+button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled) { cursor: pointer; }
+:focus-visible { outline: 3px solid #56a586; outline-offset: 3px; }
+::selection { background: #cfe9da; color: #173c2a; }
+
+.rf-app { min-height: 100vh; background: #f6f8f6; }
+.rf-main { min-width: 0; width: 100%; padding-bottom: 5.5rem; }
+.rf-topbar { display: flex; gap: 1rem; align-items: center; justify-content: space-between; padding: 1.4rem clamp(1rem, 3vw, 3rem); border-bottom: 1px solid #e2e9e5; background: rgba(255,255,255,.85); }
+.rf-eyebrow { color: #71857a; font-size: .72rem; font-weight: 750; text-transform: uppercase; letter-spacing: .14em; }
+.rf-title { font-size: clamp(1.35rem, 2vw, 1.9rem); line-height: 1.2; color: #1d3529; font-weight: 800; letter-spacing: -.045em; margin-top: .3rem; }
+.rf-topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; }
+.rf-nav-link { display: inline-flex; align-items: center; gap: .45rem; text-decoration: none; color: #486254; background: #f5f8f6; border: 1px solid #e2e9e5; border-radius: .8rem; padding: .68rem .95rem; font-size: .85rem; font-weight: 650; transition: background .15s, border-color .15s; }
+.rf-nav-link:hover { background: #eaf3ee; }
+.rf-nav-link[aria-current="page"] { color: #21714c; border-color: #9ed6b7; background: #e4f4e9; }
+.rf-create { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; background: #246947; color: #fff; border: none; border-radius: .8rem; padding: .76rem 1.1rem; font-weight: 750; font-size: .86rem; box-shadow: 0 4px 12px rgba(28,96,60,.13); transition: transform .15s, background .15s; white-space: nowrap; }
+.rf-create:hover { background: #195639; transform: translateY(-1px); }
+.rf-content { max-width: 1500px; margin-inline: auto; padding: clamp(1rem, 2.8vw, 2.5rem); }
+.rf-content > * { min-width: 0; }
+.rf-skip { position: absolute; z-index: 100; left: 1rem; top: -5rem; background: #fff; padding: .7rem 1rem; border-radius: .6rem; }
+.rf-skip:focus { top: 1rem; }
+@media (max-width: 850px) {
+ .rf-topbar { align-items: flex-start; flex-direction: column; }
+ .rf-topbar-actions { width: 100%; }
+ .rf-nav-link { flex: 1; justify-content: center; }
+ .rf-create { flex: 1; }
+}
+@media (max-width: 520px) {
+ .rf-topbar { padding: 1rem; }
+ .rf-topbar-actions { gap: .4rem; }
+ .rf-nav-link { font-size: .78rem; padding: .65rem .5rem; }
+ .rf-create { width: 100%; flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+ html { scroll-behavior: auto; }
+ .rf-create, .rf-nav-link { transition: none; }
+ .rf-create:hover { transform: none; }
 }
