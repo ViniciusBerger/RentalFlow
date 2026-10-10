@@ -1,35 +1,11 @@
-interface IncomeProps {
-  props: {
-    yearly?: {label:string , totalRevenue: number, totalProfit:number}  | null
-    monthly?: {label:string , totalRevenue: number, totalProfit:number} | null
-  }
-}
-export const BalanceSection = ({props}: IncomeProps)=> (
-    <div className="grid grid-cols-2 gap-4 mb-10">
-          <div className="bg-white p-5 text-center rounded-2xl border border-sage-100 shadow-sm shadow-sage-100/50">
-            <p className="text-[10px] uppercase tracking-widest text-sage-600 font-black mb-1">Yearly Income</p>
-            <h2 className="text-2xl font-bold tracking-tight">R$ {props.yearly?.totalRevenue ?? 0}</h2>
-            <p className="text-xs font-bold mt-0.5 text-sage-500">{props.yearly?.label ?? ""}</p>
-          </div>
-
-          <div className="bg-white p-5 text-center rounded-2xl border border-sky-100 shadow-sm shadow-sky-100/50">
-            <p className="text-[10px] uppercase tracking-widest text-sky-600 font-black mb-1">Yearly Profit</p>
-            <h2 className="text-2xl font-bold tracking-tight">R$ {props.yearly?.totalProfit ?? 0}</h2>
-            <p className="text-xs font-bold mt-0.5 text-sage-500">{props.yearly?.label ?? ""}</p>
-          </div>
-
-
-          <div className="bg-white p-5 text-center rounded-2xl border border-sage-100 shadow-sm shadow-sage-100/50">
-            <p className="text-[10px] uppercase tracking-widest text-sage-600 font-black mb-1">Monthly Income</p>
-            <h2 className="text-2xl font-bold  tracking-tight">R$ {props.monthly?.totalRevenue ?? 0}</h2>
-            <p className="text-xs font-bold mt-0.5 text-sage-500">{props.monthly?.label ?? ""}</p>
-            
-          </div>
-          
-          <div className="bg-white p-5 text-center rounded-2xl border border-sky-100 shadow-sm shadow-sky-100/50">
-            <p className="text-[10px] uppercase tracking-widest text-sky-600 font-black mb-1">Monthly Profit</p>
-            <h2 className="text-2xl font-bold tracking-tight">R$ {props.monthly?.totalProfit ?? 0}</h2>
-            <p className="text-xs font-bold mt-0.5 text-sage-500">{props.monthly?.label ?? ""}</p>
-          </div>
-      </div>
-)
+import { ArrowUpRight, Banknote, CalendarRange, TrendingUp, Wallet } from "lucide-react";
+interface IncomeProps { props: {yearly?: {label:string,totalRevenue:number,totalProfit:number}|null;monthly?:{label:string,totalRevenue:number,totalProfit:number}|null} }
+const format = (value:number|undefined) => (value??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+export const BalanceSection=({props}:IncomeProps)=>(<section className="rf-metrics" aria-label="Financial summary">
+{[
+{title:"Yearly revenue",value:props.yearly?.totalRevenue,period:props.yearly?.label,icon:TrendingUp},
+{title:"Yearly profit",value:props.yearly?.totalProfit,period:props.yearly?.label,icon:Wallet},
+{title:"Monthly revenue",value:props.monthly?.totalRevenue,period:props.monthly?.label,icon:Banknote},
+{title:"Monthly profit",value:props.monthly?.totalProfit,period:props.monthly?.label,icon:CalendarRange}
+].map(item=><article className="rf-metric rf-panel" key={item.title}><div className="rf-metric-top"><span className="rf-icon"><item.icon size={22}/></span><ArrowUpRight size={17} className="rf-muted"/></div><p className="rf-metric-label">{item.title}</p><strong className="rf-metric-value">{format(item.value)}</strong><span className="rf-metric-period">{item.period||"Current period"}</span></article>)}
+</section>);

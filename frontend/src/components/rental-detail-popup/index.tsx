@@ -23,7 +23,7 @@ interface ModalProps {
   isOpen: boolean;
   rental: Rental | null;
   onClose: () => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (id: string) => Promise<boolean> | boolean;
   onEditSubmit: (data: any) => Promise<boolean>;
   isSavingEdit: boolean;
   editError: any;
@@ -41,6 +41,8 @@ export default function RentalDetailPopUp({
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Rental | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenEdit = (booking: Rental) => {
     setSelectedBooking(booking);
@@ -62,7 +64,7 @@ export default function RentalDetailPopUp({
           onClick={onClose}
         />
 
-        <div className="relative w-full max-w-lg overflow-hidden rounded-t-[40px] bg-white shadow-2xl animate-in slide-in-from-bottom duration-300 md:rounded-[40px] md:zoom-in-95">
+        <div className="relative w-full max-w-2xl max-h-[94vh] overflow-y-auto rf-dialog rounded-t-[28px] bg-white shadow-2xl animate-in slide-in-from-bottom duration-300 md:rounded-[28px] md:zoom-in-95">
           <CloseButton onClose={onClose} />
 
           <RentalDetailHeader rental={rental} />
@@ -90,7 +92,7 @@ export default function RentalDetailPopUp({
               <GenericButton
                 content=""
                 icon={<Trash2 size={20} />}
-                onClick={() => setPendingDeleteId(rental.id)}
+                onClick={() => { setDeleteError(null); setPendingDeleteId(rental.id); }}
                 className="w-16 h-14 bg-red-50 text-red-500 rounded-[24px] flex items-center justify-center hover:bg-red-100 transition-all active:scale-95 border border-red-100"
               />
             </div>
@@ -105,6 +107,9 @@ export default function RentalDetailPopUp({
                     This action cannot be undone.
                   </p>
 
+                  {deleteError && (
+                    <p role="alert" className="mb-4 text-sm text-red-600">{deleteError}</p>
+                  )}
                   <div className="flex gap-3">
                     <GenericButton
                       content="cancel"
@@ -113,10 +118,25 @@ export default function RentalDetailPopUp({
                     />
                     <GenericButton
                       content="Delete"
-                      onClick={() => {
-                        onDelete?.(pendingDeleteId);
-                        setPendingDeleteId(null);
-                        onClose();
+                      onClick={async () => {
+                        if (!onDelete || isDeleting) {
+                          setDeleteError("Unable to delete booking. Please try again.");
+                          return;
+                        }
+                        setIsDeleting(true);
+                        try {
+                          const deleted = await onDelete(pendingDeleteId);
+                          if (!deleted) {
+                            setDeleteError("Unable to delete booking. Please try again.");
+                            return;
+                          }
+                          setPendingDeleteId(null);
+                          onClose();
+                        } catch {
+                          setDeleteError("Unable to delete booking. Please try again.");
+                        } finally {
+                          setIsDeleting(false);
+                        }
                       }}
                       className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold"
                     />

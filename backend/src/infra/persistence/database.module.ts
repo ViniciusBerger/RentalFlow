@@ -14,15 +14,10 @@ export const DRIZZLE = 'DRIZZLE_CONNECTION';
       provide: DRIZZLE,
       inject: [ConfigService], // Inject ConfigService
       useFactory: (configService: ConfigService) => {
-        // Build the URL inside the factory
-        const user = configService.get('DB_USER');
-        const pass = configService.get('DB_PASSWORD');
-        const host = configService.get('DB_HOST');
-        const port = configService.get('DB_PORT');
-        const name = configService.get('DB_NAME');
-        const db_url = configService.get('DATABASE_URL')
-
-        const connectionString = db_url //`postgresql://${user}:${pass}@${host}:${port}/${name}`;
+        const connectionString = configService.get<string>('DATABASE_URL');
+        if (!connectionString) {
+          throw new Error('DATABASE_URL must be configured');
+        }
 
         const pool = new Pool({
           connectionString,

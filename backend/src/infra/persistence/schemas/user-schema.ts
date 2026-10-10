@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("user_role", ['staff', 'admin', 'host'])
 

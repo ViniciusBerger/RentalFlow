@@ -13,7 +13,7 @@ export class DeleteRentalUseCase {
     async deleteRental(id: string): Promise<boolean> {
         const deleted = await this.rentalRepository.delete(id)
         // if couldnt delete throw an error
-        if (!deleted) throw new ServiceError("Could not delete user")
+        if (!deleted) throw new ServiceError("Could not delete rental")
         // do not pass error to keep controller clean
         return true;
     }

@@ -19,7 +19,7 @@ export const AddRentalForm = ({
   isSaving,
   formData = emptyFormData,
 }: any) => (
-  <form className="space-y-6" onSubmit={handleSubmit}>
+  <form className="rf-booking-form space-y-6" onSubmit={handleSubmit}>
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
         <TextInputFormDiv
@@ -137,6 +137,6 @@ export const AddRentalForm = ({
       </div>
     )}
 
-    <SubmitButton type="submit" isLoading={isSaving} context="Save" />
+    <SubmitButton type="submit" isLoading={isSaving} context="Create booking" />
   </form>
 );

@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
 import { Rental } from "../../entity/rental";
 import { ServiceError } from "../../../../app/errors/service.error";
@@ -29,7 +28,14 @@ export class CreateRentalUseCase {
 
     // Check if date is available to be booked on database 
     private async validate(startDate: string, endDate: string): Promise<boolean> {
-        if (new Date(startDate) >= new Date(endDate)) throw new ServiceError("End date must be after start date");
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate) ||
+            Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) ||
+            start.toISOString().slice(0, 10) !== startDate || end.toISOString().slice(0, 10) !== endDate) {
+          throw new ServiceError('Invalid rental dates');
+        }
+        if (start >= end) throw new ServiceError("End date must be after start date");
         
         const today = new Date().toISOString().split("T")[0];
 

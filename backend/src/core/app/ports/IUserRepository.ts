@@ -6,7 +6,7 @@ export interface IUserRepository {
 
     select(uid: string): Promise<User | null>;
 
-    create(firstName: string, lastName:string, email:string, role?:string, id?:string)
+    create(firebaseUid: string, email: string, firstName: string, lastName: string): Promise<boolean>
 
     delete(id: string);
 

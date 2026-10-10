@@ -20,15 +20,16 @@ describe("GetBalanceUseCase", () => {
         it("should return the yearly balance from repository", async () => {
 
             const mockBalance = [
-                { month: "January", revenue: 2000, profit: 1200 }
+                { label: "2026", totalRevenue: 2000, totalProfit: 1200 }
             ]
 
             rentalRepositoryMock.getYearlyBalanceCurrentYear.mockResolvedValue(mockBalance)
 
-            const result = await useCase.getYearlyBalance()
+            const result = await useCase.getYearlyBalance('testid123')
 
             expect(result).toEqual(mockBalance)
             expect(rentalRepositoryMock.getYearlyBalanceCurrentYear).toHaveBeenCalledTimes(1)
+            expect(rentalRepositoryMock.getYearlyBalanceCurrentYear).toHaveBeenCalledWith('testid123')
         })
     })
 
@@ -37,17 +38,17 @@ describe("GetBalanceUseCase", () => {
 
         it("should return the monthly balance from repository", async () => {
 
-            const mockBalance = {
-                revenue: 500,
-                profit: 300
-            }
+            const mockBalance = [{
+                label: "2026-01", totalRevenue: 500, totalProfit: 300
+            }]
 
             rentalRepositoryMock.getMonthlyBalanceCurrentYear.mockResolvedValue(mockBalance)
 
-            const result = await useCase.getMonthlyBalance()
+            const result = await useCase.getMonthlyBalance('testid123')
 
             expect(result).toEqual(mockBalance)
             expect(rentalRepositoryMock.getMonthlyBalanceCurrentYear).toHaveBeenCalledTimes(1)
+            expect(rentalRepositoryMock.getMonthlyBalanceCurrentYear).toHaveBeenCalledWith('testid123')
         })
     })
 

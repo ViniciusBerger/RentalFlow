@@ -64,7 +64,7 @@ export const updateRental = async(id:string, toBeUpdated: any)=> {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
-      const error: any = new Error(errorData || "Unable to fetch session");
+      const error: any = new Error(errorData?.message || "Unable to update rental");
       error.status = response.status;
       throw error;
     }

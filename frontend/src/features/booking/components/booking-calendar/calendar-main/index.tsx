@@ -42,7 +42,7 @@ export const CalendarMain = ({ viewDate, rentals }: ICalendarMainProps) => {
 
         <div className="relative">
             {/* Layer 1: The Grid Background */}
-            <div className="grid grid-cols-7 grid-rows-6 h-[480px]">
+            <div className="grid grid-cols-7 grid-rows-6 h-[540px] max-sm:h-[440px]">
             {gridCells.map((_, i) => {
                 
                 const dayNumber = i - firstDayIndex + 1; // Determine the day number for this specific cell
@@ -51,7 +51,7 @@ export const CalendarMain = ({ viewDate, rentals }: ICalendarMainProps) => {
                 return (
                 <div
                     key={i}
-                    className="border-r border-b border-sage-50 p-2 text-right text-xs font-bold text-slate-300">
+                    className="border-r border-b border-sage-50 p-2 text-right text-xs font-bold text-slate-500">
                         {isCurrentMonth ? dayNumber : ""}
                 </div>
                 );

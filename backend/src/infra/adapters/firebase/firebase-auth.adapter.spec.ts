@@ -2,10 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FirebaseAuthAdapter } from './firebase-auth.adapter';
 import { UnauthorizedException } from '@nestjs/common';
 import axios from 'axios';
+import * as admin from 'firebase-admin';
 import { CreateUserUseCase } from '../../../core/domain/user/useCases/create-user/create-user.use-case';
 import { NewUserUseCase } from '../../../core/domain/user/useCases/new-user-process/new-user.use-case';
 
 jest.mock('axios');
+jest.mock('firebase-admin', () => ({ auth: jest.fn() }));
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('FirebaseAuthAdapter', () => {
@@ -148,4 +150,35 @@ describe('FirebaseAuthAdapter', () => {
         .rejects.toThrow('INVALID_PASSWORD');
     });
   });
+
+  it('handles registered users whose profile has no role yet', async () => {
+    firebaseAuthMock.verifyIdToken.mockResolvedValue({ uid: 'u-1', email: 'test@test.com' });
+    newUserUseCaseMock.verifyUser.mockResolvedValue({ success: true });
+    await expect(adapter.validateJWT('token')).resolves.toEqual({ uid: 'u-1', email: 'test@test.com', role: undefined, isRegistered: true });
+  });
+  it('does not swallow structured Firebase REST authentication errors', async () => {
+    const error = { response: { data: {error: {message:'INVALID_PASSWORD'}} } };
+    mockedAxios.post.mockRejectedValue(error);
+    const spy=jest.spyOn(console,'log').mockImplementation(()=>undefined);
+    await expect(adapter.authenticate('a','b')).rejects.toBe(error);
+    expect(spy).toHaveBeenCalledWith('FIREBASE AUTH ERROR:',error.response.data);
+    spy.mockRestore();
+  });
+  it('handles unstructured REST failures without replacing the original error', async () => {
+    mockedAxios.post.mockRejectedValue(null);
+    const spy=jest.spyOn(console,'log').mockImplementation(()=>undefined);
+    await expect(adapter.authenticate('a','b')).rejects.toBeNull();
+    spy.mockRestore();
+  });
+  it('revokes refresh tokens when logging out from Firebase', async () => {
+    const revokeRefreshTokens = jest.fn().mockResolvedValue(undefined);
+    (admin.auth as jest.Mock).mockReturnValue({ revokeRefreshTokens });
+    await expect(adapter.logout('u-1')).resolves.toBeUndefined();
+    expect(revokeRefreshTokens).toHaveBeenCalledWith('u-1');
+  });
+  it('propagates token revocation failures to the caller', async () => {
+    (admin.auth as jest.Mock).mockReturnValue({ revokeRefreshTokens: jest.fn().mockRejectedValue(new Error('Firebase unavailable')) });
+    await expect(adapter.logout('u-1')).rejects.toThrow('Firebase unavailable');
+  });
+
 });

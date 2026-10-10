@@ -1,25 +1,3 @@
-import { ChevronLeft, ChevronRight } from "lucide-react"
-
-interface ICalendarHeaderProps {
-    viewDate: Date
-    handleNext: ()=> void;
-    handlePrev: ()=> void;
-}
-
-export const CalendarHeader = ({viewDate, handlePrev, handleNext}: ICalendarHeaderProps) => {
-    return (
-        <div className="flex items-center justify-center mb-6">
-            <ChevronLeft 
-                onClick={handlePrev} 
-                className="cursor-pointer text-slate-400 hover:text-slate-900" 
-            />
-            <h2 className="text-3xl font-black text-slate-900 w-80 text-center">
-                {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-            </h2>
-            <ChevronRight 
-                onClick={handleNext} 
-                className="cursor-pointer text-slate-400 hover:text-slate-900" 
-            />
-        </div>
-    )
-}
+import { ChevronLeft,ChevronRight } from "lucide-react";
+interface Props {viewDate:Date;handleNext:()=>void;handlePrev:()=>void}
+export const CalendarHeader=({viewDate,handlePrev,handleNext}:Props)=><div className="rf-calendar-header"><div><span className="rf-eyebrow">MONTHLY VIEW</span><h2>{viewDate.toLocaleString("en-CA",{month:"long",year:"numeric"})}</h2></div><div className="rf-calendar-controls"><button aria-label="Previous month" onClick={handlePrev}><ChevronLeft size={20}/></button><button aria-label="Next month" onClick={handleNext}><ChevronRight size={20}/></button></div></div>;

@@ -5,6 +5,6 @@ import { DomainError } from "./domain.error";
  */
 export class ServiceError extends DomainError{
     constructor(message: string) {
-        super(` ${message} `)
+        super(message)
     }
 }

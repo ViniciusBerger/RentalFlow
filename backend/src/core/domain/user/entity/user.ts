@@ -12,6 +12,7 @@ export class User{
 
 
     constructor(data: IUserParams) {
+        this.firebaseUid = data.firebaseUid;
         this.firstName = data.firstName;
         this.lastName = data.lastName;
         this.email = data.email;

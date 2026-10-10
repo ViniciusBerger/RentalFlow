@@ -15,11 +15,11 @@ describe('FindNextThreeUseCase', () => {
     useCase = new FindNextThreeUseCase(repositoryMock);
   });
 
-  it('should return a list of three rentals from the repository', async () => {
+  it('should return the upcoming rentals supplied by the repository', async () => {
     // Arrange: Define what the mock should return
     const mockRentals = [
-      new Rental({ clientFirstName: 'Alice', clientLastName: 'Z', startDate: '2026-04-01', endDate: '2026-04-05', guests: 2, revenue: 500, profit: 400, fee: 100, isActive: true }),
-      new Rental({ clientFirstName: 'Bob', clientLastName: 'Y', startDate: '2026-05-01', endDate: '2026-05-05', guests: 3, revenue: 600, profit: 500, fee: 100, isActive: true }),
+      new Rental({ userId: 'testid123', clientFirstName: 'Alice', clientLastName: 'Z', startDate: '2026-04-01', endDate: '2026-04-05', guests: 2, revenue: 500, profit: 400, fee: 100, isActive: true }),
+      new Rental({ userId: 'testid123', clientFirstName: 'Bob', clientLastName: 'Y', startDate: '2026-05-01', endDate: '2026-05-05', guests: 3, revenue: 600, profit: 500, fee: 100, isActive: true }),
     ];
     repositoryMock.findNextThree.mockResolvedValue(mockRentals);
 

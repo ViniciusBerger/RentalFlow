@@ -1,5 +1,5 @@
 import { DeleteRentalUseCase } from './delete-rental.use-case';
-import { IRentalRepository } from '../../../app/ports/IRentalRepository';
+import { IRentalRepository } from '../../../../app/ports/IRentalRepository';
 
 describe('DeleteRentalUseCase (Manual Injection)', () => {
   let useCase: DeleteRentalUseCase;
@@ -41,7 +41,7 @@ describe('DeleteRentalUseCase (Manual Injection)', () => {
 
       // WHEN & THEN
       await expect(useCase.deleteRental(id))
-        .rejects.toThrow('Could not delete user'); 
+        .rejects.toThrow('Could not delete rental'); 
       
       expect(repository.delete).toHaveBeenCalledWith(id);
     });

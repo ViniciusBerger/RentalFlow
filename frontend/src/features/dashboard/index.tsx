@@ -30,7 +30,11 @@ export const Dashboard = () => {
 
       if (!selectedRental?.id) return false;
 
-      await updateRentalAndRefresh(selectedRental.id, formData);
+      const updated = await updateRentalAndRefresh(selectedRental.id, formData);
+      if (!updated) {
+        setEditError('Failed to update rental');
+        return false;
+      }
       setIsRentalDetailPopUpOpen(false);
 
       return true;

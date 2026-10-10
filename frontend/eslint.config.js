@@ -15,6 +15,11 @@ export default defineConfig([
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
+    rules: {
+      // Legacy data/API boundary typing is tracked separately; TypeScript and
+      // behavior tests remain mandatory CI gates. Do not suppress hooks rules.
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,

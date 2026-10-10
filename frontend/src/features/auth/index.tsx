@@ -17,9 +17,9 @@ export const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-sage-50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="rf-auth-page min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
       
-      <div className="w-full max-w-[440px] z-10">
+      <div className="w-full max-w-[460px] z-10 rf-auth-card">
         <Header/>
         <AuthForm onSubmit={onSubmit} isLoading={isLoading} error={error}/>
       </div>
