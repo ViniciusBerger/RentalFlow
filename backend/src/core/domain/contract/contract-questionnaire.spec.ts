@@ -84,3 +84,51 @@ describe('seasonal contract template security and publication gates',()=>{
    {...defaultPayment,acceptedMethods:['CUSTOM']})).not.toThrow();
  });
 });
+
+describe('additional contractual validation security boundaries',()=>{
+ const policy={...defaultPolicy,jurisdiction:'Vitória/ES'};
+ const source=():ContractClause[]=>emptyContractClauses().map(c=>({...c,body:'Texto original conferido e validado pelo locador.'}));
+ it('rejects unknown or duplicated ID schemes, control characters and empty headings',()=>{
+  for(const [id,title] of [['17','Title'],['extra-INVALID!!','Title'],['annex','Title'],['1','X'],['1','Control\\u0000']]){
+   const input=source();if(id==='annex')input[0].id=id;else if(id==='1')input[0].title=title;else input[0].id=id;
+   expect(()=>validateClauses(input)).toThrow();
+  }
+ });
+ it('rejects malformed nested clauses and body types instead of trusting JS casts',()=>{
+  for(const corrupt of [null,{},[],{id:1,title:'Ok',body:'Valid content',enabled:true},
+   {id:'1',title:'Great',body:null,enabled:true},
+   {id:'1',title:'Great',body:'Text',enabled:'true'}]){
+   const input=source();(input as unknown[])[0]=corrupt;
+   expect(()=>validateClauses(input)).toThrow();
+  }
+ });
+ it('rejects advanced unresolved placeholders, missing originals, overly long content',()=>{
+  const input=source();input[0].body='Hello {{imovel.endereco}} {{unknown.field}}';
+  expect(()=>validateClauses(input)).toThrow();
+  input[0].body='This {{ variable syntax} is broken';
+  expect(()=>validateClauses(input)).toThrow();
+  input[0].body='Hello {{imovel.endereco}';
+  expect(()=>validateClauses(input)).toThrow();
+  input[0].body='  ';
+  expect(validateClauses(input)).toHaveLength(17);
+  expect(()=>validateClauses(input,true)).toThrow();
+  input[0].body='This is approved text';
+  expect(validateClauses(input,true)).toHaveLength(17);
+ });
+ it('validates all required landlord fields and optional contact formats',()=>{
+  for(const patch of [
+   {fullName:''},{cpf:''},{rg:'x'},{addressNumber:''},{addressDistrict:''},
+   {addressCity:''},{addressState:'ABC'},{addressPostalCode:'123'},{addressStreet:''},
+   {email:'bad'},{phone:'invalid'}
+  ]){
+   expect(()=>validateLandlordForPublish({...landlord,...patch},policy,defaultPayment)).toThrow();
+  }
+  expect(()=>validateLandlordForPublish({...landlord,email:'owner@example.test',phone:'+55 27 99999-9999'},policy,defaultPayment)).not.toThrow();
+ });
+ it('does not require unused bank credentials when transfer method is disabled',()=>{
+  expect(()=>validateLandlordForPublish({...landlord,bankAgency:'',bankAccount:'',bankName:''},policy,{
+    ...defaultPayment,acceptedMethods:['PIX']
+  })).not.toThrow();
+  expect(()=>validateLandlordForPublish({...landlord,pixKey:''},policy,{...defaultPayment,acceptedMethods:['CUSTOM']})).not.toThrow();
+ });
+});

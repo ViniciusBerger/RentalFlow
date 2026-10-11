@@ -48,7 +48,7 @@ describe("GetBalanceUseCase", () => {
 
             expect(result).toEqual(mockBalance)
             expect(rentalRepositoryMock.getMonthlyBalanceCurrentYear).toHaveBeenCalledTimes(1)
-            expect(rentalRepositoryMock.getMonthlyBalanceCurrentYear).toHaveBeenCalledWith('testid123')
+            expect(rentalRepositoryMock.getMonthlyBalanceCurrentYear).toHaveBeenCalledWith('testid123',undefined)
         })
     })
 
