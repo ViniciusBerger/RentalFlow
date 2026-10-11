@@ -25,7 +25,7 @@ async function bootstrap() {
   'https://www.rentalflow.club',
   process.env.FRONTEND_URL,
   'http://localhost:5173',
-].filter(Boolean);
+].filter((origin): origin is string => Boolean(origin));
 
   app.use((_req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
