@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards, UnauthorizedException, InternalServerErrorException } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { createHmac } from "node:crypto";
+import { sessionCsrfToken } from "../../infra/middleware/csrf-session";
 import { type Response } from 'express'
 import { AuthenticateUseCase} from "../../core/domain/auth/useCase/authenticate/authenticate.use-case";
 import { AuthenticateWebDto } from "../dto-web/auth/authenticate.web-dto";
@@ -91,6 +92,14 @@ export class AuthController {
     @Get("me")
     getMe(@Req() req: Request & { user: RequestUser }) {
     return req.user;
+    }
+
+    @UseGuards(AuthGuard)
+    @Get('csrf')
+    getCsrf(@Req() req: Request & { cookies: Record<string,string> }) {
+      const token=sessionCsrfToken(req);
+      if (!token) throw new UnauthorizedException('Session required');
+      return { csrfToken: token };
     }
 
     @Post('complete-profile')

@@ -4,6 +4,8 @@ import { GlobalExceptionFilter } from './web/global-exception.filter';
 import { setupSwagger } from './web/swagger-provider';
 import cookieParser from 'cookie-parser';
 import { csrfOriginProtection } from './infra/middleware/csrf-origin-protection';
+import { requireSessionCsrf } from './infra/middleware/csrf-session';
+import { securityRateLimit } from './infra/middleware/security-rate-limit';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -35,6 +37,7 @@ async function bootstrap() {
     next();
   });
   app.use(csrfOriginProtection(allowedOrigins));
+  app.use(securityRateLimit());
 
   app.enableCors({
     origin: (origin, callback) => {
@@ -45,10 +48,11 @@ async function bootstrap() {
     },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-CSRF-Token',
   });
   
-  app.use(cookieParser())
+  app.use(cookieParser());
+  app.use(requireSessionCsrf);
   
   const port = Number(process.env.PORT) || 3000;
   console.log('RAILWAY PORT =', process.env.PORT);
