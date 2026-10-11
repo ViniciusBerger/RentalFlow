@@ -15,8 +15,11 @@ function dbStub(results:any[][]){
  builder.innerJoin=jest.fn(()=>builder);
  builder.limit=jest.fn(pulled);
  builder.orderBy=jest.fn(()=>({limit:builder.limit,then:(resolve:any,reject:any)=>pulled().then(resolve,reject)}));
- const values=jest.fn((_row:any)=>({onConflictDoUpdate:jest.fn().mockResolvedValue(undefined),
-  then:(resolve:any)=>Promise.resolve(undefined).then(resolve)}));
+ const values=jest.fn((row:any)=>{
+  if(row===undefined)throw new Error('Missing database insert fixture');
+  return {onConflictDoUpdate:jest.fn().mockResolvedValue(undefined),
+   then:(resolve:any)=>Promise.resolve(undefined).then(resolve)};
+ });
  const db:any={
   select:jest.fn(()=>builder),execute:jest.fn().mockResolvedValue(undefined),
   delete:jest.fn(()=>({where:jest.fn().mockResolvedValue(undefined)})),
