@@ -10,7 +10,7 @@ const payload=()=>({
  propertyId,clientFirstName:'Ana',clientLastName:'Silva',
  startDate:'2026-12-01',endDate:'2026-12-03',
  guests:3,revenue:200,fee:20,
- bookingDraft:{requestKey:key,baseRevenueCents:20000,guest,
+ bookingDraft:{requestKey:key,baseRevenueCents:20000,confirmedTotalCents:21000,guest,
   guestFee:{mode:'AUTOMATIC'},paymentMethod:'PIX',paymentDueEvent:'KEY_HANDOVER'}
 });
 function mockDatabase(answers:any[]) {
@@ -58,6 +58,24 @@ describe('Atomic contract booking',()=>{
    ...payload(),bookingDraft:{...payload().bookingDraft,baseRevenueCents:20001}
   } as any)).rejects.toBeInstanceOf(BadRequestException);
   expect(db.transaction).not.toHaveBeenCalled();
+ });
+ it('quotes the final amount from account-owned occupancy settings',async()=>{
+  const {db}=mockDatabase([[{id:propertyId}],
+    [{includedOccupancy:2,maximumOccupancy:4,extraGuestRateCents:500}]]);
+  const price=await new ContractBookingService(db).quote('owner-a',{
+    propertyId,startDate:'2026-12-01',endDate:'2026-12-03',
+    guests:3,revenue:200,guestFee:{mode:'AUTOMATIC'}
+  });
+  expect(price).toMatchObject({baseCents:20000,calculatedExtraCents:1000,
+    chargedExtraCents:1000,totalCents:21000,nights:2});
+ });
+ it('requires a new price review if the confirmed total differs from current backend pricing',async()=>{
+  const {db,recorded}=mockDatabase([[],[{id:propertyId}],
+    [{includedOccupancy:2,maximumOccupancy:4,extraGuestRateCents:500}]]);
+  await expect(new ContractBookingService(db).create('owner-a',{
+    ...payload(),bookingDraft:{...payload().bookingDraft,confirmedTotalCents:20000}
+  } as any)).rejects.toBeInstanceOf(ConflictException);
+  expect(recorded).toHaveLength(0);
  });
  it('requires property ownership, never writes to a different account',async()=>{
   const {db,recorded}=mockDatabase([[],[]]);
