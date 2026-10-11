@@ -1,40 +1,22 @@
-import { Controller, Delete, Get, NotFoundException, Param, Req, UseGuards } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
-import { DeleteUserUseCase, findAllUsersUseCase, FindUserUseCase } from "src/core/domain/user/useCases";
-import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
-import { OnboardingGuard } from "src/infra/adapters/guards/onboarding.guard";
+import { Controller, Get, NotFoundException, Req, UseGuards } from '@nestjs/common';
+import { FindUserUseCase } from 'src/core/domain/user/useCases';
+import { AuthGuard } from 'src/infra/adapters/guards/auth.guard';
+import { OnboardingGuard } from 'src/infra/adapters/guards/onboarding.guard';
 
-@ApiTags('user module')
+/**
+ * Authenticated users may only retrieve their own profile.
+ * Account-wide enumeration and deletion by caller-supplied UID are intentionally
+ * not exposed. Account deletion needs a separate verified self-service flow.
+ */
 @Controller('user')
 @UseGuards(AuthGuard, OnboardingGuard)
 export class UserController {
-    constructor (private readonly findAllUsersUseCase:   findAllUsersUseCase,
-                private readonly deleteUserUseCase: DeleteUserUseCase,
-                private readonly findUserUseCase: FindUserUseCase){}
+  constructor(private readonly findUserUseCase: FindUserUseCase) {}
 
-    @Get('users')
-    //@ApiOperation({ summary: 'Get total revenue for the current year' })
-    //@ApiResponse({ status: 200, description: 'Yearly revenue total' })
-    async getUsers(){
-        const users = await this.findAllUsersUseCase.findUsers()
-        return users 
-    }
-
-    @Get('host')
-    async getUser(@Req() req){
-        const userId = (req as any).user?.uid;
-        const user = await this.findUserUseCase.findUser(userId)
-        
-        if (!user) throw new NotFoundException("User profile not found");
-        return user
-
-    }
-
-    @Delete('delete/:id')
-    async DeleteUser(@Param('id')id: string) {
-        const isDeleted = await this.deleteUserUseCase.deleteUser(id)
-        return isDeleted
-    }
-    
-    
+  @Get('host')
+  async getUser(@Req() req: { user: { uid: string } }) {
+    const user = await this.findUserUseCase.findUser(req.user.uid);
+    if (!user) throw new NotFoundException('User profile not found');
+    return user;
+  }
 }

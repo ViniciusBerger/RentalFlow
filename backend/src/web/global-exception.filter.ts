@@ -20,13 +20,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = HttpStatus.BAD_REQUEST;
       message = exception.message;
     } else {
-      console.error(exception);
+      // Never serialize arbitrary exception objects: SQL/query parameters may contain PII.
+      console.error('Unhandled request failure', { type: exception instanceof Error ? exception.name : 'UnknownError' });
     }
 
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
-      path: request.url,
+      path: typeof request.path === 'string' ? request.path : String(request.url ?? '').split('?')[0],
       message,
     });
   }

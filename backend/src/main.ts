@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './web/global-exception.filter';
 import { setupSwagger } from './web/swagger-provider';
 import cookieParser from 'cookie-parser';
+import { csrfOriginProtection } from './infra/middleware/csrf-origin-protection';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -11,6 +12,7 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
+    validationError: { target: false, value: false },
   })
 
   app.useGlobalPipes(validationPipe)
@@ -24,6 +26,15 @@ async function bootstrap() {
   process.env.FRONTEND_URL,
   'http://localhost:5173',
 ].filter(Boolean);
+
+  app.use((_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('X-Frame-Options', 'DENY');
+    next();
+  });
+  app.use(csrfOriginProtection(allowedOrigins));
 
   app.enableCors({
     origin: (origin, callback) => {
