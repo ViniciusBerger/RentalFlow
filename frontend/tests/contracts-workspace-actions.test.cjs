@@ -64,7 +64,7 @@ test('guest details save uses the server edit token and ignores privileged payme
  const cpf=find(view.tree,n=>n.type==='input'&&n.props.name==='cpf');
  assert.ok(cpf);cpf.props.onChange({target:{value:'masked-value'}});
  view.render();
- const btn=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Salvar rascunho'));
+ const btn=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Save draft'));
  assert.ok(btn);btn.props.onClick();
  for(let i=0;i<4;i++){await pause();view.render();}
  const patch=calls.find(x=>x.path.endsWith('/draft'));
@@ -78,11 +78,11 @@ test('guest details save uses the server edit token and ignores privileged payme
 });
 test('installments are editable only on drafts and privileged data stays read-only',async()=>{
  server();const view=await loaded();
- const total=JSON.stringify(view.tree);assert.match(total,/500,00/);
+ const total=JSON.stringify(view.tree);assert.match(total,/500[.]00/);
  const amount=find(view.tree,n=>n.type==='input'&&n.props.type==='number');
  assert.ok(amount);amount.props.onChange({target:{value:'250'}});
  view.render();
- const add=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Adicionar parcela'));
+ const add=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Add installment'));
  assert.ok(add);add.props.onClick();view.render();
  const amounts=all(view.tree,n=>n.type==='input'&&n.props.type==='number');
  assert.equal(amounts.length,2);
@@ -98,7 +98,7 @@ test('finalized versions do not render a mutable save action',async()=>{
 });
 test('workspace handles empty lists, and private API forbids guessed routes',async()=>{
  const calls=server({empty:true});
- const view=await loaded();assert.match(JSON.stringify(view.tree),/Nenhum contrato/);
+ const view=await loaded();assert.match(JSON.stringify(view.tree),/No contracts found/);
  await listContracts();assert.equal(calls.some(x=>x.path.endsWith('/workspace')),true);
 });
 test('API client enforces CSRF and only accepts genuine PDF mime types',async()=>{
