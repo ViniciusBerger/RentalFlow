@@ -92,7 +92,7 @@ test('booking details cancel deletion and permit editing the selected record',()
  let removed=false;
  const ui=mount(RentalDetailPopUp,{isOpen:true,rental,onClose:noop,onDelete:()=>removed=true,onEditSubmit:async()=>true,isSavingEdit:false,editError:null});
  let trash=find(ui.tree,n=>n.type?.name==='GenericButton'&&n.props.content==='');trash.props.onClick();ui.render();
- const cancel=find(ui.tree,n=>n.type?.name==='GenericButton'&&n.props.content==='cancel');cancel.props.onClick();ui.render();
+ const cancel=find(ui.tree,n=>n.type?.name==='GenericButton'&&n.props.content==='Cancel');cancel.props.onClick();ui.render();
  assert.equal(find(ui.tree,n=>n.type?.name==='GenericButton'&&n.props.content==='Delete'),null);
  assert.equal(removed,false);
  const edit=find(ui.tree,n=>n.type?.name==='GenericButton'&&n.props.content==='Edit Booking');edit.props.onClick();ui.render();
@@ -102,16 +102,16 @@ test('booking details cancel deletion and permit editing the selected record',()
 test('upcoming rental row action forwards the clicked booking and opens its details',()=>{
  const data={id:'r1',clientFirstName:'Ana',clientLastName:'Silva',startDate:'2026-11-01',endDate:'2026-11-03',guests:2,isActive:true};
  let received,open=false;
- const tree=NextRentals({rentals:[data],onSelectRental:x=>received=x,onOpenPopUp:()=>open=true,headerContent:'Next'});
+ const tree=mount(NextRentals,{rentals:[data],onSelectRental:x=>received=x,onOpenPopUp:()=>open=true,headerContent:'Next'}).tree;
  const row=find(tree,n=>n.type==='button'&&n.props.className==='rf-rental-row');assert.ok(row);row.props.onClick();
  assert.equal(received,data);assert.equal(open,true);
 });
 test('navigation active-state styles and mobile create action are wired',()=>{
- const sidebar=DesktopNavBar();
+ const sidebar=mount(DesktopNavBar).tree;
  const mainNav=find(sidebar,n=>n.type==='nav');const links=mainNav.props.children;
  assert.match(links[0].props.className({isActive:true}),/active/);
  assert.doesNotMatch(links[0].props.className({isActive:false}),/active/);
- const events=[];const mobile=MobileNavBar({onCreateClick:()=>events.push('create')});
+ const events=[];const mobile=mount(MobileNavBar,{onCreateClick:()=>events.push('create')}).tree;
  const btn=find(mobile,n=>n.type==='button'&&n.props['aria-label']==='Create booking');btn.props.onClick();
  assert.deepEqual(events,['create']);
 });

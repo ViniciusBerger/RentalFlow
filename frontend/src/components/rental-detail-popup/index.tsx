@@ -5,6 +5,8 @@ import { DetailGrid } from './components/detail-grid';
 import { useState } from 'react';
 import { GenericButton } from '../buttons/generic-button';
 import EditRentalPopUp from '../edit-rental-popup';
+import { useLanguage } from "../../i18n/context";
+import { localizeError } from "../../i18n/messages";
 
 interface Rental {
   id: string;
@@ -38,6 +40,7 @@ export default function RentalDetailPopUp({
   isSavingEdit,
   editError,
 }: ModalProps) {
+  const {t,locale}=useLanguage();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Rental | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -76,14 +79,14 @@ export default function RentalDetailPopUp({
               <div className="flex items-center gap-2 text-slate-400">
                 <Clock size={14} />
                 <span className="text-[10px] font-bold uppercase tracking-tight">
-                  Ref ID: {rental.id.slice(0, 8)}
+                  {t("refId")}: {rental.id.slice(0, 8)}
                 </span>
               </div>
             </div>
 
             <div className="flex gap-3 pt-2">
               <GenericButton
-                content="Edit Booking"
+                content={t("editBooking")}
                 icon={<Edit3 size={18} />}
                 onClick={() => handleOpenEdit(rental)}
                 className="flex-1 py-4 bg-slate-900 text-white rounded-[24px] font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-[0.98] shadow-lg shadow-slate-200"
@@ -91,6 +94,7 @@ export default function RentalDetailPopUp({
 
               <GenericButton
                 content=""
+                ariaLabel={t("deleteBooking")}
                 icon={<Trash2 size={20} />}
                 onClick={() => { setDeleteError(null); setPendingDeleteId(rental.id); }}
                 className="w-16 h-14 bg-red-50 text-red-500 rounded-[24px] flex items-center justify-center hover:bg-red-100 transition-all active:scale-95 border border-red-100"
@@ -101,39 +105,39 @@ export default function RentalDetailPopUp({
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                 <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
                   <h3 className="mb-2 text-lg font-bold text-slate-800">
-                    Delete rental?
+                    {t("deleteRentalQuestion")}
                   </h3>
                   <p className="mb-6 text-sm text-slate-500">
-                    This action cannot be undone.
+                    {t("deleteCannotUndo")}
                   </p>
 
                   {deleteError && (
-                    <p role="alert" className="mb-4 text-sm text-red-600">{deleteError}</p>
+                    <p role="alert" className="mb-4 text-sm text-red-600">{localizeError(deleteError,locale,"couldNotDelete")}</p>
                   )}
                   <div className="flex gap-3">
                     <GenericButton
-                      content="cancel"
+                      content={t("cancel")}
                       onClick={() => setPendingDeleteId(null)}
                       className="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-700 font-semibold"
                     />
                     <GenericButton
-                      content="Delete"
+                      content={t("delete")}
                       onClick={async () => {
                         if (!onDelete || isDeleting) {
-                          setDeleteError("Unable to delete booking. Please try again.");
+                          setDeleteError(t("couldNotDelete"));
                           return;
                         }
                         setIsDeleting(true);
                         try {
                           const deleted = await onDelete(pendingDeleteId);
                           if (!deleted) {
-                            setDeleteError("Unable to delete booking. Please try again.");
+                            setDeleteError(t("couldNotDelete"));
                             return;
                           }
                           setPendingDeleteId(null);
                           onClose();
                         } catch {
-                          setDeleteError("Unable to delete booking. Please try again.");
+                          setDeleteError(t("couldNotDelete"));
                         } finally {
                           setIsDeleting(false);
                         }

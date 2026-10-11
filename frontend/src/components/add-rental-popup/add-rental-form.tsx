@@ -1,6 +1,8 @@
 import { AlertCircle, User } from "lucide-react";
 import { SubmitButton } from "../buttons/submit-button";
 import { TextInputFormDiv } from "../text-input-form";
+import { useLanguage } from "../../i18n/context";
+import { localizeError } from "../../i18n/messages";
 
 const emptyFormData = {
   clientFirstName: '',
@@ -18,17 +20,17 @@ export const AddRentalForm = ({
   error,
   isSaving,
   formData = emptyFormData,
-}: any) => (
+}: any) => { const {t,locale}=useLanguage();return (
   <form className="rf-booking-form space-y-6" onSubmit={handleSubmit}>
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
         <TextInputFormDiv
           type="text"
           name="clientFirstName"
-          placeholder="first name"
+          placeholder={t("firstName")}
           onChange={handleChange}
           value={formData.clientFirstName}
-          label="first name"
+          label={t("firstName")}
           icon={<User size={18} />}
         />
       </div>
@@ -37,10 +39,10 @@ export const AddRentalForm = ({
         <TextInputFormDiv
           type="text"
           name="clientLastName"
-          placeholder="Last name"
+          placeholder={t("lastName")}
           onChange={handleChange}
           value={formData.clientLastName}
-          label="last name"
+          label={t("lastName")}
           icon={<User size={18} />}
         />
       </div>
@@ -49,10 +51,11 @@ export const AddRentalForm = ({
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">
-          Check In
+          {t("checkIn")}
         </label>
         <input
           type="date"
+          aria-label={t("checkIn")}
           name="startDate"
           value={formData.startDate}
           onChange={handleChange}
@@ -62,10 +65,11 @@ export const AddRentalForm = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">
-          Check Out
+          {t("checkOut")}
         </label>
         <input
           type="date"
+          aria-label={t("checkOut")}
           name="endDate"
           value={formData.endDate}
           onChange={handleChange}
@@ -77,7 +81,7 @@ export const AddRentalForm = ({
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">
-          Total Revenue
+          {t("totalRevenue")}
         </label>
         <div className="relative">
           <span className="absolute left-4 top-3 font-bold text-sage-600">R$</span>
@@ -95,7 +99,7 @@ export const AddRentalForm = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">
-          Total Fees
+          {t("totalFees")}
         </label>
         <div className="relative">
           <span className="absolute left-4 top-3 font-bold text-sage-600">R$</span>
@@ -114,7 +118,7 @@ export const AddRentalForm = ({
 
     <div className="space-y-2">
       <label className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">
-        Guests
+        {t("guests")}
       </label>
       <div className="relative">
         <input
@@ -133,10 +137,10 @@ export const AddRentalForm = ({
     {error && (
       <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 animate-in fade-in slide-in-from-top-1">
         <AlertCircle size={16} className="flex-shrink-0" />
-        <p className="text-xs font-bold leading-tight">{error}</p>
+        <p className="text-xs font-bold leading-tight">{localizeError(error,locale)}</p>
       </div>
     )}
 
-    <SubmitButton type="submit" isLoading={isSaving} context="Create booking" />
+    <SubmitButton type="submit" isLoading={isSaving} context={t("createBookingShort")} />
   </form>
-);
+);};

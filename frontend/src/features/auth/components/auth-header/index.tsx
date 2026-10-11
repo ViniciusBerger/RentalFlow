@@ -1,6 +1,7 @@
 import { Home } from "lucide-react";
+import { useLanguage } from "../../../../i18n/context";
 
-export const Header = ()=> (
+export const Header = ()=> { const {t}=useLanguage();return (
     <div className="flex flex-col items-center md:items-start mb-8">
           {/* Horizontal Branding Lockup */}
           <div className="flex items-center gap-4 mb-8">
@@ -13,8 +14,8 @@ export const Header = ()=> (
           </div>
 
           <header className="text-center md:text-left">
-            <h2 className="text-4xl font-black text-slate-900 leading-tight">Welcome back</h2>
-            <p className="text-sm font-bold text-slate-400 mt-2">Enter your credentials to manage your stays.</p>
+            <h2 className="text-4xl font-black text-slate-900 leading-tight">{t("signInWelcome")}</h2>
+            <p className="text-sm font-bold text-slate-400 mt-2">{t("signInDescription")}</p>
           </header>
     </div>
-)
+);}

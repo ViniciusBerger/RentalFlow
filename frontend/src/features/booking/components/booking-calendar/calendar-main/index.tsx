@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../../i18n/context";
+import { getWeekdays } from "../../../../../i18n/messages";
 import { calendarDisplay, normalizeRentalDates} from "../../../service/calendar-service";
 
 interface ICalendarMainProps {
@@ -5,18 +7,12 @@ interface ICalendarMainProps {
   viewDate: Date
 }
 
-const weekdays = [
-  { full: "Sunday", short: "Sun", mobile: "S" },
-  { full: "Monday", short: "Mon", mobile: "M" },
-  { full: "Tuesday", short: "Tue", mobile: "T" },
-  { full: "Wednesday", short: "Wed", mobile: "W" },
-  { full: "Thursday", short: "Thu", mobile: "T" },
-  { full: "Friday", short: "Fri", mobile: "F" },
-  { full: "Saturday", short: "Sat", mobile: "S" },
-];
+
 
 
 export const CalendarMain = ({ viewDate, rentals }: ICalendarMainProps) => {
+  const {locale}=useLanguage();
+  const weekdays=getWeekdays(locale);
   
   const normalizedRentals = rentals.map((r) => normalizeRentalDates(r)); // normalize to local midnight
   const year = viewDate.getFullYear();
@@ -60,7 +56,7 @@ export const CalendarMain = ({ viewDate, rentals }: ICalendarMainProps) => {
 
             {/* Layer 2: The Rental Bars */}
             <div className="absolute inset-0 grid grid-cols-7 grid-rows-6 pointer-events-none">
-            {calendarDisplay(normalizedRentals, viewDate)}
+            {calendarDisplay(normalizedRentals, viewDate, locale)}
             </div>
         </div>
     </div>

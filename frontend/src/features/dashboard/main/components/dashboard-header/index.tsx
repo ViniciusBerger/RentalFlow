@@ -1,2 +1,3 @@
+import { useLanguage } from "../../../../../i18n/context";
 interface IHeaderProps {username:{firstName?:string;lastName?:string}|null}
-export const Header=({username}:IHeaderProps)=><div className="rf-greeting"><div><p className="rf-eyebrow">FINANCIAL OVERVIEW</p><h2>Welcome back, {username?.firstName?.trim()||"Host"}<span className="rf-greeting-dot">.</span></h2><p>Here is how your rentals are performing.</p></div><span className="rf-greeting-tag">Live account overview</span></div>;
+export const Header=({username}:IHeaderProps)=>{const { t }=useLanguage(); return <div className="rf-greeting"><div><p className="rf-eyebrow">{t("dashboardHeading")}</p><h2>{t("welcomeBack")} {username?.firstName?.trim()||t("host")}<span className="rf-greeting-dot">.</span></h2><p>{t("dashboardDescription")}</p></div><span className="rf-greeting-tag">{t("liveOverview")}</span></div>; };

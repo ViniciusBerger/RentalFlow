@@ -3,8 +3,12 @@ import { User, Home } from "lucide-react";
 import { useAuth } from "../../hooks/auth/useAuth";
 import { Footer } from "../../components/footer";
 import { SubmitButton } from "../../components/buttons/submit-button";
+import { LanguageSwitcher } from "../../i18n/language";
+import { useLanguage } from "../../i18n/context";
+import { localizeError } from "../../i18n/messages";
 
 export default function CompleteProfilePage() {
+  const {t,locale}=useLanguage();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -26,6 +30,7 @@ export default function CompleteProfilePage() {
   return (
     <div className="rf-onboarding min-h-screen w-full bg-[#EEF2F1] flex items-center justify-center px-6 py-10 font-sans">
       <div className="w-full max-w-[620px] rf-onboarding-card">
+        <div className="flex justify-end mb-3"><LanguageSwitcher /></div>
         <div className="mb-10 flex items-center gap-4">
           <div className="h-14 w-14 rounded-2xl bg-white shadow-[0_4px_14px_rgba(15,23,42,0.12)] border border-slate-100 flex items-center justify-center">
             <Home className="h-6 w-6 text-[#5DA88A] fill-[#5DA88A]" />
@@ -37,10 +42,10 @@ export default function CompleteProfilePage() {
 
         <div className="mb-8">
           <h2 className="text-[3rem] leading-none font-extrabold tracking-[-0.04em] text-[#09183F]">
-            Complete profile
+            {t("completeProfile")}
           </h2>
           <p className="mt-3 text-[1.1rem] font-semibold text-[#94A3C4]">
-            Finish setting up your account to manage your stays.
+            {t("completeProfileDescription")}
           </p>
         </div>
 
@@ -49,7 +54,7 @@ export default function CompleteProfilePage() {
             <User className="h-5 w-5 text-[#B7C5D8]" />
             <input
               type="text"
-              placeholder="First name"
+              placeholder={t("firstName")} aria-label={t("firstName")}
               value={form.firstName}
               onChange={handleChange("firstName")}
               className="w-full bg-transparent outline-none text-[#09183F] placeholder:text-[#B7C5D8] text-lg font-medium"
@@ -60,7 +65,7 @@ export default function CompleteProfilePage() {
             <User className="h-5 w-5 text-[#B7C5D8]" />
             <input
               type="text"
-              placeholder="Last name"
+              placeholder={t("lastName")} aria-label={t("lastName")}
               value={form.lastName}
               onChange={handleChange("lastName")}
               className="w-full bg-transparent outline-none text-[#09183F] placeholder:text-[#B7C5D8] text-lg font-medium"
@@ -68,11 +73,11 @@ export default function CompleteProfilePage() {
           </div>
 
           {error && (
-            <p className="px-1 text-sm font-medium text-red-500">{error}</p>
+            <p className="px-1 text-sm font-medium text-red-500">{localizeError(error,locale,"profileFailed")}</p>
           )}
 
             {/* Submit Button */}
-            <SubmitButton type={"submit"} isLoading={isLoading} context={">"}/>
+            <SubmitButton type={"submit"} isLoading={isLoading} context={t("continue")}/>
         </form>
 
         <Footer/>

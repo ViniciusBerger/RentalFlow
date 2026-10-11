@@ -42,7 +42,7 @@ test('optional label and input value defaults do not cause uncontrolled form mar
 test('button loading and display states include disabled and customizable labels',()=>{
  const loading=ssr(SubmitButton,{type:'submit',isLoading:true,context:'Save'});
  const normal=ssr(SubmitButton,{type:'submit',isLoading:false,context:'Save'});
- assert.match(loading,/loading\.\.\./);assert.match(loading,/disabled/);
+ assert.match(loading,/Loading\.\.\./);assert.match(loading,/disabled/);
  assert.match(normal,/Save/);assert.doesNotMatch(normal,/disabled/);
  assert.match(ssr(GenericButton,{content:'Edit'}),/Edit/);
  assert.match(ssr(GenericButton,{content:'Edit',className:'custom-button'}),/custom-button/);
@@ -58,7 +58,7 @@ test('next booking dates tolerate empty and complete ISO timestamps',()=>{
  assert.match(html,/0 guests/);assert.match(html,/—/);assert.match(html,/Nov/);
 });
 test('mobile navigation supports both active and inactive states',()=>{
- const nav=MobileNavBar({onCreateClick:noop});const links=nav.props.children.filter(Boolean).filter(x=>x.type?.name==='NavLink'||x.props?.to);
+ const nav=mount(MobileNavBar,{onCreateClick:noop}).tree;const links=nav.props.children.filter(Boolean).filter(x=>x.type?.name==='NavLink'||x.props?.to);
  assert.equal(links.length,2);
  for(const link of links){assert.match(link.props.className({isActive:true}),/active/);assert.doesNotMatch(link.props.className({isActive:false}),/active/)}
 });

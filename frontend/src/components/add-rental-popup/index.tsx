@@ -1,8 +1,10 @@
 import { useState, } from 'react'
 import { AddRentalForm } from './add-rental-form';
 import { CloseButton } from '../buttons/close-button';
+import { useLanguage } from "../../i18n/context";
 
 export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, error }: { onSubmit: any,isSaving: boolean, error: any, isOpen: boolean, onClose: () => void }) {
+  const {t}=useLanguage();
 
   const [formData, setFormData] = useState({
     clientFirstName: '',
@@ -57,7 +59,7 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
         
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-black text-slate-800">Create a booking</h2>
+          <h2 className="text-2xl font-black text-slate-800">{t("createBooking")}</h2>
           <CloseButton onClose={onClose}/>
         </div>
 

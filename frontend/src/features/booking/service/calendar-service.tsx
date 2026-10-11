@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { translate, type Locale } from "../../../i18n/messages";
 
 // Helper: normalize a date to local midnight
 const toLocalMidnight = (d: Date | string) => {
@@ -42,7 +43,7 @@ export const buildRentalDiff = (original: any, updated: any) => {
 
 
 // Calendar rental rendering logic 
-export const calendarDisplay = (rentals: any[], viewDate: Date) => {
+export const calendarDisplay = (rentals: any[], viewDate: Date, locale: Locale = "en") => {
     const firstDayOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
     const firstDayIndex = firstDayOfMonth.getDay();
     const calendarStartDate = toLocalMidnight(new Date(viewDate.getFullYear(), viewDate.getMonth(), 1 - firstDayIndex));
@@ -76,7 +77,7 @@ export const calendarDisplay = (rentals: any[], viewDate: Date) => {
 
                     <span className="text-[8px] sm:text-[10px] font-black uppercase truncate">
                         {/* Show the ACTUAL nights (e.g., 3) even if the bar spans 4 cells */}
-                        {`${rental.clientFirstName} / ${totalDaysToShow - 1} nights`}
+                        {`${rental.clientFirstName} / ${totalDaysToShow - 1} ${translate(locale,totalDaysToShow - 1 === 1 ? "nightSingular" : "nightPlural")}`}
                     </span>
                 </div>
         );

@@ -8,8 +8,11 @@ import { useRentalActions } from "../hooks/rental-actions/useRentalActions";
 import { UseLoadData } from "../hooks/load-data/useLoadData";
 import { DashboardErrorState } from "../components/error-state";
 import { LoadingState } from "../components/loading-state";
+import { LanguageSwitcher } from "../i18n/language";
+import { useLanguage } from "../i18n/context";
 
 export const AppLayout = () => {
+  const { t } = useLanguage();
   const { pathname } = useLocation();
   const isBookings = pathname.startsWith("/bookings");
   const [isAddRentalOpen, setIsAddRentalOpen] = useState(false);
@@ -42,16 +45,17 @@ export const AppLayout = () => {
 
   return (
      <div className="rf-app min-h-screen flex font-sans">
-      <a href="#main-content" className="rf-skip">Skip to content</a>
+      <a href="#main-content" className="rf-skip">{t("skipContent")}</a>
       <DesktopNavBar />
 
       <main className="rf-main flex-1 min-w-0" id="main-content">
         <header className="rf-topbar">
-          <div><p className="rf-eyebrow">RentalFlow / Workspace</p><h1 className="rf-title">{isBookings ? "Bookings & calendar" : "Overview"}</h1><p className="rf-subtitle">{isBookings ? "Manage reservations and upcoming stays." : "Your rental business, at a glance."}</p></div>
+          <div><p className="rf-eyebrow">RentalFlow / {t("workspace")}</p><h1 className="rf-title">{isBookings ? t("bookingsAndCalendar") : t("overview")}</h1><p className="rf-subtitle">{isBookings ? t("manageStays") : t("businessAtGlance")}</p></div>
           <div className="rf-top-actions">
-            <Link to="/dashboard" className={'rf-pill '+(!isBookings?'selected':'')}><LayoutDashboard size={17}/> Overview</Link>
-            <Link to="/bookings" className={'rf-pill '+(isBookings?'selected':'')}><CalendarDays size={17}/> Bookings</Link>
-            <button className="rf-button" onClick={handleOpenAddRental}><Plus size={18}/> New booking</button>
+            <LanguageSwitcher />
+            <Link to="/dashboard" className={'rf-pill '+(!isBookings?'selected':'')}><LayoutDashboard size={17}/> {t("overview")}</Link>
+            <Link to="/bookings" className={'rf-pill '+(isBookings?'selected':'')}><CalendarDays size={17}/> {t("bookings")}</Link>
+            <button className="rf-button" onClick={handleOpenAddRental}><Plus size={18}/> {t("newBooking")}</button>
           </div>
         </header>
         <div className="rf-page"><Outlet /></div>

@@ -1,7 +1,8 @@
 import { CheckCircle2 } from "lucide-react";
 import { AvatarInitials } from "../../../avatar-initials";
+import { useLanguage } from "../../../../i18n/context";
 
-export const RentalDetailHeader = ({rental}: any)=> (
+export const RentalDetailHeader = ({rental}: any)=> {const {t}=useLanguage();return (
     <div className="bg-sage-50 p-8 pt-12">
           <div className="flex items-center gap-5">
               <AvatarInitials firstName={rental.clientFirstName} lastName={rental.clientLastName}/>
@@ -10,7 +11,7 @@ export const RentalDetailHeader = ({rental}: any)=> (
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white w-fit shadow-sm border border-sage-100">
                       <CheckCircle2 size={12} className={rental.isActive ? 'text-sage-500' : 'text-amber-500'} />
                       <span className={`text-[10px] font-black uppercase tracking-widest ${rental.isActive ? 'text-sage-600' : 'text-amber-600'}`}>
-                        {rental.isActive ? 'Confirmed Stay' : 'Await Confirmation'}
+                        {rental.isActive ? t("confirmedStay") : t("awaitConfirmation")}
                       </span>
                   </div>
                   
@@ -20,4 +21,4 @@ export const RentalDetailHeader = ({rental}: any)=> (
               </div>
           </div>
       </div>
-)
+);}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AddRentalForm } from '../add-rental-popup/add-rental-form';
 import { CloseButton } from '../buttons/close-button';
+import { useLanguage } from "../../i18n/context";
 
 type RentalData = {
   clientFirstName: string;
@@ -28,6 +29,7 @@ export default function EditRentalPopUp({
   onClose: () => void;
   rental: Partial<RentalData> | null;
 }) {
+  const {t}=useLanguage();
   const [formData, setFormData] = useState<RentalData>({
   clientFirstName: '',
   clientLastName: '',
@@ -102,7 +104,7 @@ export default function EditRentalPopUp({
 
       <div className="relative w-full max-w-lg rounded-t-[32px] bg-white p-8 shadow-2xl animate-in slide-in-from-bottom duration-300 md:rounded-[32px] md:zoom-in-95">
         <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-black text-slate-800">Edit Rental</h2>
+          <h2 className="text-2xl font-black text-slate-800">{t("editRental")}</h2>
           <CloseButton onClose={onClose} />
         </div>
 
