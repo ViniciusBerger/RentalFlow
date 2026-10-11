@@ -276,3 +276,15 @@ test('refresh request failures keep the existing contracts visible with an error
  assert.match(JSON.stringify(view.tree),/Temporary network failure/);
  assert.ok(find(view.tree,n=>n.type==='button'&&String(n.props.className).includes('rf-contract-workspace-item')));
 });
+
+test('property selection and guest search filter contracts on the client without changing stored records',async()=>{
+ server();const view=await loaded();
+ const filters=all(view.tree,n=>n.type==='select');
+ const property=filters.find(n=>n.props.value==='ALL'&&JSON.stringify(n.props.children).includes('Casa Teste'));
+ assert.ok(property);property.props.onChange({target:{value:'00000000-0000-4000-8000-000000000000'}});
+ view.render();
+ assert.match(JSON.stringify(view.tree),/No contracts found/);
+ const next=all(view.tree,n=>n.type==='select').find(n=>n.props.value==='00000000-0000-4000-8000-000000000000');
+ next.props.onChange({target:{value:'ALL'}});view.render();
+ assert.ok(find(view.tree,n=>n.type==='button'&&String(n.props.className).includes('rf-contract-workspace-item')));
+});
