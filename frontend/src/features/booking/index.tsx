@@ -9,8 +9,10 @@ import RentalDetailPopUp from '../../components/rental-detail-popup';
 import { DashboardErrorState } from '../../components/error-state';
 import { LoadingState } from '../../components/loading-state';
 import { buildRentalDiff } from './service/calendar-service';
+import { useLanguage } from "../../i18n/context";
 
 export const BookingsPage = () => {
+    const {t}=useLanguage();
     const {nextRentals, isLoading, loadRentals } = UseLoadData()
     const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions(loadRentals)
     
@@ -46,21 +48,21 @@ export const BookingsPage = () => {
       const changedFields = buildRentalDiff(selectedRental, formData);
 
       if (Object.keys(changedFields).length === 0) {
-        setEditError("No changes to save");
+        setEditError(t("noChanges"));
         return false;
       }
 
       const success = await updateRentalAndRefresh(selectedRental.id, changedFields);
 
       if (!success) {
-        setEditError("Failed to update rental");
+        setEditError(t("updateFailed"));
         return false;
       }
 
       setIsRentalDetailPopUpOpen(false);
       return true;
     } catch (err: any) {
-      setEditError(err || "Failed to update rental");
+      setEditError(err || t("updateFailed"));
       return false;
     } finally {
       setIsSavingEdit(false);
@@ -85,7 +87,7 @@ export const BookingsPage = () => {
             <NextRentals 
                 onOpenPopUp={() => setIsRentalDetailPopUpOpen(true)}
                 onSelectRental={(rental) => setSelectedRental(rental)}
-                headerContent='Next Rentals'
+                headerContent={t("nextRentals")}
                 rentals={nextRentals}
                 />
 
