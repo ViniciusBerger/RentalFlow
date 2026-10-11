@@ -77,3 +77,68 @@ describe('server-only contract draft preview',()=>{
   expect(pdf.toString('latin1')).toMatch(/\/Count [2-9][0-9]* /);
  });
 });
+
+describe('draft placeholder branch and payment variations',()=>{
+ const withBody=(body:string)=>{
+  const data=fixture();
+  data.template=clauses.map((c,i)=>({...c,body:i===0?body:c.body}));
+  return data;
+ };
+ it('marks missing landlord and property data without inventing identities or rates',()=>{
+  const input=withBody('Locador: {{locador.nome}}; CPF {{locador.cpf}}; endereço {{locador.endereco}}; taxa {{imovel.taxa_extra}}.');
+  input.landlord=null;input.propertyRules.extraGuestRateCents=null;
+  const out=renderContractPreview(input);
+  expect(out.ready).toBe(false);
+  expect(out.missing).toEqual(expect.arrayContaining([
+   'locador.nome','locador.cpf','locador.endereco','imovel.taxa_extra'
+  ]));
+  expect(out.clauses[0].body).toContain('[PENDENTE: imovel.taxa_extra]');
+ });
+ it('renders a complete owner address and zero extra-guest fees correctly',()=>{
+  const input=withBody('Endereço: {{locador.endereco}}; taxa {{imovel.taxa_extra}}.');
+  input.landlord={...input.landlord,addressStreet:'Rua das Flores',addressNumber:'10',
+   addressComplement:'Apt 2',addressDistrict:'Centro',addressCity:'Vitória',
+   addressState:'ES',addressPostalCode:'29000-000'};
+  input.propertyRules.extraGuestRateCents=0;
+  const out=renderContractPreview(input);
+  expect(out.ready).toBe(true);
+  expect(out.clauses[0].body).toContain('Rua das Flores, 10, Apt 2, Centro, Vitória, ES');
+  expect(out.clauses[0].body).toContain('0,00');
+ });
+ it('shows both explicit payment dates and missing event due rules',()=>{
+  const input=withBody('Parcelas: {{reserva.parcelas}}; sinal: {{reserva.sinal}}.');
+  input.installments=[
+   {sequence:1,agreedCents:10000,dueDate:'2027-01-01',isDeposit:false},
+   {sequence:2,agreedCents:30000,isDeposit:false}
+  ];
+  const out=renderContractPreview(input);
+  expect(out.ready).toBe(true);
+  expect(out.clauses[0].body).toContain('2027-01-01');
+  expect(out.clauses[0].body).toContain('vencimento pendente');
+  expect(out.clauses[0].body).toContain('Sem sinal identificado');
+ });
+ it('empty installments and missing guest fields are disclosed rather than silently completed',()=>{
+  const input=withBody('Parcelas {{reserva.parcelas}}; telefone {{locatario.telefone}}; e-mail {{locatario.email}}.');
+  input.installments=[];input.guest={};
+  const out=renderContractPreview(input);
+  expect(out.ready).toBe(false);
+  expect(out.missing).toEqual(expect.arrayContaining(['reserva.parcelas','locatario.telefone','locatario.email']));
+ });
+ it('allows literal zero policy values and marks undefined policy fields only when referenced',()=>{
+  const input=withBody('Multa {{politica.multa_danos}}, prazo {{politica.cancelamento_dias}}, foro {{foro.cidade_estado}}.');
+  input.policy={damagePenaltyPercent:0,jurisdiction:'Vitória/ES'};
+  const out=renderContractPreview(input);
+  expect(out.ready).toBe(false);
+  expect(out.missing).toContain('politica.cancelamento_dias');
+  expect(out.missing).not.toContain('politica.multa_danos');
+  expect(out.clauses[0].body).toContain('Multa 0');
+ });
+ it('blank guest names and unavailable check-in values remain pending only when used',()=>{
+  const input=withBody('Locatário {{locatario.nome}}; check-in {{imovel.entrada}}.');
+  input.rental.clientFirstName='';input.rental.clientLastName='';
+  input.propertyRules.checkInTime=null;
+  const out=renderContractPreview(input);
+  expect(out.missing).toEqual(expect.arrayContaining(['locatario.nome','imovel.entrada']));
+  expect(out.ready).toBe(false);
+ });
+});
