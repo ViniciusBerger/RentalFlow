@@ -19,14 +19,14 @@ async function bootstrap() {
 
   app.useGlobalPipes(validationPipe)
   app.useGlobalFilters(new GlobalExceptionFilter());
-  setupSwagger(app);
+  if (process.env.NODE_ENV !== 'production') setupSwagger(app);
 
 
   const allowedOrigins = [
   'https://rentalflow.club',
   'https://www.rentalflow.club',
   process.env.FRONTEND_URL,
-  'http://localhost:5173',
+  ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:5173']),
 ].filter((origin): origin is string => Boolean(origin));
 
   app.use((_req, res, next) => {

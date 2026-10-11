@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Param, Req, Res, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Req, Res, UseGuards, NotFoundException } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from '../adapters/guards/auth.guard';
 import { OnboardingGuard } from '../adapters/guards/onboarding.guard';

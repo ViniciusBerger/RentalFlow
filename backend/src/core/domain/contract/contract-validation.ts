@@ -25,7 +25,7 @@ export function verifyInstallments(totalCents: number, amounts: readonly number[
       amounts.reduce((a,b)=>a+b,0) !== totalCents) throw new Error('Installments must exactly total the agreed amount');
 }
 export function validateBrazilianCpf(value: string): boolean {
-  const cpf = value.replace(/[.\-\s]/g,'');
+  const cpf = value.replace(/[.-\s]/g,'');
   if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
   const digit = (n:number) => {
     const sum = cpf.slice(0,n).split('').reduce((s,ch,i)=>s+Number(ch)*(n+1-i),0);
@@ -39,10 +39,10 @@ export type ContractingGuest = {fullName:string; cpf:string; rg:string; national
 export function verifyGuestFinalization(guest: ContractingGuest): void {
   if (!guest || typeof guest.fullName!=='string' || guest.fullName.trim().length<3 ||
       !validateBrazilianCpf(guest.cpf??'') || typeof guest.rg!=='string' ||
-      !/^[A-Za-z0-9.\-]{4,20}$/.test(guest.rg.trim()) ||
+      !/^[A-Za-z0-9.-]{4,20}$/.test(guest.rg.trim()) ||
       guest.nationality !== 'BR' || !['SOLTEIRO','CASADO','DIVORCIADO','VIUVO','UNIAO_ESTAVEL','SEPARADO'].includes(guest.maritalStatus) ||
       typeof guest.address!=='string' || guest.address.trim().length<10 || guest.address.length>500 ||
-      typeof guest.phone!=='string' || !/^\+?\d[\d\s()\-]{8,20}$/.test(guest.phone) ||
+      typeof guest.phone!=='string' || !/^\+?\d[\d\s()-]{8,20}$/.test(guest.phone) ||
       typeof guest.email!=='string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email) || guest.email.length>254) {
     throw new Error('Required Brazilian contracting guest information is missing or invalid');
   }
