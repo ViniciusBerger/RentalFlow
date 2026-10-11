@@ -110,6 +110,7 @@ export class ContractBookingService {
    catch{throw new BadRequestException('Invalid occupancy or extra-guest rate');}
    try{verifyInstallments(quote.totalCents,draft.installments?.map(x=>x.agreedCents)??[quote.totalCents]);}
    catch{throw new BadRequestException('Installments must total agreed booking amount');}
+   if(draft.paymentDueEvent&&draft.paymentDueDate)throw new BadRequestException('Only one default due rule allowed');
    for(const item of draft.installments??[]){
     if(item.dueDate&&item.dueEvent)throw new BadRequestException('Only one due rule per installment');
     if(item.dueDate&&(!/^\d{4}-\d{2}-\d{2}$/.test(item.dueDate)||
@@ -146,7 +147,7 @@ export class ContractBookingService {
      identityKeyVersion:sealed.keyVersion
     });
    }
-   const schedule=draft.installments?.length?draft.installments:[{agreedCents:quote.totalCents}];
+   const schedule=draft.installments?.length?draft.installments:[{agreedCents:quote.totalCents,paymentMethod:draft.paymentMethod,dueEvent:draft.paymentDueEvent,dueDate:draft.paymentDueDate}];
    await tx.insert(RentalInstallmentSchema).values(schedule.map((item,index)=>({
     rentalId:rental.id,userId:uid,sequence:index+1,agreedCents:item.agreedCents,
     dueDate:'dueDate' in item?item.dueDate:undefined,

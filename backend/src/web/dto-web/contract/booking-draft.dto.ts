@@ -27,5 +27,8 @@ export class BookingDraftDto {
  @IsInt() @Min(0) @Max(1_000_000_000) baseRevenueCents:number;
  @IsOptional() @ValidateNested() @Type(()=>GuestDraftDto) guest?:GuestDraftDto;
  @IsOptional() @ValidateNested() @Type(()=>GuestFeeDto) guestFee?:GuestFeeDto;
+ @IsOptional() @IsIn(['PIX','BANK_TRANSFER','CUSTOM']) paymentMethod?:string;
+ @IsOptional() @IsIn(['CHECKIN','KEY_HANDOVER','AGREED_EVENT']) paymentDueEvent?:string;
+ @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) paymentDueDate?:string;
  @IsOptional() @ValidateNested({each:true}) @Type(()=>InstallmentDto) installments?:InstallmentDto[];
 }
