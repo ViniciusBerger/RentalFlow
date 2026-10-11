@@ -1,5 +1,8 @@
 import {requireSessionCsrf,sessionCsrfToken} from './csrf-session';
 describe('session-bound CSRF',()=>{
+ const previous=process.env.CSRF_TOKEN_ENFORCEMENT;
+ beforeEach(()=>{process.env.CSRF_TOKEN_ENFORCEMENT='true';});
+ afterAll(()=>{if(previous===undefined)delete process.env.CSRF_TOKEN_ENFORCEMENT;else process.env.CSRF_TOKEN_ENFORCEMENT=previous;});
  function req(method:string,headers:Record<string,string>={},path='/rental/update'): any {
   return {method,path,cookies:{'__Host-access_token':'signed.random.high.entropy.sample.token'},get:(key:string)=>headers[key.toLowerCase()]};
  }
@@ -16,6 +19,10 @@ describe('session-bound CSRF',()=>{
   const other=req('PATCH',{'x-csrf-token':sessionCsrfToken(req('GET'))!});
   other.cookies['__Host-access_token']='another session with sufficient entropy';
   expect(run(other).response.status).toHaveBeenCalledWith(403);
+ });
+ it('keeps existing requests functional during zero-downtime rolling deployments',()=>{
+  process.env.CSRF_TOKEN_ENFORCEMENT='false';
+  expect(run(req('PATCH')).next).toHaveBeenCalled();
  });
  it('allows safe requests and login bootstrap but not unauthenticated writes',()=>{
   expect(run(req('GET')).next).toHaveBeenCalled();

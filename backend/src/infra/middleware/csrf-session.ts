@@ -11,6 +11,9 @@ export function sessionCsrfToken(req: Pick<Request,'cookies'>): string | undefin
   return createHmac('sha256',Buffer.from(session)).update('rentalflow:csrf:v1').digest('base64url');
 }
 export function requireSessionCsrf(req: Request,res: Response,next: NextFunction): void {
+  // Opt-in after both API and SPA are live; old SPA cannot send CSRF headers.
+  // Trusted Origin/Fetch-Metadata protection remains active during rollout.
+  if (process.env.CSRF_TOKEN_ENFORCEMENT !== 'true') { next();return; }
   if (!['POST','PUT','PATCH','DELETE'].includes(req.method) || req.path==='/auth/login') { next();return; }
   const expected=sessionCsrfToken(req);
   if (!expected) { next();return; } // authentication guards still reject missing sessions
