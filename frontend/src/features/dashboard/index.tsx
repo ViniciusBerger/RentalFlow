@@ -6,9 +6,11 @@ import RentalDetailPopUp from "../../components/rental-detail-popup";
 import { useRentalActions } from "../../hooks/rental-actions/useRentalActions";
 import { UseLoadData } from "../../hooks/load-data/useLoadData";
 import { LoadingState } from "../../components/loading-state";
+import { useLanguage } from "../../i18n/context";
 
 
 export const Dashboard = () => {
+  const {t}=useLanguage();
   const { balances, nextRentals, isLoading, userData, loadData } = UseLoadData();
   const { isSaving, error: actionError, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh } = // 
     useRentalActions(loadData);
@@ -32,14 +34,14 @@ export const Dashboard = () => {
 
       const updated = await updateRentalAndRefresh(selectedRental.id, formData);
       if (!updated) {
-        setEditError('Failed to update rental');
+        setEditError(t("updateFailed"));
         return false;
       }
       setIsRentalDetailPopUpOpen(false);
 
       return true;
     } catch (err: any) {
-      setEditError(err?.message || "Failed to update rental");
+      setEditError(err?.message || t("updateFailed"));
       return false;
     } finally {
       setIsSavingEdit(false);
@@ -51,7 +53,7 @@ export const Dashboard = () => {
   if (!userData) {
   return (
     <DashboardErrorState
-      message="User profile could not be loaded."
+      message={t("profileNotLoaded")}
       onRetry={() => {
         loadData();
       }}
