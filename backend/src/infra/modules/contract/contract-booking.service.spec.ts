@@ -31,7 +31,7 @@ function mockDatabase(answers:any[]) {
   }})),
   update:jest.fn(()=>({set:()=>({where:jest.fn().mockResolvedValue([])})}))
  };
- const db:any={transaction:jest.fn(cb=>cb(tx))};
+ const db:any={transaction:jest.fn(cb=>cb(tx)),select:tx.select};
  return {db,tx,recorded};
 }
 
