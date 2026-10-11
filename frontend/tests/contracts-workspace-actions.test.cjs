@@ -28,7 +28,7 @@ const data=(editable=true)=>({
   clauses:[{id:'1',title:'Contrato de teste',body:'Texto aprovado de teste'}]}
 });
 const response=(value)=>({ok:true,status:200,json:async()=>value,
- blob:async()=>new Blob(['%PDF-1.4\npreview\n%%EOF'],{type:'application/pdf'})});
+ blob:async()=>new Blob(['%PDF-1.4\nprivate watermark draft PDF preview contents\n%%EOF'],{type:'application/pdf'})});
 const oldFetch=global.fetch,oldWindow=global.window,oldDocument=global.document;
 const pause=()=>new Promise(r=>setImmediate(r));
 const find=(node,fn)=>!node||typeof node!=='object'?null:
