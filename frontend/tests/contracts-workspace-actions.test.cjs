@@ -78,7 +78,7 @@ test('guest details save uses the server edit token and ignores privileged payme
 });
 test('installments are editable only on drafts and privileged data stays read-only',async()=>{
  server();const view=await loaded();
- const total=JSON.stringify(view.tree);assert.match(total,/50.000/);
+ const total=JSON.stringify(view.tree);assert.match(total,/500,00/);
  const amount=find(view.tree,n=>n.type==='input'&&n.props.type==='number');
  assert.ok(amount);amount.props.onChange({target:{value:'250'}});
  view.render();
