@@ -29,6 +29,13 @@
       "when": 1791720000000,
       "tag": "0003_properties_and_scoped_bookings",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791726000000,
+      "tag": "0004_contract_foundations",
+      "breakpoints": true
     }
   ]
 }
