@@ -89,7 +89,7 @@ describe('additional contractual validation security boundaries',()=>{
  const policy={...defaultPolicy,jurisdiction:'Vitória/ES'};
  const source=():ContractClause[]=>emptyContractClauses().map(c=>({...c,body:'Texto original conferido e validado pelo locador.'}));
  it('rejects unknown or duplicated ID schemes, control characters and empty headings',()=>{
-  for(const [id,title] of [['17','Title'],['extra-INVALID!!','Title'],['annex','Title'],['1','X'],['1','Control\\u0000']]){
+  for(const [id,title] of [['17','Title'],['extra-INVALID!!','Title'],['annex','Title'],['1','X'],['1','Control'+String.fromCharCode(0)]]){
    const input=source();if(id==='annex')input[0].id=id;else if(id==='1')input[0].title=title;else input[0].id=id;
    expect(()=>validateClauses(input)).toThrow();
   }
