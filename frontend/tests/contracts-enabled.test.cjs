@@ -250,3 +250,36 @@ test('payment method changes and property read failures do not invalidate a prev
  step(view,4);
  assert.equal(all(view.tree,n=>n.type==='details').length,17);
 });
+
+test('property-settings fetch rejection is shown rather than being interpreted as a saved configuration',async()=>{
+ const calls=api();const view=await loaded();
+ const originalFetch=global.fetch;
+ global.fetch=async(url,init)=>{
+  if(String(url).endsWith('/contracts/properties/550e8400-e29b-41d4-a716-446655440099/settings')&&!init?.method)
+   return makeResponse({message:'Not found'},404);
+  return originalFetch(url,init);
+ };
+ step(view,3);
+ const selector=all(view.tree,n=>n.type==='select')[0];
+ selector.props.onChange({target:{value:'550e8400-e29b-41d4-a716-446655440099'}});
+ view.render();await sleep();await sleep();view.render();
+ assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+ assert.equal(calls.some(x=>x.path.endsWith('/contracts/settings')),true);
+});
+test('failed template publication preserves draft and never claims approval',async()=>{
+ const calls=api({existing:true});const view=await loaded();
+ step(view,5);
+ const checkbox=find(view.tree,n=>n.type==='input'&&n.props.type==='checkbox');
+ checkbox.props.onChange({target:{checked:true}});view.render();
+ const oldFetch=global.fetch;
+ global.fetch=async(url,init)=>{
+  if(String(url).endsWith('/contracts/template/publish'))return makeResponse({message:'Approval denied'},409);
+  return oldFetch(url,init);
+ };
+ const oldWindow=global.window;global.window={confirm:()=>true};
+ try{await clickButton(view,'Publish template');}finally{global.window=oldWindow}
+ view.render();
+ assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+ assert.equal(calls.some(x=>x.path.endsWith('/contracts/template')),true);
+ assert.equal(all(view.tree,n=>n.type==='p').some(x=>String(x.props.children).includes('Latest published version')),true);
+});
