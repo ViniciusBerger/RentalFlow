@@ -51,8 +51,16 @@ const {Pool}=require('pg');
    "INSERT INTO rental_guest_details(rental_id,user_id) VALUES($1,'account-b')",[rental]);
   await denied('23503',
    "INSERT INTO rental_installments(rental_id,user_id,sequence,agreed_cents) VALUES($1,'account-b',1,52000)",[rental]);
+  // Separate owner-a contract avoids the one-open-revision unique index taking
+  // precedence over the account foreign key we are explicitly testing.
+  const otherRental=(await client.query(
+   "INSERT INTO rentals(user_id,property_id,first_name,last_name,start_date,end_date,number_of_guests,total_revenue,fee,profit) VALUES('account-a',$1,'Ana','Silva','2027-03-05','2027-03-07',2,300,30,270) RETURNING id",
+   [property])).rows[0].id;
+  const otherContract=(await client.query(
+   "INSERT INTO contracts(user_id,rental_id) VALUES('account-a',$1) RETURNING id",
+   [otherRental])).rows[0].id;
   await denied('23503',
-   "INSERT INTO contract_revisions(contract_id,user_id,version_number,status) VALUES($1,'account-b',2,'DRAFT')",[contract]);
+   "INSERT INTO contract_revisions(contract_id,user_id,version_number,status) VALUES($1,'account-b',1,'DRAFT')",[otherContract]);
   await client.query(
    "INSERT INTO rental_installments(rental_id,user_id,sequence,agreed_cents,received_cents) VALUES($1,'account-a',1,52000,0)",[rental]);
   const financial=(await client.query(
