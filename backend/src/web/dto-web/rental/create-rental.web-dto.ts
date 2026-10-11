@@ -8,9 +8,16 @@ import {
   IsISO8601,
   Min,
   IsUUID,
+  IsOptional,
+  ValidateNested,
 } from 'class-validator';
+import {BookingDraftDto} from '../contract/booking-draft.dto';
 
 export class CreateRentalWebDto {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BookingDraftDto)
+  bookingDraft?: BookingDraftDto;
   @IsUUID()
   @IsNotEmpty()
   propertyId: string;

@@ -15,6 +15,8 @@ import {
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
 import { ICreateRentalResponse } from "src/core/domain/rental/useCases/create-rental/ICreateRentalResponse";
 import { OnboardingGuard } from "src/infra/adapters/guards/onboarding.guard";
+import { BadRequestException } from "@nestjs/common";
+import { ContractBookingService } from "../../infra/modules/contract/contract-booking.service";
 
 
 @ApiTags('Rentals module')
@@ -28,7 +30,8 @@ export class RentalController {
         private readonly updateRentalUseCase: UpdateRentalUseCase,
         private readonly findAllUseCase:      FindAllRentalsUseCase,
         private readonly findNextThreeUseCase:FindNextThreeUseCase,
-        private readonly cancelRentalUseCase: CancelRentalUseCase){}
+        private readonly cancelRentalUseCase: CancelRentalUseCase,
+        private readonly contractBookingService: ContractBookingService){}
 
 
     @Get('find')
@@ -66,6 +69,8 @@ export class RentalController {
     @ApiResponse({ status: 201, description: 'The rental has been successfully created' })
     async createRental(@Req() req:Request ,@Body() dto: CreateRentalWebDto): Promise<ICreateRentalResponse>{
         const userId = (req as any).user?.uid;
+        if (process.env.CONTRACT_BOOKING_DRAFTS_ENABLED==='true') return this.contractBookingService.create(userId,dto);
+        if (dto.bookingDraft) throw new BadRequestException('Contract booking feature is disabled');
         const { clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee, propertyId} = dto
         
         const rental = await this.createRentalUseCase.createRental(userId, clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee, propertyId)
