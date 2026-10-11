@@ -253,3 +253,26 @@ test('HTTP client rejects invalid lists and offers no fallback public PDF URL',a
  await assert.rejects(listContracts(),/Service unavailable/);
  await assert.rejects(getContract(key),/Service unavailable/);
 });
+
+test('private PDF renderer errors are reported without creating a document link',async()=>{
+ server();const view=await loaded();
+ const normal=global.fetch;
+ global.fetch=async(url,init)=>{
+  if(String(url).endsWith('/preview.pdf'))
+   return {ok:true,status:200,blob:async()=>new Blob(['error page'],{type:'text/html'})};
+  return normal(url,init);
+ };
+ const button=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Preview draft PDF'));
+ button.props.onClick();
+ for(let i=0;i<5;i++){await pause();view.render();}
+ assert.match(JSON.stringify(view.tree),/Invalid PDF preview response/);
+});
+test('refresh request failures keep the existing contracts visible with an error',async()=>{
+ server();const view=await loaded();
+ global.fetch=async()=>{throw new Error('Temporary network failure');};
+ const refresh=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Refresh'));
+ refresh.props.onClick();
+ for(let i=0;i<5;i++){await pause();view.render();}
+ assert.match(JSON.stringify(view.tree),/Temporary network failure/);
+ assert.ok(find(view.tree,n=>n.type==='button'&&String(n.props.className).includes('rf-contract-workspace-item')));
+});
