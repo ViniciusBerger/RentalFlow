@@ -1,12 +1,20 @@
-import { useState, } from 'react'
+import { useRef, useState } from 'react'
 import { AddRentalForm } from './add-rental-form';
 import { CloseButton } from '../buttons/close-button';
 import { useProperties } from '../../features/properties/property-store';
 import { useLanguage } from "../../i18n/context";
 
+const contractBookingEnabled=import.meta.env.VITE_CONTRACT_BOOKING_DRAFTS_ENABLED==='true';
+const initialContract={cpf:'',rg:'',nationality:'BR',maritalStatus:'',address:'',phone:'',email:'',feeMode:'AUTOMATIC',feeReason:'',feeAdjustment:'',paymentMethod:'PIX',paymentDueEvent:'KEY_HANDOVER'};
 export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, error }: { onSubmit: any,isSaving: boolean, error: any, isOpen: boolean, onClose: () => void }) {
   const {t}=useLanguage();
   const {properties}=useProperties();
+  const [contractForm,setContractForm]=useState(initialContract);
+  const requestKey=useRef<string|null>(null);
+  const handleContractChange=(e:React.ChangeEvent<HTMLInputElement|HTMLSelectElement>)=>{
+    requestKey.current=null;
+    setContractForm(prev=>({...prev,[e.target.name]:e.target.value}));
+  };
 
   const [formData, setFormData] = useState({
     clientFirstName: '',
@@ -22,6 +30,7 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
+    requestKey.current=null;
     setFormData(prev => {
       let finalValue: string | number = value;
 
@@ -49,8 +58,30 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
     const active=properties.filter(p=>p.isActive);
     const propertyId=formData.propertyId || (active.length===1?active[0].id:'');
     if(!propertyId)return;
-    const success = await onSubmit({...formData,propertyId}); // Send the actual data!
+    const payload:Record<string,unknown>={...formData,propertyId};
+    if(contractBookingEnabled){
+      if(!requestKey.current)requestKey.current=crypto.randomUUID();
+      const guest:Record<string,string>={};
+      for(const key of ['cpf','rg','nationality','maritalStatus','address','phone','email'] as const){
+        if(contractForm[key].trim())guest[key]=contractForm[key].trim();
+      }
+      const guestFee=contractForm.feeMode==='ADJUSTED'
+        ?{mode:'ADJUSTED',cents:Math.round(Number(contractForm.feeAdjustment)*100),reason:contractForm.feeReason}
+        :contractForm.feeMode==='WAIVED'
+        ?{mode:'WAIVED',reason:contractForm.feeReason}
+        :{mode:'AUTOMATIC'};
+      payload.bookingDraft={
+        requestKey:requestKey.current,
+        baseRevenueCents:Math.round(Number(formData.revenue)*100),
+        guest,guestFee,paymentMethod:contractForm.paymentMethod,
+        paymentDueEvent:contractForm.paymentDueEvent
+      };
+    }
+    const success=await onSubmit(payload);
     if (!success) return;
+    requestKey.current=null;
+    setContractForm(initialContract);
+    setFormData({clientFirstName:'',clientLastName:'',startDate:'',endDate:'',revenue:'',fee:'',guests:'',propertyId:''});
     onClose();
   };
 
@@ -69,7 +100,7 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
           <CloseButton onClose={onClose}/>
         </div>
 
-        <AddRentalForm handleSubmit={handleSubmit} handleChange={handleChange} error={error} isSaving={isSaving} formData={formData}   />
+        <AddRentalForm handleSubmit={handleSubmit} handleChange={handleChange} handleContractChange={handleContractChange} contractForm={contractForm} contractBookingEnabled={contractBookingEnabled} error={error} isSaving={isSaving} formData={formData} />
       </div>
     </div>
   );
