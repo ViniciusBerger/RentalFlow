@@ -39,7 +39,7 @@ export function validateClauses(input:ContractClause[],publish=false):ContractCl
    throw new BadRequestException('Invalid clause format');
   }
   seen.add(c.id);
-  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(c.title)||c.title.includes('{{'))throw new BadRequestException('Invalid clause heading');
+  if([...c.title].some(ch=>{const n=ch.charCodeAt(0);return n<32&&n!==9&&n!==10&&n!==13;})||c.title.includes('{{'))throw new BadRequestException('Invalid clause heading');
   const body=c.body.trim()?safeClauseText(c.body):'';
   const matches=[...body.matchAll(/{{([^{}]+)}}/g)];
   for(const match of matches)if(!placeholders.has(match[1]))throw new BadRequestException('Unapproved contract placeholder');

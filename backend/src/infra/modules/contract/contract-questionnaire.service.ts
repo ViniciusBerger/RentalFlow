@@ -1,5 +1,5 @@
 import {BadRequestException, ConflictException, Injectable, Inject, NotFoundException} from '@nestjs/common';
-import {and, asc, desc, eq, sql} from 'drizzle-orm';
+import {and, desc, eq, sql} from 'drizzle-orm';
 import {NodePgDatabase} from 'drizzle-orm/node-postgres';
 import {DRIZZLE} from '../../persistence/database.module';
 import {ContractSettingsSchema} from '../../persistence/schemas/contract-settings-schema';
