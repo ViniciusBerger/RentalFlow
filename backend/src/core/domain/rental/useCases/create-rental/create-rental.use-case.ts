@@ -12,14 +12,14 @@ import { ICreateRentalResponse } from "./ICreateRentalResponse";
 export class CreateRentalUseCase {
     constructor(private readonly rentalRepository: IRentalRepository) {}
 
-    async createRental(userId:string, clientFirstName: string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number): Promise<ICreateRentalResponse> {
+    async createRental(userId:string, clientFirstName: string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number, propertyId?: string): Promise<ICreateRentalResponse> {
         //validate if start-date and end-date are free before booking a rental
-        await this.validate(userId, startDate, endDate)    
+        await this.validate(userId, startDate, endDate, propertyId)    
         const profit = (revenue - fee)
 
         // create a domain Rental object 
         const rental = Rental.create({
-            userId: userId, clientFirstName:clientFirstName, clientLastName:clientLastName, startDate: startDate, endDate:endDate, guests:guests, revenue: revenue, profit: profit, fee: fee
+            userId: userId, propertyId, clientFirstName:clientFirstName, clientLastName:clientLastName, startDate: startDate, endDate:endDate, guests:guests, revenue: revenue, profit: profit, fee: fee
         })  
 
         return await this.rentalRepository.save(rental); 
@@ -27,7 +27,7 @@ export class CreateRentalUseCase {
 
 
     // Check if date is available to be booked on database 
-    private async validate(userId: string, startDate: string, endDate: string): Promise<boolean> {
+    private async validate(userId: string, startDate: string, endDate: string, propertyId?: string): Promise<boolean> {
         const start = new Date(startDate);
         const end = new Date(endDate);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate) ||
@@ -44,7 +44,7 @@ export class CreateRentalUseCase {
         }
 
         // if date is already booked throw service error showing that date is booked
-        const notValid = await this.rentalRepository.checkOverlapDate(userId, startDate, endDate)
+        const notValid = await this.rentalRepository.checkOverlapDate(userId, startDate, endDate, propertyId)
         if(notValid) throw new ServiceError('Date already booked.')
         
         return true

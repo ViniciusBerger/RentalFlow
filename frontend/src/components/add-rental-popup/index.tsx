@@ -1,10 +1,12 @@
 import { useState, } from 'react'
 import { AddRentalForm } from './add-rental-form';
 import { CloseButton } from '../buttons/close-button';
+import { useProperties } from '../../features/properties/property-store';
 import { useLanguage } from "../../i18n/context";
 
 export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, error }: { onSubmit: any,isSaving: boolean, error: any, isOpen: boolean, onClose: () => void }) {
   const {t}=useLanguage();
+  const {properties}=useProperties();
 
   const [formData, setFormData] = useState({
     clientFirstName: '',
@@ -13,10 +15,11 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
     endDate: '',
     revenue: '',
     fee: '',
-    guests: ''
+    guests: '',
+    propertyId: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     setFormData(prev => {
@@ -43,7 +46,10 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
   const handleSubmit = async (e: React.BaseSyntheticEvent) => {
     e.preventDefault(); 
     
-    const success = await onSubmit(formData); // Send the actual data!
+    const active=properties.filter(p=>p.isActive);
+    const propertyId=formData.propertyId || (active.length===1?active[0].id:'');
+    if(!propertyId)return;
+    const success = await onSubmit({...formData,propertyId}); // Send the actual data!
     if (!success) return;
     onClose();
   };

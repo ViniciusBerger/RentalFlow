@@ -12,6 +12,7 @@ type RentalData = {
   fee: number;
   profit: number;
   guests: number;
+  propertyId: string;
 };
 
 export default function EditRentalPopUp({
@@ -39,6 +40,7 @@ export default function EditRentalPopUp({
   fee: 0,
   profit: 0,
   guests: 0,
+  propertyId: '',
 });
 
   // React-supported render-time adjustment: reset form when the selected
@@ -58,11 +60,12 @@ export default function EditRentalPopUp({
         fee: rental.fee ?? 0,
         profit: rental.profit ?? 0,
         guests: rental.guests ?? 0,
+        propertyId: rental.propertyId ?? '',
       });
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     setFormData((prev) => {

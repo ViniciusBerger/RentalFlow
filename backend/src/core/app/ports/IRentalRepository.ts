@@ -48,7 +48,7 @@ export interface IRentalRepository {
      * Business Rule check: Determines if a car is already booked within a specific timeframe.
      * Uses the logic: (ExistingStart < NewEnd) AND (ExistingEnd > NewStart).
      */
-    checkOverlapDate(userId: string, startDate: string, endDate: string): Promise<boolean>;
+    checkOverlapDate(userId: string, startDate: string, endDate: string, propertyId?: string): Promise<boolean>;
 
 
     /**
@@ -58,7 +58,7 @@ export interface IRentalRepository {
    * @returns A promise resolving to an array containing a single object 
    * for the current year. Format: { label: "2026", totalRevenue: 50000, totalProfit: 42500 }
    */
-    getYearlyBalanceCurrentYear(userUid:string);
+    getYearlyBalanceCurrentYear(userUid:string,propertyId?:string);
 
     /**
    * Calculates balance grouped by month for the current calendar year.
@@ -67,5 +67,5 @@ export interface IRentalRepository {
    * @returns A promise resolving to an array of objects for each month 
    * in the current year. Format: { label: "2026-02", totalRevenue: 12500, totalProfit: 42500 }
    */
-    getMonthlyBalanceCurrentYear(userUid:string);
+    getMonthlyBalanceCurrentYear(userUid:string,propertyId?:string);
 }

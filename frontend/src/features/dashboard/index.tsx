@@ -6,11 +6,15 @@ import RentalDetailPopUp from "../../components/rental-detail-popup";
 import { useRentalActions } from "../../hooks/rental-actions/useRentalActions";
 import { UseLoadData } from "../../hooks/load-data/useLoadData";
 import { LoadingState } from "../../components/loading-state";
+import { useProperties } from '../properties/property-store';
+import { bookingMatches, calculatePropertyBalances } from '../properties/property-data';
+import { PropertySelector } from '../properties/property-selector';
 import { useLanguage } from "../../i18n/context";
 
 
 export const Dashboard = () => {
   const {t}=useLanguage();
+  const {selectedId,properties}=useProperties();
   const { balances, nextRentals, monthlySeries, isLoading, userData, loadData, refreshAfterMutation } = UseLoadData();
   const { isSaving, error: actionError, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh } = // 
     useRentalActions(refreshAfterMutation);
@@ -22,8 +26,11 @@ export const Dashboard = () => {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editError, setEditError] = useState<any>(null);
 
-  const yearlyBalance = balances[0];
-  const monthlyBalance = balances[1];
+  const currentDay=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const [year,month]=currentDay.split('-').map(Number);
+  const selectedBalances=selectedId==='all'?null:calculatePropertyBalances(nextRentals,selectedId,year,month);
+  const yearlyBalance = selectedBalances?.yearly??balances[0];
+  const monthlyBalance = selectedBalances?.monthly??balances[1];
 
   const handleEditRental = async (formData: any) => {
     try {
@@ -63,13 +70,14 @@ export const Dashboard = () => {
 
   return (
     <>
+      <div className="rf-dashboard-property-filter"><PropertySelector/></div>
       <Main
         onOpenCreateRentalPopUp={() => setIsCreateRentalPopUpOpen(true)}
         onSelectRental={(rental) => setSelectedRental(rental)}
         onOpenPopUp={() => setIsRentalDetailPopUpOpen(true)}
         props={{ yearly: yearlyBalance, monthly: monthlyBalance }}
-        threeNextRentals={nextRentals}
-        monthlySeries={monthlySeries ?? []}
+        threeNextRentals={nextRentals.filter(r=>bookingMatches(r,selectedId)).map(r=>({...r,propertyName:properties.find(p=>p.id===r.propertyId)?.name,propertyColor:properties.find(p=>p.id===r.propertyId)?.color}))}
+        monthlySeries={selectedBalances?.months??monthlySeries??[]}
         userData={userData}
       />
 

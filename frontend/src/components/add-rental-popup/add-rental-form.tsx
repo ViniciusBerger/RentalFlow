@@ -2,6 +2,7 @@ import { AlertCircle, User } from "lucide-react";
 import { SubmitButton } from "../buttons/submit-button";
 import { TextInputFormDiv } from "../text-input-form";
 import { useLanguage } from "../../i18n/context";
+import { useProperties } from '../../features/properties/property-store';
 import { localizeError } from "../../i18n/messages";
 
 const emptyFormData = {
@@ -12,6 +13,7 @@ const emptyFormData = {
   revenue: ' ',
   fee: ' ',
   guests: ' ',
+  propertyId: '',
 };
 
 export const AddRentalForm = ({
@@ -20,8 +22,14 @@ export const AddRentalForm = ({
   error,
   isSaving,
   formData = emptyFormData,
-}: any) => { const {t,locale}=useLanguage();return (
+}: any) => { const {t,locale}=useLanguage();const {properties}=useProperties();const active=properties.filter(p=>p.isActive);return (
   <form className="rf-booking-form space-y-6" onSubmit={handleSubmit}>
+    <label className="rf-property-select">{t('property')}
+      <select required name="propertyId" aria-label={t('property')} value={formData.propertyId || (active.length===1?active[0].id:'')} onChange={handleChange}>
+        <option value="">{t('chooseProperty')}</option>
+        {active.map(property=><option key={property.id} value={property.id}>{property.name}</option>)}
+      </select>
+    </label>
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
         <TextInputFormDiv

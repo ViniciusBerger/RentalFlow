@@ -61,7 +61,7 @@ test('next booking dates tolerate empty and complete ISO timestamps',()=>{
 });
 test('mobile navigation supports both active and inactive states',()=>{
  const nav=mount(MobileNavBar,{onCreateClick:noop}).tree;const links=nav.props.children.filter(Boolean).filter(x=>x.type?.name==='NavLink'||x.props?.to);
- assert.equal(links.length,2);
+ assert.equal(links.length,3);
  for(const link of links){assert.match(link.props.className({isActive:true}),/active/);assert.doesNotMatch(link.props.className({isActive:false}),/active/)}
 });
 test('edit form treats absent rental fields as defaults and never closes on API rejection',async()=>{

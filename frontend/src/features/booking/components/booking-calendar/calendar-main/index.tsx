@@ -1,6 +1,6 @@
 import { useLanguage } from "../../../../../i18n/context";
 import { getWeekdays } from "../../../../../i18n/messages";
-import { calendarDisplay, normalizeRentalDates} from "../../../service/calendar-service";
+import { calendarDisplay, calendarRowHeight, normalizeRentalDates} from "../../../service/calendar-service";
 
 interface ICalendarMainProps {
   rentals: any[]
@@ -20,7 +20,8 @@ export const CalendarMain = ({ viewDate, rentals }: ICalendarMainProps) => {
 
   const firstDayIndex = new Date(year, month, 1).getDay();      // weekday index of the 1st day of the month (0 = Sunday)
   const daysInMonth = new Date(year, month + 1, 0).getDate();   // number of days in the current month
-  const gridCells = Array.from({ length: 42 });                 // Create 42 cells for 6 weeks (covers all possibilities)
+  const gridCells = Array.from({ length: 42 });
+  const rowHeight=calendarRowHeight(normalizedRentals,viewDate);                 // Create 42 cells for 6 weeks (covers all possibilities)
 
   return (
     <div className="bg-white rounded-3xl border border-sage-200 overflow-hidden shadow-sm">
@@ -38,7 +39,7 @@ export const CalendarMain = ({ viewDate, rentals }: ICalendarMainProps) => {
 
         <div className="relative">
             {/* Layer 1: The Grid Background */}
-            <div className="grid grid-cols-7 grid-rows-6 h-[540px] max-sm:h-[440px]">
+            <div className="grid grid-cols-7" style={{gridTemplateRows:`repeat(6,${rowHeight}px)`}}>
             {gridCells.map((_, i) => {
                 
                 const dayNumber = i - firstDayIndex + 1; // Determine the day number for this specific cell
@@ -55,7 +56,7 @@ export const CalendarMain = ({ viewDate, rentals }: ICalendarMainProps) => {
             </div>
 
             {/* Layer 2: The Rental Bars */}
-            <div className="absolute inset-0 grid grid-cols-7 grid-rows-6 pointer-events-none">
+            <div className="absolute inset-0 grid grid-cols-7 pointer-events-none" style={{gridTemplateRows:`repeat(6,${rowHeight}px)`}}>
             {calendarDisplay(normalizedRentals, viewDate, locale)}
             </div>
         </div>

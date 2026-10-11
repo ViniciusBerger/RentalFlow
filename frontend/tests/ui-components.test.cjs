@@ -69,7 +69,7 @@ test('desktop sidebar provides only implemented routes and workspace overview',(
  const html=render(DesktopNavBar,{});
  assert.match(html,/Main navigation/);assert.match(html,/href="\/dashboard"/);
  assert.match(html,/href="\/bookings"/);
- assert.doesNotMatch(html,/href="\/properties"/);
+ assert.match(html,/href="\/properties"/);
  assert.doesNotMatch(html,/href="\/guests"/);
 });
 test('mobile nav exposes main routes and accessible booking action',()=>{

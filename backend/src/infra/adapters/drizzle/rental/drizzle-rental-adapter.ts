@@ -5,6 +5,8 @@ import { Inject } from '@nestjs/common';
 import { RentalRow, RentalSchema } from '../../../persistence/schemas/rental-schema';
 import { DRIZZLE } from '../../../persistence/database.module';
 import * as rentalSchema from '../../../persistence/schemas/rental-schema';
+import { PropertySchema } from '../../../persistence/schemas/property-schema';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { Rental } from '../../../../core/domain/rental/entity/rental';
 import type { IRentalRepository } from '../../../../core/app/ports/IRentalRepository';
@@ -16,6 +18,13 @@ import { PersistenceError } from '../../../../core/app/errors/persistence.error'
  */
 export class DrizzleOrmRentalAdapter implements IRentalRepository {
 
+  private throwBookingConstraint(error: unknown): never {
+    const code=(error as {code?:string,cause?:{code?:string}})?.code ?? (error as {cause?:{code?:string}})?.cause?.code;
+    if(code==='23P01') throw new ConflictException('Date already booked for this property');
+    if(code==='23503') throw new NotFoundException('Property not found in this account');
+    throw error;
+  }
+
   // inject database instance
   constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof rentalSchema>) {}
 
@@ -25,7 +34,15 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @returns client first name, client last name, start and end date (as string)
    */
   async save(data: Rental): Promise<{userId: string, clientFirstName:string, clientLastName:string, startDate: string, endDate: string, guests:number, revenue: number, fee: number, profit:number}> {
-    const operationResult = await this.db.insert(RentalSchema).values({
+    const propertyId = data.propertyId ?? (await this.db.select({id:PropertySchema.id}).from(PropertySchema)
+      .where(and(eq(PropertySchema.userId,data.userId),eq(PropertySchema.isDefault,true))))[0]?.id;
+    if (!propertyId) throw new NotFoundException('Property not found');
+    const property = await this.db.select({id:PropertySchema.id}).from(PropertySchema)
+      .where(and(eq(PropertySchema.id,propertyId),eq(PropertySchema.userId,data.userId),eq(PropertySchema.isActive,true)));
+    if (!property.length) throw new NotFoundException('Property not found');
+    let operationResult;
+    try { operationResult = await this.db.insert(RentalSchema).values({
+      propertyId,
       userId: data.userId,
       clientFirstName: data.clientFirstName,
       clientLastName: data.clientLastName,
@@ -37,8 +54,9 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
       fee: data.fee
     }).returning({ userId:RentalSchema.userId, clientFirstName:RentalSchema.clientFirstName, clientLastName:RentalSchema.clientLastName, startDate: RentalSchema.startDate, endDate: RentalSchema.endDate, guests: RentalSchema.guests, revenue:RentalSchema.revenue, fee:RentalSchema.fee, profit: RentalSchema.profit});
 
-    if (!operationResult[0]) throw new PersistenceError('error saving rental')
-    return operationResult[0] // rental added
+    } catch(error) {this.throwBookingConstraint(error);}
+    if (!operationResult![0]) throw new PersistenceError('error saving rental');
+    return operationResult![0] // rental added
   }
 
   /**
@@ -47,13 +65,23 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    */
   async update(userId: string, id: string, toBeUpdated: Partial<RentalRow>): Promise<boolean> {
     const patch = {...toBeUpdated};
+    if(patch.propertyId !== undefined) {
+      const owner = await this.db.select({id:PropertySchema.id}).from(PropertySchema)
+        .where(and(eq(PropertySchema.id,patch.propertyId),eq(PropertySchema.userId,userId),eq(PropertySchema.isActive,true)));
+      if(!owner.length) throw new NotFoundException('Property not found');
+    }
+
     // Keep profit consistent if only revenue or fee changes. Uses current DB values atomically.
     if (patch.revenue !== undefined || patch.fee !== undefined) {
       patch.profit = sql`${patch.revenue === undefined ? RentalSchema.revenue : patch.revenue} - ${patch.fee === undefined ? RentalSchema.fee : patch.fee}` as unknown as number;
     }
-    const operationResult = await this.db.update(RentalSchema).set(patch)
-      .where(and(eq(RentalSchema.id,id),eq(RentalSchema.userId,userId)));
-    if (operationResult.rowCount === 0) throw new PersistenceError('cannot update item');
+    let operationResult;
+    try {
+      operationResult = await this.db.update(RentalSchema).set(patch)
+        .where(and(eq(RentalSchema.id,id),eq(RentalSchema.userId,userId)));
+    } catch(error) {this.throwBookingConstraint(error);}
+
+    if (operationResult!.rowCount === 0) throw new PersistenceError('cannot update item');
     return true;
   }
 
@@ -116,14 +144,15 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * Checks if any existing rental dates conflict with the provided date range.
    * @returns True if an overlap exists, false otherwise.
    */
-  async checkOverlapDate(userId: string, startDate: string, endDate: string) {
+  async checkOverlapDate(userId: string, startDate: string, endDate: string, propertyId?: string) {
     const overlap = await this.db.select()
       .from(RentalSchema)
       .where(and(
         lt(RentalSchema.startDate, endDate),
         gt(RentalSchema.endDate, startDate),
         eq(RentalSchema.userId,userId),
-        eq(RentalSchema.isActive,true)
+        eq(RentalSchema.isActive,true),
+        ...(propertyId ? [eq(RentalSchema.propertyId,propertyId)] : [])
       )).limit(1)
 
     return overlap.length > 0
@@ -134,7 +163,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @returns A promise resolving to an array of objects for each month 
    * in the current year. Format: { label: "2026-02", totalRevenue: 12500 }
    */
-  async getMonthlyBalanceCurrentYear(userUid:string) {
+  async getMonthlyBalanceCurrentYear(userUid:string,propertyId?:string) {
     return await this.db
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY-MM')`.as('month_label'),
@@ -146,6 +175,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
       .where(and(
         eq(RentalSchema.isActive, true),
         eq(RentalSchema.userId, userUid),
+        ...(propertyId ? [eq(RentalSchema.propertyId,propertyId)] : []),
         sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`,
         sql`${RentalSchema.startDate} < DATE_TRUNC('year', NOW()) + INTERVAL '1 year'`
       ))
@@ -158,7 +188,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @returns A promise resolving to an array containing a single object 
    * for the current year. Format: { label: "2026", totalRevenue: 50000 }
    */
-  async getYearlyBalanceCurrentYear(userUid:string) {
+  async getYearlyBalanceCurrentYear(userUid:string,propertyId?:string) {
     return await this.db
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY')`.as('year_label'),
@@ -170,6 +200,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
       .where(and(
         eq(RentalSchema.isActive, true),
         eq(RentalSchema.userId, userUid),
+        ...(propertyId ? [eq(RentalSchema.propertyId,propertyId)] : []),
         sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`,
         sql`${RentalSchema.startDate} < DATE_TRUNC('year', NOW()) + INTERVAL '1 year'`
       ))

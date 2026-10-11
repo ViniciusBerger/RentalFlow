@@ -42,50 +42,41 @@ export const buildRentalDiff = (original: any, updated: any) => {
 
 
 
-// Calendar rental rendering logic 
-export const calendarDisplay = (rentals: any[], viewDate: Date, locale: Locale = "en") => {
-    const firstDayOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-    const firstDayIndex = firstDayOfMonth.getDay();
-    const calendarStartDate = toLocalMidnight(new Date(viewDate.getFullYear(), viewDate.getMonth(), 1 - firstDayIndex));
+// Render simultaneous bookings in property-specific lanes instead of covering one another.
+// A single lane can contain multiple non-overlapping bookings at the same property.
+export const calendarDisplay = (rentals: any[], viewDate: Date, locale: Locale = 'en') => {
+  const first=new Date(viewDate.getFullYear(),viewDate.getMonth(),1);
+  const calendarStart=new Date(viewDate.getFullYear(),viewDate.getMonth(),1-first.getDay());
+  const toDay=(date:Date)=>Math.round(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())/86400000);
+  const offset=(date:Date)=>toDay(date)-toDay(calendarStart);
+  const events=rentals.map(r=>({r,start:offset(new Date(r.startDate)),end:offset(new Date(r.endDate))}));
+  const lanes=Array.from({length:6},(_,week)=>[...new Set(events.filter(e=>e.start<=week*7+6&&e.end>=week*7)
+    .map(e=>e.r.propertyId||e.r.id))].sort());
+  const elements:JSX.Element[]=[];
+  for(const event of events){
+    const {r,start,end}=event;
+    const nights=diffDays(new Date(r.startDate),new Date(r.endDate));
+    if(end<0||start>41||end<start)continue;
+    for(let week=Math.max(0,Math.floor(start/7));week<=Math.min(5,Math.floor(end/7));week++){
+      const firstDay=Math.max(start,week*7), lastDay=Math.min(end,week*7+6);
+      const lane=lanes[week].indexOf(r.propertyId||r.id);
+      elements.push(<div key={`${r.id}-${week}`} className="rf-calendar-event pointer-events-auto"
+        style={{gridColumn:`${firstDay%7+1} / span ${lastDay-firstDay+1}`,gridRow:week+1,
+          marginTop:`${24+lane*25}px`,alignSelf:'start',height:22,
+          backgroundColor:r.propertyColor||'#0D8A57',borderColor:r.propertyColor||'#0D8A57'}}>
+        <span>{`${r.clientFirstName} / ${nights} ${translate(locale,nights===1?'nightSingular':'nightPlural')}`}</span>
+      </div>);
+    }
+  }
+  return elements;
+};
 
-    return rentals.flatMap((rental) => {
-        const startDate = new Date(rental.startDate);
-        const endDate = new Date(rental.endDate);
-
-        // This determines the VISUAL length. 
-        // From 2nd to 5th is (5 - 2) = 3. 
-        // Add +1 if you want the bar to physically occupy the '5' cell.
-        const totalDaysToShow = diffDays(startDate, endDate) + 1;
-        let remainingDays = totalDaysToShow;
-
-        const gridIndexStart = Math.round((startDate.getTime() - calendarStartDate.getTime()) / (24 * 60 * 60 * 1000));
-        const elements: JSX.Element[] = [];
-        let gridIndex = gridIndexStart;
-
-        while (remainingDays > 0) {
-            const colStart = (gridIndex % 7) + 1;
-            const rowStart = Math.floor(gridIndex / 7) + 1;
-            const daysThisRow = Math.min(remainingDays, 8 - colStart);
-
-            elements.push(
-                <div
-                    key={`${rental.id}-${gridIndex}`}
-                    className="flex items-center px-2 h-7 sm:h-8 my-auto border-y z-10 pointer-events-auto self-center bg-sage-500 border-sage-600 text-white shadow-sm rounded-lg p-2"
-                    style={{
-                    gridColumn: `${colStart} / span ${daysThisRow}`,
-                    gridRow: rowStart,}}>
-
-                    <span className="text-[8px] sm:text-[10px] font-black uppercase truncate">
-                        {/* Show the ACTUAL nights (e.g., 3) even if the bar spans 4 cells */}
-                        {`${rental.clientFirstName} / ${totalDaysToShow - 1} ${translate(locale,totalDaysToShow - 1 === 1 ? "nightSingular" : "nightPlural")}`}
-                    </span>
-                </div>
-        );
-
-            remainingDays -= daysThisRow;
-            gridIndex += daysThisRow;
-        }
-        
-        return elements;
-    });
+export const calendarRowHeight=(rentals:any[],viewDate:Date)=>{
+  const first=new Date(viewDate.getFullYear(),viewDate.getMonth(),1);
+  const start=new Date(viewDate.getFullYear(),viewDate.getMonth(),1-first.getDay());
+  const toDay=(d:Date)=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);
+  const offset=(d:Date)=>toDay(d)-toDay(start);
+  const maximum=Math.max(1,...Array.from({length:6},(_,week)=>new Set(rentals.filter(r=>offset(new Date(r.startDate))<=week*7+6&&offset(new Date(r.endDate))>=week*7)
+    .map(r=>r.propertyId||r.id)).size));
+  return Math.max(90,30+maximum*25);
 };

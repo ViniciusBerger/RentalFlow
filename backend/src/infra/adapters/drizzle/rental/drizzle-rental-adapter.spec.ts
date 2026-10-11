@@ -99,6 +99,7 @@ describe('DrizzleOrmAdapter', () => {
     });
 
     it('should return the partial saved data on success', async () => {
+      dbMock.where.mockResolvedValue([{id:'11111111-1111-4111-8111-111111111111'}]);
       const dbReturn = {
         clientFirstName: 'firstname',
         clientLastName: 'lastname',
@@ -114,6 +115,7 @@ describe('DrizzleOrmAdapter', () => {
     });
 
     it('should throw PersistenceError if insert fails', async () => {
+      dbMock.where.mockResolvedValue([{id:'11111111-1111-4111-8111-111111111111'}]);
       dbMock.returning.mockResolvedValue([]);
 
       await expect(adapter.save(mockRental)).rejects.toThrow(PersistenceError);

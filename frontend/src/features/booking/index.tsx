@@ -10,10 +10,14 @@ import { DashboardErrorState } from '../../components/error-state';
 import { LoadingState } from '../../components/loading-state';
 import { buildRentalDiff } from './service/calendar-service';
 import { dateKey } from './service/booking-timeline';
+import { useProperties } from '../properties/property-store';
+import { PropertySelector } from '../properties/property-selector';
+import { bookingMatches } from '../properties/property-data';
 import { useLanguage } from "../../i18n/context";
 
 export const BookingsPage = () => {
     const {t}=useLanguage();
+    const {properties,selectedId}=useProperties();
     const {nextRentals, isLoading, loadRentals, refreshAfterMutation } = UseLoadData()
     const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions(refreshAfterMutation)
     
@@ -28,7 +32,8 @@ export const BookingsPage = () => {
     const handleNext = ()=> setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))
     const handlePrev = ()=> setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
 
-    const filteredRentals = nextRentals.filter(rental=> {
+    const visibleRentals = nextRentals.filter(rental=>bookingMatches(rental,selectedId));
+    const filteredRentals = visibleRentals.filter(rental=> {
         const startDate = dateKey(rental.startDate);
         const endDate = dateKey(rental.endDate);
         const viewStart = `${viewDate.getFullYear()}-${String(viewDate.getMonth()+1).padStart(2,'0')}-01`;
@@ -77,16 +82,20 @@ export const BookingsPage = () => {
     return (
         <div className="rf-bookings-page">
             <BookingHeader onOpenCreateRentalPopUp={() => setIsCreateRentalPopUpOpen(true)} />
+            <div className="rf-bookings-filter"><PropertySelector/></div>
+            <div className="rf-property-legend" aria-label={t('propertyLegend')}>
+              {properties.filter(p=>p.isActive||visibleRentals.some((r:any)=>r.propertyId===p.id)).filter(p=>selectedId==='all'||p.id===selectedId).map(property=><span key={property.id}><i style={{backgroundColor:property.color}}/>{property.name}</span>)}
+            </div>
             <BookingCalendar 
                 viewDate={viewDate} 
                 handleNext={handleNext}
                 handlePrev={handlePrev}
-                rentals={filteredRentals}/>
+                rentals={filteredRentals.map((r:any)=>({...r,propertyColor:properties.find(p=>p.id===r.propertyId)?.color}))}/>
 
             <BookingGroups
                 onOpenPopUp={() => setIsRentalDetailPopUpOpen(true)}
                 onSelectRental={(rental) => setSelectedRental(rental)}
-                rentals={nextRentals}
+                rentals={visibleRentals.map((r:any)=>({...r,propertyName:properties.find(p=>p.id===r.propertyId)?.name,propertyColor:properties.find(p=>p.id===r.propertyId)?.color}))}
             />
 
             <AddRentalPopUp 

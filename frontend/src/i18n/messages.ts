@@ -1,6 +1,7 @@
 /** User-facing strings. Keep keys identical in both locales to prevent silent fallbacks. */
 export const en = {
   language: 'Language', portuguese: 'Português (Brasil)', english: 'English',
+  property: 'Property', properties: 'Properties', allProperties: 'All properties', chooseProperty: 'Choose a property', addProperty: 'Add property', editProperty: 'Edit property', archiveProperty: 'Archive property', propertyName: 'Property name', propertyAddress: 'Address (optional)', propertyColor: 'Calendar color', propertyIcon: 'Property icon', propertiesHelp: 'Manage your properties, icons and calendar colors.', primaryProperty: 'Primary property', propertyArchived: 'Property archived', propertyHasBookings: 'This property has upcoming bookings and cannot be archived.', propertySaveFailed: 'Could not save property.', propertyArchiveConfirm: 'Archive this property? Past bookings will remain.', propertyLegend: 'Calendar property colors', noProperties: 'Add a property to get started.',
   workspace: 'Workspace', overview: 'Overview', bookings: 'Bookings',
   sidebarHeading: 'WORKSPACE', mainNavigation: 'Main navigation', mobileNavigation: 'Mobile navigation',
   workspaceTitle: 'Your workspace', workspaceCopy: 'All your bookings and financial results, together.', management: 'Management',
@@ -61,6 +62,7 @@ export type MessageKey = Exclude<keyof typeof en, 'weekdaysFull' | 'weekdaysShor
 export type Locale = 'pt-BR' | 'en';
 export const ptBR: Record<MessageKey, string> & {weekdaysFull: readonly string[]; weekdaysShort: readonly string[]; weekdaysMobile: readonly string[]} = {
   language: 'Idioma', portuguese: 'Português (Brasil)', english: 'English',
+  property: 'Imóvel', properties: 'Imóveis', allProperties: 'Todos os imóveis', chooseProperty: 'Selecione um imóvel', addProperty: 'Adicionar imóvel', editProperty: 'Editar imóvel', archiveProperty: 'Arquivar imóvel', propertyName: 'Nome do imóvel', propertyAddress: 'Endereço (opcional)', propertyColor: 'Cor no calendário', propertyIcon: 'Ícone do imóvel', propertiesHelp: 'Gerencie os imóveis, ícones e cores do calendário.', primaryProperty: 'Imóvel principal', propertyArchived: 'Imóvel arquivado', propertyHasBookings: 'Este imóvel tem reservas futuras e não pode ser arquivado.', propertySaveFailed: 'Não foi possível salvar o imóvel.', propertyArchiveConfirm: 'Arquivar este imóvel? As reservas anteriores serão mantidas.', propertyLegend: 'Cores dos imóveis no calendário', noProperties: 'Adicione um imóvel para começar.',
   workspace: 'Área de trabalho', overview: 'Visão geral', bookings: 'Reservas',
   sidebarHeading: 'ÁREA DE TRABALHO', mainNavigation: 'Navegação principal', mobileNavigation: 'Navegação móvel',
   workspaceTitle: 'Sua área de trabalho', workspaceCopy: 'Todas as reservas e resultados financeiros em um só lugar.', management: 'Gestão',
