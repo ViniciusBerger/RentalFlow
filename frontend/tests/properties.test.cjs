@@ -12,9 +12,12 @@ const {PropertiesPage}=require('../src/features/properties/index.tsx');
 const {LanguageProvider}=require('../src/i18n/language.tsx');
 const {calendarRowHeight,calendarDisplay,normalizeRentalDates}=require('../src/features/booking/service/calendar-service.tsx');
 const oldFetch=global.fetch;
+const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
+const csrfResponse=()=>response({csrfToken:'test-session-bound-csrf-token'});
+const withCsrf=(handler)=>async(url,opts)=>String(url).endsWith('/auth/csrf')?csrfResponse():handler(url,opts);
 const property=(id='11111111-1111-4111-8111-111111111111',overrides={})=>({id,userId:'company-A',name:'Casa Praia',address:'Rua 1',color:'#2563EB',icon:'waves',isActive:true,isDefault:false,...overrides});
 const response=(data,ok=true)=>({ok,json:async()=>data,status:ok?200:404});
-afterEach(()=>{global.fetch=oldFetch;resetProperties();});
+afterEach(()=>{global.fetch=oldFetch;resetProperties();clearCsrfToken();});
 
 test('palette identifiers are stable and do not require external image uploads',()=>{
  assert.ok(PROPERTY_COLORS.length>=6);assert.ok(PROPERTY_ICONS.length>=6);
@@ -50,12 +53,13 @@ test('a property with no bookings has 12 zero-valued months',()=>{
  assert.equal(result.yearly.totalRevenue,0);assert.equal(result.yearly.totalProfit,0);
 });
 test('all property CRUD calls require cookies and use account-scoped endpoints',async()=>{
- const requests=[];global.fetch=async(url,opts)=>{requests.push({url,opts});return response(opts?.method==='DELETE'?{archived:true}:property());};
+ const requests=[];global.fetch=withCsrf(async(url,opts)=>{requests.push({url,opts});return response(opts?.method==='DELETE'?{archived:true}:property());});
  await loadProperties();await createProperty({name:'Casa',address:'',color:'#2563EB',icon:'waves'});
  await editProperty(property().id,{name:'Casa 2',address:'Rua',color:'#9333EA',icon:'house'});
  await archiveProperty(property().id);
  assert.equal(requests.length,4);
  assert.equal(requests[0].opts.credentials,'include');
+ assert.equal(requests[1].opts.headers.get('X-CSRF-Token'),'test-session-bound-csrf-token');
  assert.equal(requests[1].opts.method,'POST');assert.equal(JSON.parse(requests[1].opts.body).name,'Casa');
  assert.equal(requests[2].opts.method,'PATCH');assert.match(requests[2].url,/11111111/);
  assert.equal(requests[3].opts.method,'DELETE');
@@ -145,10 +149,10 @@ test('uncontrolled selector updates the shared dashboard property filter',async(
  assert.equal(mount(useProperties).tree.selectedId,property().id);
 });
 test('properties editor can add a property, choose color/icon and persist',async()=>{
- const saved=[];global.fetch=async(url,opts)=>{
+ const saved=[];global.fetch=withCsrf(async(url,opts)=>{
    if(opts?.method==='POST'){saved.push(JSON.parse(opts.body));return response(property('33333333-3333-4333-8333-333333333333'));}
    return response([property()]);
- };
+ });
  await refreshProperties();const view=mount(PropertiesPage);
  let add=find(view.tree,n=>n.type==='button'&&n.props?.className==='rf-button');
  add.props.onClick();view.render();
@@ -156,18 +160,19 @@ test('properties editor can add a property, choose color/icon and persist',async
  input.props.onChange({target:{value:'Apartamento Centro'}});view.render();
  const color=find(view.tree,n=>n.type==='button'&&n.props?.['aria-label']==='#9333EA');color.props.onClick();view.render();
  const icon=find(view.tree,n=>n.type==='button'&&n.props?.['aria-label']==='apartment');icon.props.onClick();view.render();
- const form=find(view.tree,n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});view.render();
+ const form=find(view.tree,n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});
+ await new Promise(resolve=>setImmediate(resolve));view.render();
  assert.equal(saved.length,1);assert.equal(saved[0].name,'Apartamento Centro');assert.equal(saved[0].color,'#9333EA');assert.equal(saved[0].icon,'apartment');
 });
 test('existing property can be edited and property archiving is blocked for primary property',async()=>{
  const primary=property('11111111-1111-4111-8111-111111111111',{isDefault:true});
  const second=property('22222222-2222-4222-8222-222222222222');
  let archiveCount=0,updateCount=0;
- global.fetch=async(_url,options)=>{
+ global.fetch=withCsrf(async(_url,options)=>{
    if(options?.method==='PATCH'){updateCount++;return response(second);}
    if(options?.method==='DELETE'){archiveCount++;return response({archived:true});}
    return response([primary,second]);
- };
+ });
  await refreshProperties();const view=mount(PropertiesPage);
  const all=(node,fn)=>{const acc=[];const rec=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n))return n.forEach(rec);if(fn(n))acc.push(n);rec(n.props?.children);};rec(node);return acc;};
  const editButtons=all(view.tree,n=>n.type==='button'&&n.props?.className==='rf-outline');
@@ -175,10 +180,11 @@ test('existing property can be edited and property archiving is blocked for prim
  editButtons[1].props.onClick();view.render();
  assert.equal(find(view.tree,n=>n.type==='input'&&n.props?.maxLength===120).props.value,'Casa Praia');
  await find(view.tree,n=>n.type==='form').props.onSubmit({preventDefault(){}});
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(updateCount,1);view.render();
  const archiveButton=all(view.tree,n=>n.type==='button'&&n.props?.className==='rf-outline')[2];
  const before=global.window;global.window={confirm:()=>true};
- try{await archiveButton.props.onClick();}finally{global.window=before;}
+ try{await archiveButton.props.onClick();await new Promise(resolve=>setImmediate(resolve));}finally{global.window=before;}
  assert.equal(archiveCount,1);
 });
 test('archiving a property can be cancelled and does not call the API',async()=>{
@@ -190,7 +196,7 @@ test('archiving a property can be cancelled and does not call the API',async()=>
  assert.equal(mount(useProperties).tree.properties.length,1);
 });
 test('property create failures keep editor open and show feedback',async()=>{
- global.fetch=async(_url,opts)=>opts?.method==='POST'?response({message:'Invalid property'},false):response([property()]);
+ global.fetch=withCsrf(async(_url,opts)=>opts?.method==='POST'?response({message:'Invalid property'},false):response([property()]));
  await refreshProperties();const view=mount(PropertiesPage);
  find(view.tree,n=>n.type==='button'&&n.props.className==='rf-button').props.onClick();view.render();
  await find(view.tree,n=>n.type==='form').props.onSubmit({preventDefault(){}});view.render();
@@ -220,7 +226,7 @@ test('booking form requires explicit property with multiple properties',async()=
  assert.match(html,/Choose a property/);assert.match(html,/Casa Praia/);
 });
 test('property archive service reports errors without removing bookings',async()=>{
- const secondary=property();global.fetch=async(_url,opts)=>opts?.method==='DELETE'?response({message:'Property has active or future bookings'},false):response([secondary]);
+ const secondary=property();global.fetch=withCsrf(async(_url,opts)=>opts?.method==='DELETE'?response({message:'Property has active or future bookings'},false):response([secondary]));
  await refreshProperties();const view=mount(PropertiesPage);
  const archive=find(view.tree,n=>n.type==='button'&&n.props.className==='rf-outline'&&Array.isArray(n.props.children)&&n.props.children.includes('Archive property'));
  const prior=global.window;global.window={confirm:()=>true};
@@ -262,7 +268,7 @@ test('property list shows an actionable empty state for a new account',async()=>
  assert.match(html,/Add property/);
 });
 test('property create provides fallback error even when network returns no message',async()=>{
- global.fetch=async(_url,opts)=>opts?.method==='POST'?response({},false):response([property()]);
+ global.fetch=withCsrf(async(_url,opts)=>opts?.method==='POST'?response({},false):response([property()]));
  await refreshProperties();const view=mount(PropertiesPage);
  find(view.tree,n=>n.type==='button'&&n.props.className==='rf-button').props.onClick();view.render();
  await find(view.tree,n=>n.type==='form').props.onSubmit({preventDefault(){}});view.render();

@@ -1,3 +1,4 @@
+import {csrfFetch} from '../../lib/csrf-fetch';
 export const PROPERTY_COLORS = ['#0D8A57','#2563EB','#C2410C','#9333EA','#D97706','#0E7490','#BE185D','#475569'] as const;
 export const PROPERTY_ICONS = ['building','house','apartment','waves','sun','tree','mountain','key'] as const;
 export type Property = {
@@ -6,7 +7,7 @@ export type Property = {
 };
 const url = import.meta.env.VITE_API_URL;
 async function request<T>(path:string,init?:RequestInit):Promise<T> {
-  const response=await fetch(`${url}/properties${path}`,{credentials:'include',...init,
+  const response=await (init?.method && init.method.toUpperCase()!=='GET' ? csrfFetch : fetch)(`${url}/properties${path}`,{credentials:'include',...init,
     headers:{'Content-Type':'application/json',...init?.headers}});
   if(!response.ok) {const body=await response.json().catch(()=>null);throw new Error(body?.message??`HTTP ${response.status}`);}
   return response.json() as Promise<T>;

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import {PrivateContractDocumentsModule} from './infra/security/private-contract-documents.module';
 import { ConfigModule } from '@nestjs/config';
 import { PropertyModule } from './infra/modules/property/property.module';
 import { RentalModule } from './infra/modules/rental/rental.module';
@@ -14,7 +15,8 @@ import { UserModule } from './infra/modules/user/user.module';
     RentalModule, 
     AuthModule,
     UserModule,
-    DatabaseModule, 
+    DatabaseModule,
+    PrivateContractDocumentsModule, 
     ConfigModule.forRoot({isGlobal: true })],
     
   controllers: [AppController],

@@ -1,7 +1,8 @@
+import {csrfFetch} from '../../lib/csrf-fetch';
 const baseUrl = import.meta.env.VITE_API_URL;
 
 export const addRental = async (rentalData: any)=> {
-    const response = await fetch(`${baseUrl}/rental/add`, {
+    const response = await csrfFetch(`${baseUrl}/rental/add`, {
     method: 'POST',
     credentials: "include",
     headers: {
@@ -24,7 +25,7 @@ export const addRental = async (rentalData: any)=> {
 
 export const deleteRental = async(id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${baseUrl}/rental/delete/${id}`, {
+    const response = await csrfFetch(`${baseUrl}/rental/delete/${id}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {
@@ -53,7 +54,7 @@ export const deleteRental = async(id: string): Promise<boolean> => {
 
 export const updateRental = async(id:string, toBeUpdated: any)=> {
     try {
-      const response = await fetch(`${baseUrl}/rental/update`, {
+      const response = await csrfFetch(`${baseUrl}/rental/update`, {
       method: 'PATCH',
       credentials: 'include',
       headers: {
