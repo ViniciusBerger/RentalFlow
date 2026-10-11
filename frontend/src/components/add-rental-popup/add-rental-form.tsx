@@ -23,6 +23,10 @@ export const AddRentalForm = ({
   handleContractChange,
   contractForm,
   contractBookingEnabled,
+  onQuote,
+  quote,
+  quoteBusy,
+  quoteError,
   error,
   isSaving,
   formData = emptyFormData,
@@ -93,7 +97,7 @@ export const AddRentalForm = ({
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">
-          {t("totalRevenue")}
+          {contractBookingEnabled?(locale==='pt-BR'?'Preço base da estadia':'Base rental price'):t("totalRevenue")}
         </label>
         <div className="relative">
           <span className="absolute left-4 top-3 font-bold text-sage-600">R$</span>
@@ -147,6 +151,22 @@ export const AddRentalForm = ({
     </div>
 
     {contractBookingEnabled&&<BookingContractFields data={contractForm} onChange={handleContractChange} locale={locale}/>}
+    {contractBookingEnabled&&<div className="space-y-3">
+      <button type="button" onClick={onQuote} disabled={quoteBusy||isSaving}
+       className="w-full border-2 border-sage-600 rounded-xl px-4 py-3 font-semibold">
+       {quoteBusy?(locale==='pt-BR'?'Calculando no servidor...':'Calculating on server...'):
+        (locale==='pt-BR'?'Conferir valor total antes de reservar':'Review total before booking')}
+      </button>
+      {quote&&<div role="status" className="rounded-xl bg-sage-50 border border-sage-200 px-4 py-3 text-sm space-y-1">
+       <p className="font-semibold">{locale==='pt-BR'?'Cálculo confirmado pelo servidor':'Price calculated by server'}</p>
+       <p>{locale==='pt-BR'?'Valor base':'Base price'}: {new Intl.NumberFormat(locale,{style:'currency',currency:'BRL'}).format(quote.baseCents/100)}</p>
+       <p>{locale==='pt-BR'?'Taxa de hóspedes calculada':'Calculated extra-guest fee'}: {new Intl.NumberFormat(locale,{style:'currency',currency:'BRL'}).format(quote.calculatedExtraCents/100)}</p>
+       <p>{locale==='pt-BR'?'Taxa aplicada':'Applied extra-guest fee'}: {new Intl.NumberFormat(locale,{style:'currency',currency:'BRL'}).format(quote.chargedExtraCents/100)}</p>
+       <p className="font-bold">{locale==='pt-BR'?'Total da reserva':'Booking total'}: {new Intl.NumberFormat(locale,{style:'currency',currency:'BRL'}).format(quote.totalCents/100)}</p>
+       <p className="text-xs">{locale==='pt-BR'?'O backend recalcula o total ao salvar e rejeita valores desatualizados.':'The backend recalculates on save and rejects stale totals.'}</p>
+      </div>}
+      {quoteError&&<p role="alert" className="text-sm text-red-700">{localizeError(quoteError,locale)}</p>}
+    </div>}
     {error && (
       <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 animate-in fade-in slide-in-from-top-1">
         <AlertCircle size={16} className="flex-shrink-0" />
@@ -154,6 +174,6 @@ export const AddRentalForm = ({
       </div>
     )}
 
-    <SubmitButton type="submit" isLoading={isSaving} context={t("createBookingShort")} />
+    <SubmitButton type="submit" isLoading={isSaving} disabled={contractBookingEnabled&&(!quote||quoteBusy)} context={t("createBookingShort")} />
   </form>
 );};
