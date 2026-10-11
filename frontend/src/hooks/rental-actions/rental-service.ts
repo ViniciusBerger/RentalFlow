@@ -78,3 +78,33 @@ export const updateRental = async(id:string, toBeUpdated: any)=> {
     throw error;
   }
 }
+
+export type BookingPriceQuote={
+ baseCents:number;calculatedExtraCents:number;chargedExtraCents:number;
+ totalCents:number;guests:number;nights:number;
+};
+export type BookingQuoteRequest={
+ propertyId:string;startDate:string;endDate:string;guests:number;revenue:number;
+ guestFee:{mode:'AUTOMATIC'}|{mode:'WAIVED';reason:string}|{mode:'ADJUSTED';cents:number;reason:string};
+};
+/** A review quote is calculated on the backend and never authorizes a booking by itself. */
+export async function getBookingQuote(input:BookingQuoteRequest):Promise<BookingPriceQuote>{
+ const response=await csrfFetch(baseUrl+'/rental/quote',{
+  method:'POST',credentials:'include',cache:'no-store',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify(input)
+ });
+ if(!response.ok){
+  const payload:unknown=await response.json().catch(()=>null);
+  const message=payload&&typeof payload==='object'&&'message' in payload
+   ?String((payload as {message:unknown}).message):'Unable to obtain a rental price quote';
+  throw new Error(message);
+ }
+ const payload:BookingPriceQuote=await response.json();
+ if(!payload||!Number.isSafeInteger(payload.totalCents)||
+   !Number.isSafeInteger(payload.chargedExtraCents)||
+   !Number.isSafeInteger(payload.calculatedExtraCents)||
+   !Number.isSafeInteger(payload.baseCents)||
+   payload.totalCents<0||payload.chargedExtraCents<0)
+  throw new Error('Invalid price quote response');
+ return payload;
+}
