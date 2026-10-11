@@ -94,6 +94,7 @@ test('complete questionaire works across all six steps without client-side autho
  inputs.find(n=>n.props.type==='checkbox').props.onChange({target:{checked:false}});
  view.render();await clickButton(view,'Save settings');
  step(view,3);await sleep();view.render();
+ const propertySelect=all(view.tree,n=>n.type==='select')[0];propertySelect.props.onChange({target:{value:property.id}});view.render();
  inputs=all(view.tree,n=>n.type==='input');
  const occupied=inputs.filter(n=>n.props.type==='number');
  occupied[0].props.onChange({target:{value:'10'}});occupied[1].props.onChange({target:{value:'12'}});
@@ -107,10 +108,14 @@ test('complete questionaire works across all six steps without client-side autho
  assert.equal(JSON.parse(saved.init.body).maximumOccupancy,12);
  assert.equal(JSON.parse(saved.init.body).houseRules.length,2);
  step(view,4);
+ const clauseTitle=all(view.tree,n=>n.type==='input').find(n=>n.props.maxLength===120);
+ clauseTitle.props.onChange({target:{value:'Regras adicionais'}});view.render();
  const clauseText=all(view.tree,n=>n.type==='textarea');
  clauseText[0].props.onChange({target:{value:'Texto original revisado para a propriedade.'}});
  await clickButton(view,'Add optional clause');
  view.render();assert.ok(all(view.tree,n=>n.type==='details').length>=18);
+ const optionalToggle=all(view.tree,n=>n.type==='input').find(n=>n.props.type==='checkbox');
+ optionalToggle.props.onChange({target:{checked:true}});view.render();
  const remove=all(view.tree,n=>n.type==='button').find(n=>n.props.children==='Remove');
  assert.ok(remove);remove.props.onClick();view.render();
  await clickButton(view,'Save draft');
@@ -136,4 +141,63 @@ test('blank draft and properties absent are not treated as published documents',
  const publish=all(view.tree,n=>n.type==='button').find(n=>String(n.props.children).includes('Publish template'));
  // No saved draft ID means an approved checkbox cannot enable finalization.
  assert.ok(publish?.props.disabled);
+});
+
+test('server errors on questionnaire requests show feedback and never fake success',async()=>{
+ const calls=api(),view=await loaded();
+ const originalFetch=global.fetch;
+ global.fetch=async (url,init)=>{
+  if(String(url).endsWith('/contracts/settings')&&init?.method==='PUT')return makeResponse({message:['CPF is invalid','Missing details']},400);
+  return originalFetch(url,init);
+ };
+ await clickButton(view,'Save settings');view.render();
+ assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+ assert.ok(calls.some(x=>x.path.endsWith('/contracts/settings')));
+ step(view,4);
+ global.fetch=async (url,init)=>{
+  if(String(url).endsWith('/contracts/template/draft'))return makeResponse({message:'Template unavailable'},503);
+  return originalFetch(url,init);
+ };
+ await clickButton(view,'Save draft');view.render();
+ assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+});
+test('failed initial load is shown safely and does not expose fake contract fields',async()=>{
+ api();global.fetch=async()=>{throw new Error('Network unavailable')};
+ const view=await loaded();view.render();
+ assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+ assert.equal(all(view.tree,n=>n.type==='input').length,0);
+});
+test('property configuration errors show feedback while retaining previously loaded account settings',async()=>{
+ api();const view=await loaded();
+ step(view,3);await sleep();view.render();
+ const previous=global.fetch;
+ global.fetch=async (url,init)=>{
+  if(String(url).includes('/contracts/properties/')&&init?.method==='PUT')return makeResponse({},500);
+  return previous(url,init);
+ };
+ await clickButton(view,'Save property rules');view.render();
+ assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+});
+test('contract API refuses malformed backend responses and preserves HTTP error status',async()=>{
+ const {readSettings,readTemplate,saveTemplateDraft}=require('../src/features/contracts/contract-api.ts');
+ global.fetch=async()=>({ok:false,status:400,json:async()=>{throw Error('invalid JSON')}});
+ await assert.rejects(readSettings(),/HTTP 400/);
+ global.fetch=async()=>makeResponse({message:['Invalid clause','Missing annex']},422);
+ await assert.rejects(readTemplate(),/Invalid clause; Missing annex/);
+ global.fetch=async(url)=>String(url).endsWith('/auth/csrf')?
+   makeResponse({csrfToken:'fixture-csrf-session-token'}):makeResponse({message:'Draft cannot be saved'},409);
+ await assert.rejects(saveTemplateDraft(scaffold),/Draft cannot be saved/);
+});
+test('wizard next/back navigation works and cancelled publication does not send a request',async()=>{
+ const calls=api(),view=await loaded();
+ await clickButton(view,'Next');view.render();
+ assert.match(JSON.stringify(view.tree.props.children).slice(0,120),'');
+ await clickButton(view,'Back');view.render();
+ step(view,4);await clickButton(view,'Save draft');view.render();
+ step(view,5);
+ const approve=find(view.tree,n=>n.type==='input'&&n.props.type==='checkbox');
+ approve.props.onChange({target:{checked:true}});view.render();
+ const oldWindow=global.window;global.window={confirm:()=>false};
+ try{await clickButton(view,'Publish template')}finally{global.window=oldWindow}
+ assert.equal(calls.filter(x=>x.path.endsWith('/contracts/template/publish')).length,0);
 });
