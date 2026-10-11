@@ -29,17 +29,34 @@ body{margin:0;min-width:320px}button{cursor:pointer}button:disabled{cursor:not-a
 .rf-chart-toolbar{padding:18px 22px 5px;display:flex;flex-wrap:wrap;gap:8px}
 .rf-chart-toggle{border:1px solid #dfe9e2;border-radius:9px;background:#fff;padding:9px 14px;color:#4d6658;font-size:12px;font-weight:760}
 .rf-chart-toggle.active,.rf-chart-toggle[aria-pressed=true]{background:#e2f3e8;border-color:#95d1ae;color:#0c6b41}
-.rf-chart-bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;align-items:end;padding:24px 24px 12px;min-height:250px}
-.rf-chart-month{display:flex;min-width:0;flex-direction:column;align-items:center;gap:9px}
-.rf-chart-amount{font-size:clamp(8px,.85vw,11px);color:#466153;font-weight:750;white-space:nowrap}
-.rf-chart-track{height:150px;width:100%;max-width:48px;background:#eff5f0;border-radius:8px;display:flex;align-items:end;overflow:hidden}
-.rf-chart-bar{display:block;width:100%;border-radius:7px 7px 0 0;background:linear-gradient(0deg,#086443,#44b57d);min-height:0}
-.rf-chart-unfinished .rf-chart-bar{background:linear-gradient(0deg,#83b89c,#d5e8db)}
-.rf-chart-month-name{font-size:11px;font-weight:700;color:#758a7d;text-transform:capitalize}
+/* Revenue trend: the currency line is primary; pale bars have an independent reservation-count axis. */
+.rf-chart-period{display:inline-flex;align-items:center;gap:8px;border:1px solid #e2eae5;border-radius:11px;padding:10px 13px;color:#476653;font-size:12px;font-weight:750;white-space:nowrap}
+.rf-trend-scroll{overflow-x:auto;overscroll-behavior-inline:contain;padding:6px 16px 0}
+.rf-trend-viewport{position:relative;min-width:720px}
+.rf-trend-svg{display:block;width:100%;height:auto;overflow:visible}
+.rf-trend-grid{stroke:#e9efea;stroke-width:1;stroke-dasharray:4 5}
+.rf-trend-axis{fill:#81918a;font-size:11px;font-weight:600}
+.rf-trend-right-label{fill:#628f74;font-size:11px;font-weight:700}
+.rf-trend-reservation-bars rect{fill:#8dceb1;opacity:.28}
+.rf-trend-area{fill:url(#rf-trend-fill)}
+.rf-trend-line{fill:none;stroke:#087447;stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round}
+.rf-trend-guide{stroke:#178353;stroke-width:1.5;stroke-dasharray:4 4;opacity:.58}
+.rf-trend-dot{fill:#087447;stroke:white;stroke-width:2.5;outline:none;cursor:pointer}
+.rf-trend-dot:hover,.rf-trend-dot.active,.rf-trend-dot:focus-visible{stroke:#cff0d9;stroke-width:5}
+.rf-trend-month{fill:#70857a;font-size:12px;font-weight:700;text-transform:capitalize}
+.rf-trend-tooltip{position:absolute;right:36px;top:12px;min-width:185px;z-index:2;background:#fff;box-shadow:0 9px 32px #0f523120;border:1px solid #e5eee7;border-radius:12px;padding:13px 16px;font-size:12px;color:#415f4f;pointer-events:none;display:grid;gap:9px}
+.rf-trend-tooltip strong{font-size:13px;color:#243d30;text-transform:capitalize}
+.rf-trend-tooltip span{display:flex;align-items:center;gap:9px}
+.rf-trend-tooltip b{margin-left:auto;color:#203f30}
+.rf-trend-legend{display:flex;flex-wrap:wrap;gap:13px 24px;padding:2px 24px 21px;font-size:12px;color:#5f7969}
+.rf-trend-legend span{display:inline-flex;align-items:center;gap:8px}
+.rf-trend-legend-line,.rf-trend-legend-bar{display:inline-block;flex:none;width:11px;height:11px;border-radius:50%;background:#087447}
+.rf-trend-legend-bar{border-radius:3px;background:#a1d9b9}
 .rf-chart-insights{display:flex;flex-wrap:wrap;gap:12px 30px;background:#f6faf7;border-top:1px solid #e5eee8;padding:16px 24px;font-size:12px;color:#315d42}
 .rf-chart-insights p{margin:0}
 .rf-chart-footnote{font-size:11px;color:#839489;padding:12px 24px 20px;line-height:1.6}
 .rf-booking-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,335px),1fr));gap:18px;align-items:start;margin-top:24px}
 .rf-booking-groups .rf-rentals{min-width:0}
 .rf-booking-groups .rf-viewall{display:none}
-@media(max-width:780px){.rf-chart-bars{overflow-x:auto;gap:7px;padding:20px 12px 12px}.rf-chart-month-name{font-size:9px}.rf-chart-amount{font-size:9px}.rf-chart-track{height:120px}.rf-chart-toolbar{padding:13px}.rf-chart-footnote{padding:12px 16px}}
+@media(max-width:780px){.rf-chart-toolbar{padding:13px}.rf-chart-period{font-size:11px}.rf-trend-scroll{padding:6px 10px 0}.rf-chart-footnote{padding:12px 16px}}
+@media(max-width:520px){.rf-chart-header{flex-direction:column}.rf-trend-legend{padding-inline:16px}.rf-trend-tooltip{top:5px;right:14px}}
