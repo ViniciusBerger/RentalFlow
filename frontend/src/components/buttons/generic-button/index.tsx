@@ -4,10 +4,12 @@ interface IButtonProps {
     content: string
     onClick?: ()=> void
     className?:string
+    ariaLabel?:string
 }
 
-export const GenericButton = ({icon, content, onClick, className}: IButtonProps)=> (
+export const GenericButton = ({icon, content, onClick, className, ariaLabel}: IButtonProps)=> (
     <button
+    type="button" aria-label={ariaLabel}
     onClick={onClick} 
     className={
         className ??
