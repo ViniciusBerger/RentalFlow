@@ -47,17 +47,19 @@ export class ContractDataCrypto {
     return {ciphertext, nonce, authTag: cipher.getAuthTag(), keyVersion: this.active,
       sha256: createHash('sha256').update(value).digest('hex')};
   }
-  open(value: SealedData, userId: string, kind: string, resourceId: string): Buffer {
+  open(value: SealedComponents & {sha256?: string}, userId: string, kind: string, resourceId: string): Buffer {
     const key = this.keys.get(value.keyVersion);
     if (!key) throw new Error('Encryption key version unavailable');
     if (value.nonce.length !== 12 || value.authTag.length !== 16 ||
-        !/^[a-f0-9]{64}$/.test(value.sha256)) throw new Error('Invalid encrypted payload');
+        (value.sha256 !== undefined && !/^[a-f0-9]{64}$/.test(value.sha256))) throw new Error('Invalid encrypted payload');
     const decipher = createDecipheriv('aes-256-gcm', key, value.nonce);
     decipher.setAAD(this.context(userId, kind, resourceId));
     decipher.setAuthTag(value.authTag);
     const clear = Buffer.concat([decipher.update(value.ciphertext), decipher.final()]);
-    const digest = Buffer.from(createHash('sha256').update(clear).digest('hex'), 'hex');
-    if (!timingSafeEqual(digest, Buffer.from(value.sha256, 'hex'))) throw new Error('Encrypted document integrity verification failed');
+    if (value.sha256) {
+      const digest = Buffer.from(createHash('sha256').update(clear).digest('hex'), 'hex');
+      if (!timingSafeEqual(digest, Buffer.from(value.sha256, 'hex'))) throw new Error('Encrypted document integrity verification failed');
+    }
     return clear;
   }
 }
