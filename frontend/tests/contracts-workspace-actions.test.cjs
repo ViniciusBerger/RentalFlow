@@ -234,7 +234,7 @@ test('Portuguese contract workspace covers localized draft, due-date and payment
   assert.ok(deposit);deposit.props.onChange({target:{checked:true}});view.render();
   const add=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Adicionar parcela'));
   assert.ok(add);add.props.onClick();view.render();
-  const remove=all(view.tree,n=>n.type==='button').find(n=>n.props['aria-label']==='Remover parcela');
+  const remove=all(view.tree,n=>n.type==='button').filter(n=>n.props['aria-label']==='Remover parcela').at(-1);
   assert.ok(remove);remove.props.onClick();view.render();
   const save=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Salvar rascunho'));
   assert.ok(save);save.props.onClick();
