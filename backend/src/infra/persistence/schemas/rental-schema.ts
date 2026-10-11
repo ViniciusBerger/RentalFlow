@@ -1,4 +1,5 @@
-import { pgTable, uuid, varchar, doublePrecision, timestamp, date, index, boolean, integer, foreignKey } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm';
+import { pgTable, uuid, varchar, doublePrecision, timestamp, date, index, boolean, integer, foreignKey, unique, check } from "drizzle-orm/pg-core";
 import { PropertySchema } from "./property-schema";
 import { UserSchema } from "./user-schema";
 
@@ -24,7 +25,9 @@ export const RentalSchema = pgTable("rentals", {
   startDateIdx: index("start_date_idx").on(table.startDate),
   userIdIdx: index('user_id_index').on(table.userId),
   propertyOwnerFk: foreignKey({columns:[table.propertyId,table.userId], foreignColumns:[PropertySchema.id,PropertySchema.userId], name:"rentals_property_owner_fk"}),
-  propertyIdx: index("rentals_property_idx").on(table.propertyId)
+  propertyIdx: index("rentals_property_idx").on(table.propertyId),
+  rentalOwnerUnique: unique("rentals_id_owner_unique").on(table.id,table.userId),
+  dateCheck: check("rental_valid_dates",sql.raw('"end_date" > "start_date"'))
 }));
 
 // Optional: Export types for use in your Adapter
