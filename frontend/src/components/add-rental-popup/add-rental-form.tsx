@@ -4,6 +4,7 @@ import { TextInputFormDiv } from "../text-input-form";
 import { useLanguage } from "../../i18n/context";
 import { useProperties } from '../../features/properties/property-store';
 import { localizeError } from "../../i18n/messages";
+import { BookingContractFields } from "./booking-contract-fields";
 
 const emptyFormData = {
   clientFirstName: '',
@@ -19,6 +20,9 @@ const emptyFormData = {
 export const AddRentalForm = ({
   handleSubmit,
   handleChange,
+  handleContractChange,
+  contractForm,
+  contractBookingEnabled,
   error,
   isSaving,
   formData = emptyFormData,
@@ -95,7 +99,7 @@ export const AddRentalForm = ({
           <span className="absolute left-4 top-3 font-bold text-sage-600">R$</span>
           <input
             type="number"
-            step="1"
+            step="0.01"
             min="0"
             name="revenue"
             value={formData.revenue}
@@ -113,7 +117,7 @@ export const AddRentalForm = ({
           <span className="absolute left-4 top-3 font-bold text-sage-600">R$</span>
           <input
             type="number"
-            step="1"
+            step="0.01"
             min="0"
             name="fee"
             value={formData.fee}
@@ -133,7 +137,7 @@ export const AddRentalForm = ({
           type="number"
           step="1"
           min="0"
-          max="20"
+          max="999"
           name="guests"
           value={formData.guests ?? 0}
           onChange={handleChange}
@@ -142,6 +146,7 @@ export const AddRentalForm = ({
       </div>
     </div>
 
+    {contractBookingEnabled&&<BookingContractFields data={contractForm} onChange={handleContractChange} locale={locale}/>}
     {error && (
       <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 animate-in fade-in slide-in-from-top-1">
         <AlertCircle size={16} className="flex-shrink-0" />
