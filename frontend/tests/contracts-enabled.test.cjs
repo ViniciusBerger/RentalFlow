@@ -132,7 +132,8 @@ test('blank draft and properties absent are not treated as published documents',
  api({noProperties:true,blank:true});
  const view=await loaded();
  step(view,3);
- assert.equal(all(view.tree,n=>n.type==='input').length,0);
+ assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+ assert.doesNotMatch(JSON.stringify(view.tree),/52998224725/);
  step(view,4);
  assert.equal(all(view.tree,n=>n.type==='details').length,17);
  step(view,5);
@@ -191,7 +192,7 @@ test('contract API refuses malformed backend responses and preserves HTTP error 
 test('wizard next/back navigation works and cancelled publication does not send a request',async()=>{
  const calls=api(),view=await loaded();
  await clickButton(view,'Next');view.render();
- assert.match(JSON.stringify(view.tree.props.children).slice(0,120),'');
+ assert.ok(find(view.tree,n=>n.type==='h3'));
  await clickButton(view,'Back');view.render();
  step(view,4);await clickButton(view,'Save draft');view.render();
  step(view,5);
