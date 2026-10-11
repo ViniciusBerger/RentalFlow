@@ -57,7 +57,9 @@ jobs:
         run: npm run typecheck
 
       - name: Backend coverage (95% business/adapters gate)
-        run: npm run test:cov -- --ci | tee coverage-summary.txt
+        run: |
+          set -o pipefail
+          npm run test:cov -- --ci | tee coverage-summary.txt
 
       - name: HTTP integration tests
         run: npm run test:e2e -- --runInBand --ci
@@ -124,7 +126,9 @@ jobs:
         run: node --test tests/contracts.test.cjs
 
       - name: Frontend coverage (95% exercised-modules gate)
-        run: npm run test:cov | tee coverage-summary.txt
+        run: |
+          set -o pipefail
+          npm run test:cov | tee coverage-summary.txt
 
       - name: Frontend UI smoke checks
         run: node --test ui-redesign.test.mjs

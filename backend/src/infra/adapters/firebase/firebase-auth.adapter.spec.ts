@@ -159,14 +159,14 @@ describe('FirebaseAuthAdapter', () => {
   it('does not swallow structured Firebase REST authentication errors', async () => {
     const error = { response: { data: {error: {message:'INVALID_PASSWORD'}} } };
     mockedAxios.post.mockRejectedValue(error);
-    const spy=jest.spyOn(console,'log').mockImplementation(()=>undefined);
+    const spy=jest.spyOn(console,'error').mockImplementation(()=>undefined);
     await expect(adapter.authenticate('a','b')).rejects.toBe(error);
-    expect(spy).toHaveBeenCalledWith('FIREBASE AUTH ERROR:',error.response.data);
+    expect(spy).toHaveBeenCalledWith('Firebase authentication failed',{status:null});
     spy.mockRestore();
   });
   it('handles unstructured REST failures without replacing the original error', async () => {
     mockedAxios.post.mockRejectedValue(null);
-    const spy=jest.spyOn(console,'log').mockImplementation(()=>undefined);
+    const spy=jest.spyOn(console,'error').mockImplementation(()=>undefined);
     await expect(adapter.authenticate('a','b')).rejects.toBeNull();
     spy.mockRestore();
   });

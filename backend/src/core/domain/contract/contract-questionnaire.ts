@@ -69,11 +69,11 @@ export function validateLandlordForPublish(profile:LandlordProfile|null|undefine
    !profile.rg?.trim()||profile.rg.length<4||
    !profile.addressStreet?.trim()||!profile.addressNumber?.trim()||!profile.addressDistrict?.trim()||
    !profile.addressCity?.trim()||!profile.addressState||!/^[A-Z]{2}$/.test(profile.addressState)||
-   !profile.addressPostalCode||!/^\\d{5}-?\\d{3}$/.test(profile.addressPostalCode)) {
+   !profile.addressPostalCode||!/^\d{5}-?\d{3}$/.test(profile.addressPostalCode)) {
    throw new BadRequestException('Complete landlord identification before publishing');
  }
- if(profile.email?.trim()&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(profile.email))throw new BadRequestException('Invalid landlord email');
- if(profile.phone?.trim()&&!/^\\+?\\d[\\d\\s()-]{8,20}$/.test(profile.phone))throw new BadRequestException('Invalid landlord phone');
+ if(profile.email?.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email))throw new BadRequestException('Invalid landlord email');
+ if(profile.phone?.trim()&&!/^\+?\d[\d\s()-]{8,20}$/.test(profile.phone))throw new BadRequestException('Invalid landlord phone');
  if(!/^.{2,90}\/[A-Z]{2}$/.test(policy.jurisdiction.trim()))throw new BadRequestException('Jurisdiction city/state is required');
  if(payment.acceptedMethods.length===0)throw new BadRequestException('Select an accepted payment method');
  if(payment.acceptedMethods.includes('PIX')&&!profile.pixKey?.trim())throw new BadRequestException('PIX key is required for PIX payments');

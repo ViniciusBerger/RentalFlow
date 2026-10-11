@@ -23,7 +23,7 @@ const {Pool}=require('pg');
   for(const uid of ['owner-a','owner-b'])await client.query('INSERT INTO users(firebase_uid,first_name,last_name,email) VALUES($1,$2,$3,$4)',[uid,'Test','Owner',uid+'@example.test']);
   const template=(await client.query("INSERT INTO contract_templates(user_id,name,is_default) VALUES('owner-a','Seasonal',true) RETURNING id")).rows[0].id;
   const draft=(await client.query("INSERT INTO contract_template_versions(template_id,user_id,version_number,status) VALUES($1,'owner-a',1,'DRAFT') RETURNING id",[template])).rows[0].id;
-  await denied('23503',"INSERT INTO contract_template_versions(template_id,user_id,version_number) VALUES($1,'owner-b',2)",[template]);
+  await denied('23503',"INSERT INTO contract_template_versions(template_id,user_id,version_number,status,published_at) VALUES($1,'owner-b',2,'PUBLISHED',now())",[template]);
   await denied('23505',"INSERT INTO contract_template_versions(template_id,user_id,version_number) VALUES($1,'owner-a',1)",[template]);
   await client.query("UPDATE contract_template_versions SET clauses=$2,status='PUBLISHED',published_at=now() WHERE id=$1",[draft,JSON.stringify([{id:'1',body:'Owner-approved test'}])]);
   await denied('23514',"UPDATE contract_template_versions SET clauses='[]' WHERE id=$1",[draft]);

@@ -85,7 +85,7 @@ describe('Rental creation scopes availability per user',()=>{
     jest.useFakeTimers().setSystemTime(new Date('2026-10-11T12:00:00Z'));
     try {
       await new CreateRentalUseCase(repo).createRental('host-A','Ana','Silva','2026-11-01','2026-11-02',2,200,50);
-      expect(repo.checkOverlapDate).toHaveBeenCalledWith('host-A','2026-11-01','2026-11-02');
+      expect(repo.checkOverlapDate).toHaveBeenCalledWith('host-A','2026-11-01','2026-11-02',undefined);
     }finally{jest.useRealTimers();}
   });
 });
