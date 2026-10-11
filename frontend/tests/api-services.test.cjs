@@ -6,9 +6,10 @@ const { login, getMe, completeProfile, logout }=require('../src/hooks/auth/auth-
 const { addRental, deleteRental, updateRental }=require('../src/hooks/rental-actions/rental-service.ts');
 const { loadNextRentals, loadUserData, loadDashboardBalance }=require('../src/hooks/load-data/load-data.service.ts');
 const { loadBalance }=require('../src/hooks/load-data/balance-service.ts');
-afterEach(()=>{delete global.fetch});
+const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
+afterEach(()=>{delete global.fetch;clearCsrfToken();});
 function respond(status,body){return {ok:status>=200&&status<300,status,json:async()=>body};}
-function track(...results){const calls=[];global.fetch=async (url,options)=>{calls.push([url,options]);let next=results.shift();if(next instanceof Error)throw next;return next;};return calls;}
+function track(...results){const calls=[];global.fetch=async (url,options)=>{if(String(url).endsWith('/auth/csrf'))return respond(200,{csrfToken:'test-session-bound-token'});calls.push([url,options]);let next=results.shift();if(next instanceof Error)throw next;return next;};return calls;}
 
 test('login sends development credentials as JSON with session cookies', async()=>{
  const calls=track(respond(200,{message:'Development login successful'}));

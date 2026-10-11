@@ -5,7 +5,7 @@ const {createRentalDataStore}=require('../src/hooks/load-data/rental-data-store.
 const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
 const {MemoryRouter}=require('react-router-dom');
-const {mount}=require('./test-dispatcher.cjs');
+const {mount:originalMount}=require('./test-dispatcher.cjs');
 process.env.VITE_API_URL='http://localhost:3000';
 const {AuthForm}=require('../src/features/auth/components/auth-form/index.tsx');
 const {AddRentalForm}=require('../src/components/add-rental-popup/add-rental-form.tsx');
@@ -21,15 +21,31 @@ const EditRentalPopUp=require('../src/components/edit-rental-popup/index.tsx').d
 const {useRentalActions}=require('../src/hooks/rental-actions/useRentalActions.tsx');
 const {UseLoadData}=require('../src/hooks/load-data/useLoadData.tsx');
 const {useRentalDataStore}=require('../src/hooks/load-data/useRentalDataStore.ts');
-const {login,getMe,completeProfile,logout}=require('../src/hooks/auth/auth-service.tsx');
+const authApi=require('../src/hooks/auth/auth-service.tsx');
+const {login,getMe}=authApi;
 const {loadBalance}=require('../src/hooks/load-data/balance-service.ts');
 const {loadNextRentals,loadUserData}=require('../src/hooks/load-data/load-data.service.ts');
-const {addRental,updateRental,deleteRental}=require('../src/hooks/rental-actions/rental-service.ts');
+const rentalApi=require('../src/hooks/rental-actions/rental-service.ts');
 const h=React.createElement,noop=()=>{},ssr=(C,p)=>renderToStaticMarkup(h(MemoryRouter,null,h(C,p)));
 const respond=(status,payload)=>({ok:status>=200&&status<300,status,json:async()=>payload});
 const badJson=status=>({ok:false,status,json:async()=>{throw new SyntaxError('bad JSON')}});
+const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
+const secure=(fetchImpl)=>{
+ if(typeof fetchImpl!=='function'||fetchImpl.__csrfWrapped)return fetchImpl;
+ const wrapper=async (url,opts)=>String(url).endsWith('/auth/csrf')?
+  respond(200,{csrfToken:'test-session-bound-token'}):fetchImpl(url,opts);
+ wrapper.__csrfWrapped=true;return wrapper;
+};
+const protect=()=>{global.fetch=secure(global.fetch);};
+
+const mount=(...args)=>{protect();return originalMount(...args)};
+const completeProfile=(...args)=>{protect();return authApi.completeProfile(...args)};
+const logout=(...args)=>{protect();return authApi.logout(...args)};
+const addRental=(...args)=>{protect();return rentalApi.addRental(...args)};
+const updateRental=(...args)=>{protect();return rentalApi.updateRental(...args)};
+const deleteRental=(...args)=>{protect();return rentalApi.deleteRental(...args)};
 const find=(x,fn)=>{if(!x||typeof x!=='object')return null;if(Array.isArray(x))return x.map(y=>find(y,fn)).find(Boolean)||null;if(fn(x))return x;return find(x.props?.children,fn)};
-afterEach(()=>delete global.fetch);
+afterEach(()=>{delete global.fetch;clearCsrfToken()});
 
 test('status badges distinguish cancelled from active booking',()=>{
  const base={clientFirstName:'Ana',clientLastName:'Silva'};
