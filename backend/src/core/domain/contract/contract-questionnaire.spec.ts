@@ -50,6 +50,10 @@ describe('seasonal contract template security and publication gates',()=>{
   expect(()=>validateClauses(bad)).toThrow();
   bad[0].body='Unopened locador.nome}}';
   expect(()=>validateClauses(bad)).toThrow();
+  bad[0].body='Entre em contato com ana@example.test';
+  expect(()=>validateClauses(bad)).toThrow('Use placeholders');
+  bad[0].body='CPF 529.982.247-25';
+  expect(()=>validateClauses(bad)).toThrow('Use placeholders');
  });
  it('supports disabled optional clauses, but enabled extra clauses must be complete to publish',()=>{
   const extra={id:'extra-safe1',title:'Additional agreed rule',body:'',enabled:false};

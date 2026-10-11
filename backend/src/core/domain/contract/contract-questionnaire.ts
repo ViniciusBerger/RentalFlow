@@ -28,6 +28,13 @@ const placeholders=new Set([
  'reserva.entrada','reserva.saida','reserva.hospedes','reserva.valor_total','reserva.parcelas','reserva.sinal',
  'politica.cancelamento_dias','politica.multa_danos','politica.multa_descumprimento','foro.cidade_estado'
 ]);
+/** Identity details belong in AES-sealed profile/guest records, not plaintext templates. */
+export function rejectEmbeddedIdentifiers(text:string):void {
+ const emails=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+ if(emails.test(text))throw new BadRequestException('Use placeholders instead of embedding email addresses');
+ const cpfCandidates=text.match(/(?<![0-9])(?:[0-9]{3}[.\s-]?){3}[0-9]{2}(?![0-9])/g)??[];
+ if(cpfCandidates.some(candidate=>validateBrazilianCpf(candidate)))throw new BadRequestException('Use placeholders instead of embedding CPF numbers');
+}
 export function validateClauses(input:ContractClause[],publish=false):ContractClause[] {
  if(!Array.isArray(input)||input.length>40||input.length<17)throw new BadRequestException('Invalid clause list');
  const seen=new Set<string>();
@@ -41,6 +48,7 @@ export function validateClauses(input:ContractClause[],publish=false):ContractCl
   seen.add(c.id);
   if([...c.title].some(ch=>{const n=ch.charCodeAt(0);return n<32&&n!==9&&n!==10&&n!==13;})||c.title.includes('{{'))throw new BadRequestException('Invalid clause heading');
   const body=c.body.trim()?safeClauseText(c.body):'';
+  rejectEmbeddedIdentifiers(body);
   const matches=[...body.matchAll(/{{([^{}]+)}}/g)];
   for(const match of matches)if(!placeholders.has(match[1]))throw new BadRequestException('Unapproved contract placeholder');
   if((body.match(/{{/g)||[]).length!==matches.length||(body.match(/}}/g)||[]).length!==matches.length)throw new BadRequestException('Invalid contract placeholder syntax');
@@ -60,10 +68,12 @@ export function validateLandlordForPublish(profile:LandlordProfile|null|undefine
  if(!profile||!profile.fullName?.trim()||profile.fullName.trim().length<3||!validateBrazilianCpf(profile.cpf??'')||
    !profile.rg?.trim()||profile.rg.length<4||
    !profile.addressStreet?.trim()||!profile.addressNumber?.trim()||!profile.addressDistrict?.trim()||
-   !profile.addressCity?.trim()||!profile.addressState||!/[A-Z]{2}/.test(profile.addressState)||
+   !profile.addressCity?.trim()||!profile.addressState||!/^[A-Z]{2}$/.test(profile.addressState)||
    !profile.addressPostalCode||!/^\\d{5}-?\\d{3}$/.test(profile.addressPostalCode)) {
    throw new BadRequestException('Complete landlord identification before publishing');
  }
+ if(profile.email?.trim()&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(profile.email))throw new BadRequestException('Invalid landlord email');
+ if(profile.phone?.trim()&&!/^\\+?\\d[\\d\\s()-]{8,20}$/.test(profile.phone))throw new BadRequestException('Invalid landlord phone');
  if(!/^.{2,90}\/[A-Z]{2}$/.test(policy.jurisdiction.trim()))throw new BadRequestException('Jurisdiction city/state is required');
  if(payment.acceptedMethods.length===0)throw new BadRequestException('Select an accepted payment method');
  if(payment.acceptedMethods.includes('PIX')&&!profile.pixKey?.trim())throw new BadRequestException('PIX key is required for PIX payments');

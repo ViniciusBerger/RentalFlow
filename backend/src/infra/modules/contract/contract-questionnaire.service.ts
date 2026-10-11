@@ -11,7 +11,7 @@ import {ContractAuditEventSchema} from '../../persistence/schemas/contract-secur
 import {ContractDataCrypto} from '../../security/encrypted-data';
 import {safeClauseText} from '../../security/secure-clause-text';
 import {defaultPayment,defaultPolicy,emptyContractClauses,validateClauses,validateLandlordForPublish,
- type ContractClause,type ContractPolicy,type ContractPayment,type LandlordProfile} from '../../../core/domain/contract/contract-questionnaire';
+ rejectEmbeddedIdentifiers,type ContractClause,type ContractPolicy,type ContractPayment,type LandlordProfile} from '../../../core/domain/contract/contract-questionnaire';
 
 const profileColumns = {
  profileCiphertext:ContractSettingsSchema.profileCiphertext,
@@ -137,7 +137,7 @@ export class ContractQuestionnaireService {
   if(input.maximumOccupancy<input.includedOccupancy||
      input.houseRules.some(r=>typeof r!=='string'||r.length>700||!r.trim())||
      input.houseRules.join('').length>6000)throw new BadRequestException('Invalid property contract settings');
-  const rules=input.houseRules.map(r=>safeClauseText(r));
+  const rules=input.houseRules.map(r=>{const body=safeClauseText(r);rejectEmbeddedIdentifiers(body);return body;});
   return this.db.transaction(async tx=>{
    const [owned]=await tx.select({id:PropertySchema.id}).from(PropertySchema).where(and(
     eq(PropertySchema.id,propertyId),eq(PropertySchema.userId,uid),eq(PropertySchema.isActive,true))).limit(1);
