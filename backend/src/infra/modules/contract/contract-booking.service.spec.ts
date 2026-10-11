@@ -81,7 +81,7 @@ describe('Atomic contract booking',()=>{
   expect(identity.userId).toBe('owner-a');
   expect(JSON.stringify(identity)).not.toContain(guest.rg);
   const schedule=recorded.find(r=>Array.isArray(r));
-  expect(schedule[0]).toMatchObject({agreedCents:21000,receivedCents:0,
+  expect(schedule![0]).toMatchObject({agreedCents:21000,receivedCents:0,
    paymentMethod:'PIX',dueEvent:'KEY_HANDOVER'});
   expect(tx.execute).toHaveBeenCalledTimes(1);
   expect(db.transaction).toHaveBeenCalledTimes(1);
