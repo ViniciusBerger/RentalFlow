@@ -23,7 +23,7 @@ export type ContractDetail={
  status:string;revisionId:string;revisionVersion:number;
  history:{id:string;status:string;version:number;finalizedAt:string|null;createdAt:string}[];
  guest:Record<string,string>;installments:DraftInstallment[];editToken:string;
- pricing:{baseRevenueCents:number|null;calculatedExtraCents:number|null;chargedExtraCents:number|null;guestFeeMode:string|null};
+ pricing:{baseRevenueCents:number|null;calculatedExtraCents:number|null;chargedExtraCents:number|null;guestFeeMode:string|null;guestFeeReason:string|null};
  templateVersion:number|null;preview:ContractPreview;editable:boolean;
 };
 async function checked<T>(response:Response):Promise<T>{

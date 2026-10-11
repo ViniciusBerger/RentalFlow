@@ -152,12 +152,15 @@ export function ContractsWorkspacePage(){
      </div>
      <p className="rf-contract-help">{pt?'Total definido pelo servidor':'Server-authoritative total'}: <strong>{money(detail.booking.totalCents,locale)}</strong>.
       {' '}{pt?'O valor da reserva não pode ser alterado pelo editor do contrato.':'The contract editor cannot change the booking total.'}</p>
+     {detail.pricing?.guestFeeReason&&<p className="rf-contract-help">
+      {pt?'Justificativa para taxa de hóspedes':'Guest surcharge justification'}: {String(detail.pricing.guestFeeReason)}
+     </p>}
      {!editable&&<p className="rf-contract-help">{pt?'Revisões prontas ou finalizadas não permitem alterações aqui.':'Ready or finalized revisions cannot be edited here.'}</p>}
      <h4>{pt?'Identificação do contratante':'Contracting guest identification'}</h4>
      <p className="rf-contract-help">{pt?'O nome do contratante vem da reserva. O restante é um rascunho criptografado.':'Guest name comes from the booking; these draft identity fields are encrypted at rest.'}</p>
      <div className="rf-contract-grid">
       {guestFields.map(([key,label])=><label key={key} className="rf-contract-field">{label}
-       <input name={key} autoComplete="off" maxLength={key==='address'?500:key==='email'?254:40}
+       <input name={key} autoComplete="off" maxLength={key==='address'?500:key==='email'?254:key==='phone'?32:key==='nationality'||key==='maritalStatus'?40:20}
         disabled={!editable||saving} value={guest[key]??''} onChange={e=>{
          setGuest(g=>({...g,[key]:e.target.value}));setGuestDirty(true);setNotice('');
         }}/></label>)}

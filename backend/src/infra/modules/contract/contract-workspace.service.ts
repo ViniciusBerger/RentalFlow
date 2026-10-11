@@ -41,6 +41,9 @@ export class ContractWorkspaceService {
  constructor(@Inject(DRIZZLE) private readonly db:NodePgDatabase){}
  async list(uid:string,filter:{status?:string;propertyId?:string;query?:string}={}){
   if(!uid)throw new NotFoundException();
+  if(filter.status!==undefined&&typeof filter.status!=='string')throw new BadRequestException('Invalid status filter');
+  if(filter.propertyId!==undefined&&typeof filter.propertyId!=='string')throw new BadRequestException('Invalid property filter');
+  if(filter.query!==undefined&&typeof filter.query!=='string')throw new BadRequestException('Invalid search filter');
   if(filter.status&&!['ALL','DRAFT','READY','FINALIZED'].includes(filter.status))
    throw new BadRequestException('Invalid status filter');
   if(filter.propertyId&&!/^[0-9a-f-]{36}$/i.test(filter.propertyId))
@@ -172,7 +175,8 @@ export class ContractWorkspaceService {
    pricing:{baseRevenueCents:plainMeta?.baseRevenueCents??null,
     calculatedExtraCents:plainMeta?.calculatedExtraCents??null,
     chargedExtraCents:plainMeta?.chargedExtraCents??null,
-    guestFeeMode:plainMeta?.guestFeeMode??null},
+    guestFeeMode:plainMeta?.guestFeeMode??null,
+    guestFeeReason:plainMeta?.guestFeeReason??null},
    templateVersion:template?.versionNumber??null,
    preview,editable:current.status==='DRAFT'
   };
