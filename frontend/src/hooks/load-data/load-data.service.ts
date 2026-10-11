@@ -7,7 +7,7 @@ export const loadDashboardBalance = async ()=> {
     return balances
 }
 
-// load all next rentals from today and on
+// Load all active bookings belonging to the signed-in user, including history
 export const loadNextRentals = async() => {
   const response = await fetch(`${baseUrl}/rental/findall`, {
     method: 'GET',

@@ -24,12 +24,13 @@ describe('FindNextThreeUseCase', () => {
     repositoryMock.findNextThree.mockResolvedValue(mockRentals);
 
     // Act: Call the use case
-    const result = await useCase.find();
+    const result = await useCase.find('user-1');
 
     // Assert: Check results and repository interaction
     expect(result).toHaveLength(2);
     expect(result).toEqual(mockRentals);
     expect(repositoryMock.findNextThree).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.findNextThree).toHaveBeenCalledWith('user-1');
   });
 
   it('should propagate errors from the repository', async () => {
@@ -37,7 +38,7 @@ describe('FindNextThreeUseCase', () => {
     repositoryMock.findNextThree.mockRejectedValue(new Error('Database failure'));
 
     // Act & Assert: Ensure the Use Case doesn't swallow the error
-    await expect(useCase.find()).rejects.toThrow('Database failure');
+    await expect(useCase.find('user-1')).rejects.toThrow('Database failure');
   });
 
   it('should return an empty array if the repository has no upcoming rentals', async () => {
@@ -45,7 +46,7 @@ describe('FindNextThreeUseCase', () => {
     repositoryMock.findNextThree.mockResolvedValue([]);
 
     // Act
-    const result = await useCase.find();
+    const result = await useCase.find('user-1');
 
     // Assert
     expect(result).toEqual([]);

@@ -86,8 +86,11 @@ test('upcoming and host loading propagate server errors',async()=>{
 });
 test('balance loads annual and monthly financial summaries in their UI order',async()=>{
  const calls=track(respond(200,[{label:'2026',totalRevenue:800,totalProfit:500}]),respond(200,[{label:'2026-11',totalRevenue:100,totalProfit:60}]));
- const [year,month]=await loadDashboardBalance();
- assert.equal(year.totalRevenue,800);assert.equal(month.totalProfit,60);
+ const [year,month,series]=await loadDashboardBalance();
+ assert.equal(year.totalRevenue,800);
+ assert.deepEqual(series,[{label:'2026-11',totalRevenue:100,totalProfit:60}]);
+ // The current-month card is NOT the first arbitrary month.
+ assert.equal(month?.label === '2026-11', require('../src/features/booking/service/booking-timeline.ts').brazilToday().slice(0,7)==='2026-11');
  assert.match(calls[0][0],/\/balance\/yearly$/);
  assert.match(calls[1][0],/\/balance\/monthly$/);
 });
@@ -98,5 +101,5 @@ test('balance errors stop loading and do not show partial financial totals',asyn
 });
 test('balance requests default to missing data safely',async()=>{
  track(respond(200,[]),respond(200,[]));
- assert.deepEqual(await loadBalance(),[undefined,undefined]);
+ assert.deepEqual(await loadBalance(),[undefined,undefined,[]]);
 });

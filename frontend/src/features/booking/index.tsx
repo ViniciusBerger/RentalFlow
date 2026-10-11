@@ -3,12 +3,13 @@ import AddRentalPopUp from '../../components/add-rental-popup';
 import { useRentalActions } from '../../hooks/rental-actions/useRentalActions';
 import { BookingHeader } from './components/booking-header';
 import { BookingCalendar } from './components/booking-calendar';
-import { NextRentals } from '../../components/next-rentals';
+import { BookingGroups } from '../../components/booking-groups';
 import { UseLoadData } from '../../hooks/load-data/useLoadData';
 import RentalDetailPopUp from '../../components/rental-detail-popup';
 import { DashboardErrorState } from '../../components/error-state';
 import { LoadingState } from '../../components/loading-state';
 import { buildRentalDiff } from './service/calendar-service';
+import { dateKey } from './service/booking-timeline';
 import { useLanguage } from "../../i18n/context";
 
 export const BookingsPage = () => {
@@ -28,13 +29,11 @@ export const BookingsPage = () => {
     const handlePrev = ()=> setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
 
     const filteredRentals = nextRentals.filter(rental=> {
-        const startDate = new Date(rental.startDate);
-        const endDate = new Date(rental.endDate)
-
-        const viewStart = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-        const viewEnd = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0);
-
-        return startDate <= viewEnd && endDate >= viewStart;
+        const startDate = dateKey(rental.startDate);
+        const endDate = dateKey(rental.endDate);
+        const viewStart = `${viewDate.getFullYear()}-${String(viewDate.getMonth()+1).padStart(2,'0')}-01`;
+        const viewEnd = `${viewDate.getFullYear()}-${String(viewDate.getMonth()+1).padStart(2,'0')}-${String(new Date(viewDate.getFullYear(),viewDate.getMonth()+1,0).getDate()).padStart(2,'0')}`;
+        return startDate !== '' && endDate !== '' && startDate <= viewEnd && endDate > viewStart;
     })
 
   
@@ -84,12 +83,11 @@ export const BookingsPage = () => {
                 handlePrev={handlePrev}
                 rentals={filteredRentals}/>
 
-            <NextRentals 
+            <BookingGroups
                 onOpenPopUp={() => setIsRentalDetailPopUpOpen(true)}
                 onSelectRental={(rental) => setSelectedRental(rental)}
-                headerContent={t("nextRentals")}
                 rentals={nextRentals}
-                />
+            />
 
             <AddRentalPopUp 
                     isOpen={isCreateRentalPopUpOpen} 

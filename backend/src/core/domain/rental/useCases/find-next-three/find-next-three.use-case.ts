@@ -9,8 +9,8 @@ export class FindNextThreeUseCase {
     // inject the Interface (Port). This allows us to swap databases or test easily.
     constructor(private readonly rentalRepository: IRentalRepository) {}
 
-    async find(): Promise<Rental[]> {
-        const rentals: Rental[] = await this.rentalRepository.findNextThree();
+    async find(userId: string): Promise<Rental[]> {
+        const rentals: Rental[] = await this.rentalRepository.findNextThree(userId);
         return rentals;
     }
 }

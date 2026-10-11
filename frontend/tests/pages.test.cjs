@@ -171,7 +171,7 @@ test('booking page advances and reverses months and uses exact changed-field pat
  assert.ok(calendar);const original=calendar.props.viewDate.getMonth();
  calendar.props.handleNext();ui.render();calendar=find(ui.tree,n=>n.type?.name==='BookingCalendar');assert.equal(calendar.props.viewDate.getMonth(),(original+1)%12);
  calendar.props.handlePrev();ui.render();calendar=find(ui.tree,n=>n.type?.name==='BookingCalendar');assert.equal(calendar.props.viewDate.getMonth(),original);
- const list=find(ui.tree,n=>n.type?.name==='NextRentals');
+ const list=find(ui.tree,n=>n.type?.name==='BookingGroups');
  list.props.onSelectRental(booking);list.props.onOpenPopUp();ui.render();
  let detail=find(ui.tree,n=>n.type?.name==='RentalDetailPopUp');
  assert.equal(detail.props.isOpen,true);
@@ -182,7 +182,7 @@ test('bookings reject no-op edits and keep details open when persistence fails',
  const booking={id:'r1',clientFirstName:'Ana',clientLastName:'Silva',startDate:'2026-11-10',endDate:'2026-11-12',guests:2,revenue:100,fee:20};
  loadState={...loadState,nextRentals:[booking],isLoading:false};
  rentalActions={...rentalActions,updateRentalAndRefresh:async()=>false};
- const ui=mount(BookingsPage);let list=find(ui.tree,n=>n.type?.name==='NextRentals');list.props.onSelectRental(booking);ui.render();
+ const ui=mount(BookingsPage);let list=find(ui.tree,n=>n.type?.name==='BookingGroups');list.props.onSelectRental(booking);ui.render();
  let detail=find(ui.tree,n=>n.type?.name==='RentalDetailPopUp');
  assert.equal(await detail.props.onEditSubmit(booking),false);
  assert.equal(await detail.props.onEditSubmit({...booking,fee:30}),false);
@@ -221,7 +221,7 @@ test('booking edit protects against absent selection and thrown persistence exce
  let detail=find(ui.tree,n=>n.type?.name==='RentalDetailPopUp');
  assert.equal(await detail.props.onEditSubmit({fee:10}),false);
  const booking={id:'b',clientFirstName:'Ana',clientLastName:'Silva',startDate:'2026-11-10',endDate:'2026-11-11',guests:2,fee:20,revenue:100};
- find(ui.tree,n=>n.type?.name==='NextRentals').props.onSelectRental(booking);
+ find(ui.tree,n=>n.type?.name==='BookingGroups').props.onSelectRental(booking);
  ui.render();detail=find(ui.tree,n=>n.type?.name==='RentalDetailPopUp');
  assert.equal(await detail.props.onEditSubmit({...booking,fee:30}),false);
  ui.render();detail=find(ui.tree,n=>n.type?.name==='RentalDetailPopUp');
@@ -321,8 +321,8 @@ test('booking edit catches a null rejection and shows fallback message without c
  loadState={...loadState,nextRentals:[booking],isLoading:false};
  rentalActions={...rentalActions,updateRentalAndRefresh:async()=>{throw null}};
  const ui=mount(BookingsPage);
- find(ui.tree,n=>n.type?.name==='NextRentals').props.onSelectRental(booking);
- find(ui.tree,n=>n.type?.name==='NextRentals').props.onOpenPopUp();
+ find(ui.tree,n=>n.type?.name==='BookingGroups').props.onSelectRental(booking);
+ find(ui.tree,n=>n.type?.name==='BookingGroups').props.onOpenPopUp();
  ui.render();
  let modal=find(ui.tree,n=>n.type?.name==='RentalDetailPopUp');
  assert.equal(modal.props.isOpen,true);
