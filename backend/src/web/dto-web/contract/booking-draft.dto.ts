@@ -25,6 +25,8 @@ export class InstallmentDto {
 export class BookingDraftDto {
  @IsUUID() requestKey:string;
  @IsInt() @Min(0) @Max(1_000_000_000) baseRevenueCents:number;
+ // Must match a fresh authenticated backend price quote; never determines price.
+ @IsInt() @Min(0) @Max(1_000_000_000) confirmedTotalCents:number;
  @IsOptional() @ValidateNested() @Type(()=>GuestDraftDto) guest?:GuestDraftDto;
  @IsOptional() @ValidateNested() @Type(()=>GuestFeeDto) guestFee?:GuestFeeDto;
  @IsOptional() @IsIn(['PIX','BANK_TRANSFER','CUSTOM']) paymentMethod?:string;

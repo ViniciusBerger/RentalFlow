@@ -15,8 +15,9 @@ import {
 import { AuthGuard } from "src/infra/adapters/guards/auth.guard";
 import { ICreateRentalResponse } from "src/core/domain/rental/useCases/create-rental/ICreateRentalResponse";
 import { OnboardingGuard } from "src/infra/adapters/guards/onboarding.guard";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { ContractBookingService } from "../../infra/modules/contract/contract-booking.service";
+import { BookingQuoteDto } from "../dto-web/contract/booking-quote.dto";
 
 
 @ApiTags('Rentals module')
@@ -62,6 +63,14 @@ export class RentalController {
         const userId = (req as any).user?.uid;
         const rentals = await this.findNextThreeUseCase.find(userId)
         return rentals
+    }
+
+    @Post('quote')
+    @ApiOperation({summary:'Get backend-authoritative contract booking price before saving'})
+    async quoteRental(@Req() req:Request,@Body() dto:BookingQuoteDto){
+        if(process.env.CONTRACT_BOOKING_DRAFTS_ENABLED!=='true')throw new NotFoundException('Contract booking feature is disabled');
+        const userId=(req as any).user?.uid;
+        return this.contractBookingService.quote(userId,dto);
     }
 
     @Post('add')
