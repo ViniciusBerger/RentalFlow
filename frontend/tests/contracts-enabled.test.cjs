@@ -34,8 +34,8 @@ function api(opts={}){
    landlord:{},policy:initialPolicy,payment:initialPayment,configured:false
   });
   if(path.endsWith('/contracts/template'))return makeResponse({
-   draft:opts.existing?{id:'550e8400-e29b-41d4-a716-446655440006',versionNumber:2,clauses:scaffold}:null,
-   published:opts.existing?{id:'550e8400-e29b-41d4-a716-446655440005',versionNumber:1,publishedAt:'2026-10-11',clauses:scaffold}:null,
+   draft:opts.existing&&!opts.publishedOnly?{id:'550e8400-e29b-41d4-a716-446655440006',versionNumber:2,clauses:scaffold}:null,
+   published:opts.existing||opts.publishedOnly?{id:'550e8400-e29b-41d4-a716-446655440005',versionNumber:1,publishedAt:'2026-10-11',clauses:scaffold}:null,
    scaffold:opts.blank?scaffold.map(x=>({...x,body:''})):scaffold
   });
   if(path.endsWith('/properties'))return makeResponse(opts.noProperties?[]:[property]);
@@ -282,4 +282,19 @@ test('failed template publication preserves draft and never claims approval',asy
  assert.ok(find(view.tree,n=>n.props?.role==='alert'));
  assert.equal(calls.some(x=>x.path.endsWith('/contracts/template')),true);
  assert.equal(all(view.tree,n=>n.type==='p').some(x=>String(x.props.children).includes('Latest published version')),true);
+});
+
+test('published-only account loads the approved version without an open draft, then saves a new editable revision',async()=>{
+ const calls=api({publishedOnly:true}),view=await loaded();
+ step(view,4);
+ const first=all(view.tree,n=>n.type==='textarea')[0];
+ assert.ok(first);assert.match(first.props.value,/Texto original/);
+ first.props.onChange({target:{value:'Texto original atualizado para a próxima versão.'}});
+ view.render();
+ await clickButton(view,'Save draft');view.render();
+ const put=calls.find(x=>x.path.endsWith('/contracts/template/draft')&&x.init?.method==='PUT');
+ assert.ok(put);
+ assert.match(JSON.parse(put.init.body).clauses[0].body,/próxima versão/);
+ step(view,5);
+ assert.ok(all(view.tree,n=>n.type==='p').some(x=>String(x.props.children).includes('Latest published version')));
 });
