@@ -75,3 +75,55 @@ test('changing the number of guests invalidates the previously confirmed total',
  await form(ui).props.handleSubmit(event);
  assert.equal(submitted,0);
 });
+
+test('waiver and adjustment selections are sent for backend pricing rather than applied in UI',async()=>{
+ const requests=[];
+ global.fetch=async(url,init)=>{
+  if(String(url).endsWith('/auth/csrf'))return respond({csrfToken:'test'});
+  if(String(url).endsWith('/properties'))return respond(property);
+  if(String(url).endsWith('/rental/quote')){
+   requests.push(JSON.parse(init.body));return respond(quote);
+  }
+  return respond({message:'Unexpected endpoint'},404);
+ };
+ const ui=mount(Popup,{isOpen:true,onSubmit:async()=>false,onClose:()=>{},isSaving:false,error:null});
+ for(const [name,value] of Object.entries({
+  propertyId:property[0].id,startDate:'2026-12-01',endDate:'2026-12-03',
+  guests:'3',revenue:'200'
+ }))form(ui).props.handleChange({target:{name,value}});
+ ui.render();
+ let fields=form(ui);
+ fields.props.handleContractChange({target:{name:'feeMode',value:'WAIVED'}});
+ fields.props.handleContractChange({target:{name:'feeReason',value:'Approved in advance'}});
+ ui.render();
+ await form(ui).props.onQuote();
+ ui.render();
+ assert.equal(requests[0].guestFee.mode,'WAIVED');
+ assert.equal(requests[0].guestFee.reason,'Approved in advance');
+ assert.equal(form(ui).props.quote.totalCents,21000);
+ fields=form(ui);
+ fields.props.handleContractChange({target:{name:'feeMode',value:'ADJUSTED'}});
+ fields.props.handleContractChange({target:{name:'feeAdjustment',value:'25.50'}});
+ ui.render();
+ assert.equal(form(ui).props.quote,null);
+ await form(ui).props.onQuote();
+ assert.deepEqual(requests[1].guestFee,{mode:'ADJUSTED',cents:2550,reason:'Approved in advance'});
+});
+test('failed quote never confirms a booking and reports a recoverable error',async()=>{
+ let saved=0;
+ global.fetch=async url=>{
+  if(String(url).endsWith('/auth/csrf'))return respond({csrfToken:'test'});
+  if(String(url).endsWith('/properties'))return respond(property);
+  return respond({message:'Occupancy limit exceeded'},400);
+ };
+ const ui=mount(Popup,{isOpen:true,onSubmit:async()=>{saved++;return true},
+  onClose:()=>{},isSaving:false,error:null});
+ form(ui).props.handleChange({target:{name:'propertyId',value:property[0].id}});
+ ui.render();
+ await form(ui).props.onQuote();
+ ui.render();
+ assert.equal(form(ui).props.quote,null);
+ assert.match(form(ui).props.quoteError,/Occupancy limit exceeded/);
+ await form(ui).props.handleSubmit(event);
+ assert.equal(saved,0);
+});
