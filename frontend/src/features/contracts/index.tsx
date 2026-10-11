@@ -23,7 +23,7 @@ const texts={
   propertyAddress:'Endereço atual do imóvel',propertyAddressHelp:'Cadastre o endereço completo na página Imóveis antes de finalizar contratos.',
   selectProperty:'Selecione um imóvel',noProperties:'Cadastre um imóvel antes de definir suas regras.',
   general:'Dados para contratos sazonais brasileiros. CPF, RG, endereço residencial e dados bancários são enviados apenas ao backend autenticado.',
-  fullName:'Nome completo',cpf:'CPF',rg:'RG',address:'Endereço residencial completo',phone:'Telefone (opcional)',
+  fullName:'Nome completo',cpf:'CPF',rg:'RG',address:'Endereço residencial',street:'Rua / logradouro',number:'Número (ou s/n)',district:'Bairro',city:'Cidade',state:'UF',zip:'CEP',complement:'Complemento (opcional)',phone:'Telefone (opcional)',
   email:'E-mail (opcional)',pix:'Chave PIX',bank:'Banco',agency:'Agência',account:'Conta',
   count:'Número padrão de parcelas',methods:'Formas de pagamento',due:'Vencimento padrão',deposit:'Tratamento do sinal',
   jurisdiction:'Foro (Cidade/UF)',cancelDays:'Prazo de cancelamento (dias)',damage:'Multa por danos (%)',
@@ -50,7 +50,7 @@ const texts={
   propertyAddress:'Current property address',propertyAddressHelp:'Provide the full address on the Properties page before finalizing contracts.',
   selectProperty:'Choose a property',noProperties:'Add a property before defining contract rules.',
   general:'For Brazilian seasonal rental agreements. CPF, RG, residential address and bank details are sent only to the authenticated backend.',
-  fullName:'Full name',cpf:'CPF',rg:'RG',address:'Complete residential address',phone:'Phone (optional)',
+  fullName:'Full name',cpf:'CPF',rg:'RG',address:'Residential address',street:'Street',number:'Number (or s/n)',district:'District',city:'City',state:'State (UF)',zip:'Postal code (CEP)',complement:'Complement (optional)',phone:'Phone (optional)',
   email:'Email (optional)',pix:'PIX key',bank:'Bank name',agency:'Bank branch',account:'Bank account',
   count:'Default installment count',methods:'Accepted payment methods',due:'Default payment due',deposit:'Deposit classification',
   jurisdiction:'Jurisdiction (City/State)',cancelDays:'Cancellation window (days)',damage:'Damage penalty (%)',
@@ -123,7 +123,7 @@ export const ContractQuestionnairePage=()=>{
    <div className="rf-panel rf-contract-card">
    {step===0&&<><h3>{t.landlord}</h3><p>{t.general}</p>
     <div className="rf-contract-grid">{field(t.fullName,'fullName')}{field(t.cpf,'cpf')}{field(t.rg,'rg')}
-     {field(t.address,'address')}{field(t.phone,'phone','tel')}{field(t.email,'email','email')}
+     {field(t.street,'addressStreet')}{field(t.number,'addressNumber')}{field(t.district,'addressDistrict')}{field(t.city,'addressCity')}{field(t.state,'addressState')}{field(t.zip,'addressPostalCode')}{field(t.complement,'addressComplement')}{field(t.phone,'phone','tel')}{field(t.email,'email','email')}
      {field(t.pix,'pixKey')}{field(t.bank,'bankName')}{field(t.agency,'bankAgency')}{field(t.account,'bankAccount')}</div>
     <button disabled={saving} className="rf-button" type="button" onClick={()=>void saveAccount()}><Save size={17}/>{saving?t.busy:t.save}</button>
    </>}

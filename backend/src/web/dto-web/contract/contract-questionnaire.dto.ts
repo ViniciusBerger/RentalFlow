@@ -6,7 +6,13 @@ export class LandlordDto {
  @IsOptional() @IsString() @Length(0,120) fullName?:string;
  @IsOptional() @IsString() @Length(0,20) cpf?:string;
  @IsOptional() @IsString() @Length(0,30) rg?:string;
- @IsOptional() @IsString() @Length(0,500) address?:string;
+ @IsOptional() @IsString() @Length(0,120) addressStreet?:string;
+ @IsOptional() @IsString() @Length(0,20) addressNumber?:string;
+ @IsOptional() @IsString() @Length(0,90) addressDistrict?:string;
+ @IsOptional() @IsString() @Length(0,90) addressCity?:string;
+ @IsOptional() @IsString() @Length(0,2) addressState?:string;
+ @IsOptional() @IsString() @Length(0,9) addressPostalCode?:string;
+ @IsOptional() @IsString() @Length(0,120) addressComplement?:string;
  @IsOptional() @IsString() @Length(0,30) phone?:string;
  @IsOptional() @IsString() @Length(0,254) email?:string;
  @IsOptional() @IsString() @Length(0,150) pixKey?:string;

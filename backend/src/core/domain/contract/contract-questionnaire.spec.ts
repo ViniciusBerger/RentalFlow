@@ -4,7 +4,7 @@ import {emptyContractClauses,validateClauses,validateLandlordForPublish,
 import type {ContractClause,LandlordProfile} from './contract-questionnaire';
 
 const complete=():ContractClause[]=>emptyContractClauses().map(c=>({...c,body:'Texto original aprovado pelo locador para este parágrafo.'}));
-const landlord:LandlordProfile={fullName:'Ana de Souza',cpf:'52998224725',rg:'12345678',address:'Rua das Flores, 120, Centro, Vitória, ES',
+const landlord:LandlordProfile={fullName:'Ana de Souza',cpf:'52998224725',rg:'12345678',addressStreet:'Rua das Flores',addressNumber:'120',addressDistrict:'Centro',addressCity:'Vitória',addressState:'ES',addressPostalCode:'29000-000',
  pixKey:'ana@example.test',bankName:'Banco Exemplo',bankAgency:'0001',bankAccount:'111-2'};
 
 describe('seasonal contract template security and publication gates',()=>{
@@ -68,7 +68,7 @@ describe('seasonal contract template security and publication gates',()=>{
   expect(()=>validateLandlordForPublish(landlord,{...defaultPolicy,jurisdiction:'Vila Velha/ES'},defaultPayment)).not.toThrow();
   expect(()=>validateLandlordForPublish(null,{...defaultPolicy,jurisdiction:'Vila Velha/ES'},defaultPayment)).toThrow();
   expect(()=>validateLandlordForPublish({...landlord,cpf:'11111111111'},{...defaultPolicy,jurisdiction:'Vila Velha/ES'},defaultPayment)).toThrow();
-  expect(()=>validateLandlordForPublish({...landlord,address:''},{...defaultPolicy,jurisdiction:'Vila Velha/ES'},defaultPayment)).toThrow();
+  expect(()=>validateLandlordForPublish({...landlord,addressStreet:''},{...defaultPolicy,jurisdiction:'Vila Velha/ES'},defaultPayment)).toThrow();
  });
  it('rejects invalid jurisdiction, missing payment methods, PIX or required bank details',()=>{
   const policy={...defaultPolicy,jurisdiction:'Vila Velha/ES'};

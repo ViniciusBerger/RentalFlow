@@ -1,7 +1,7 @@
 import {plainToInstance} from 'class-transformer';
 import {validate} from 'class-validator';
 import {SaveQuestionnaireDto,SaveTemplateDraftDto,PropertyContractSettingsDto} from './contract-questionnaire.dto';
-const settings={landlord:{fullName:'Ana',cpf:'52998224725',rg:'12345678',address:'Rua Flores 10'},
+const settings={landlord:{fullName:'Ana',cpf:'52998224725',rg:'12345678',addressStreet:'Rua Flores',addressNumber:'10',addressDistrict:'Centro',addressCity:'Vitória',addressState:'ES',addressPostalCode:'29000-000'},
  policy:{jurisdiction:'Vitória/ES',cancellationDays:30,damagePenaltyPercent:50,breachPenaltyPercent:10,utilitiesIncluded:true},
  payment:{installmentCount:2,acceptedMethods:['PIX'],defaultDueRule:'KEY_HANDOVER',depositMode:'MANUAL'}};
 const check=async<T extends object>(Class:new()=>T,data:unknown)=>validate(plainToInstance(Class,data),{

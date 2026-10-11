@@ -5,7 +5,7 @@ import { validateBrazilianCpf } from './contract-validation';
 export type ContractClause = { id:string; title:string; body:string; enabled:boolean };
 export type ContractPolicy = { jurisdiction:string; cancellationDays:number; damagePenaltyPercent:number; breachPenaltyPercent:number; utilitiesIncluded:boolean };
 export type ContractPayment = { installmentCount:number; acceptedMethods:string[]; defaultDueRule:string; depositMode:string };
-export type LandlordProfile = { fullName?:string; cpf?:string; rg?:string; address?:string; phone?:string; email?:string;
+export type LandlordProfile = { fullName?:string; cpf?:string; rg?:string; addressStreet?:string;addressNumber?:string;addressDistrict?:string;addressCity?:string;addressState?:string;addressPostalCode?:string;addressComplement?:string;phone?:string;email?:string;
   pixKey?:string; bankName?:string; bankAgency?:string; bankAccount?:string };
 export const defaultPolicy:ContractPolicy = {jurisdiction:'',cancellationDays:30,damagePenaltyPercent:50,breachPenaltyPercent:10,utilitiesIncluded:true};
 export const defaultPayment:ContractPayment = {installmentCount:2,acceptedMethods:['PIX','BANK_TRANSFER'],defaultDueRule:'KEY_HANDOVER',depositMode:'MANUAL'};
@@ -58,7 +58,10 @@ export function validateClauses(input:ContractClause[],publish=false):ContractCl
 }
 export function validateLandlordForPublish(profile:LandlordProfile|null|undefined,policy:ContractPolicy,payment:ContractPayment):void {
  if(!profile||!profile.fullName?.trim()||profile.fullName.trim().length<3||!validateBrazilianCpf(profile.cpf??'')||
-   !profile.rg?.trim()||profile.rg.length<4||!profile.address?.trim()||profile.address.trim().length<10) {
+   !profile.rg?.trim()||profile.rg.length<4||
+   !profile.addressStreet?.trim()||!profile.addressNumber?.trim()||!profile.addressDistrict?.trim()||
+   !profile.addressCity?.trim()||!profile.addressState||!/[A-Z]{2}/.test(profile.addressState)||
+   !profile.addressPostalCode||!/^\\d{5}-?\\d{3}$/.test(profile.addressPostalCode)) {
    throw new BadRequestException('Complete landlord identification before publishing');
  }
  if(!/^.{2,90}\/[A-Z]{2}$/.test(policy.jurisdiction.trim()))throw new BadRequestException('Jurisdiction city/state is required');
