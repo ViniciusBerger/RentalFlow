@@ -1,5 +1,5 @@
 import {BadRequestException,ConflictException,Inject,Injectable,NotFoundException} from '@nestjs/common';
-import {createHmac} from 'node:crypto';
+import {createHmac,randomUUID} from 'node:crypto';
 import {and,desc,eq,sql} from 'drizzle-orm';
 import {NodePgDatabase} from 'drizzle-orm/node-postgres';
 import {rentalCharge,verifyInstallments,type GuestFeeChoice} from '../../../core/domain/contract/contract-validation';
@@ -135,9 +135,25 @@ export class ContractBookingService {
      eq(ContractTemplateVersionSchema.userId,uid),
      eq(ContractTemplateVersionSchema.status,'PUBLISHED')
     )).orderBy(desc(ContractTemplateVersionSchema.publishedAt)).limit(1);
+   // Keep booking and override provenance encrypted; this is an incomplete draft,
+   // not a final/legal snapshot. Task 4.4 must revalidate before finalization.
+   const revisionId=randomUUID();
+   const metadata=crypto.seal(Buffer.from(JSON.stringify({
+    kind:'BOOKING_DRAFT_METADATA',isFinal:false,
+    rentalId:rental.id,propertyId:property.id,startDate:dto.startDate,
+    endDate:dto.endDate,guests:dto.guests,baseRevenueCents:base,
+    calculatedExtraCents:quote.calculatedExtraCents,
+    chargedExtraCents:quote.chargedExtraCents,totalCents:quote.totalCents,
+    guestFeeMode:choice.mode,guestFeeReason:choice.mode==='AUTOMATIC'?null:choice.reason,
+    includedOccupancy:policy.includedOccupancy,maximumOccupancy:policy.maximumOccupancy,
+    extraGuestRateCents:policy.extraGuestRateCents,actorId:uid
+   }),'utf8'),uid,'contract-snapshot',revisionId);
    await tx.insert(ContractRevisionSchema).values({
-    userId:uid,contractId:contract.id,templateVersionId:published?.id??null,
-    versionNumber:1,status:'DRAFT'
+    id:revisionId,userId:uid,contractId:contract.id,
+    templateVersionId:published?.id??null,versionNumber:1,status:'DRAFT',
+    snapshotCiphertext:metadata.ciphertext,snapshotNonce:metadata.nonce,
+    snapshotAuthTag:metadata.authTag,snapshotKeyVersion:metadata.keyVersion,
+    snapshotSha256:metadata.sha256
    });
    if(draft.guest&&Object.keys(draft.guest).length){
     const sealed=crypto.seal(Buffer.from(JSON.stringify(draft.guest),'utf8'),uid,'guest',rental.id);
