@@ -160,7 +160,8 @@ test('properties editor can add a property, choose color/icon and persist',async
  input.props.onChange({target:{value:'Apartamento Centro'}});view.render();
  const color=find(view.tree,n=>n.type==='button'&&n.props?.['aria-label']==='#9333EA');color.props.onClick();view.render();
  const icon=find(view.tree,n=>n.type==='button'&&n.props?.['aria-label']==='apartment');icon.props.onClick();view.render();
- const form=find(view.tree,n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});view.render();
+ const form=find(view.tree,n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});
+ await new Promise(resolve=>setImmediate(resolve));view.render();
  assert.equal(saved.length,1);assert.equal(saved[0].name,'Apartamento Centro');assert.equal(saved[0].color,'#9333EA');assert.equal(saved[0].icon,'apartment');
 });
 test('existing property can be edited and property archiving is blocked for primary property',async()=>{
@@ -179,10 +180,11 @@ test('existing property can be edited and property archiving is blocked for prim
  editButtons[1].props.onClick();view.render();
  assert.equal(find(view.tree,n=>n.type==='input'&&n.props?.maxLength===120).props.value,'Casa Praia');
  await find(view.tree,n=>n.type==='form').props.onSubmit({preventDefault(){}});
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(updateCount,1);view.render();
  const archiveButton=all(view.tree,n=>n.type==='button'&&n.props?.className==='rf-outline')[2];
  const before=global.window;global.window={confirm:()=>true};
- try{await archiveButton.props.onClick();}finally{global.window=before;}
+ try{await archiveButton.props.onClick();await new Promise(resolve=>setImmediate(resolve));}finally{global.window=before;}
  assert.equal(archiveCount,1);
 });
 test('archiving a property can be cancelled and does not call the API',async()=>{
