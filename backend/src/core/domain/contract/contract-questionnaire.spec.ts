@@ -132,3 +132,27 @@ describe('additional contractual validation security boundaries',()=>{
   expect(()=>validateLandlordForPublish({...landlord,pixKey:''},policy,{...defaultPayment,acceptedMethods:['CUSTOM']})).not.toThrow();
  });
 });
+
+describe('remaining publication branch boundaries',()=>{
+ it('rejects control bytes in headings and accepts nonempty whitespace formatting',()=>{
+   const source=emptyContractClauses().map(c=>({...c,body:'Original seasonally approved text in full.'}));
+   source[0].title='Header'+String.fromCharCode(0);
+   expect(()=>validateClauses(source)).toThrow('Invalid clause heading');
+   source[0].title='  Header  ';
+   expect(validateClauses(source)[0].title).toBe('Header');
+ });
+ it('rejects malformed or missing original clauses even when list has 17 entries',()=>{
+   const source=emptyContractClauses().map(c=>({...c,body:'Original approved text'}));
+   source[2].id='extra-another';
+   expect(()=>validateClauses(source)).toThrow('All 16 clauses are required');
+   source[2].id='3';
+   source[16].id='extra-another';
+   expect(()=>validateClauses(source)).toThrow('House rules annex is required');
+ });
+ it('rejects missing key landlord fields via each validation short-circuit',()=>{
+   const profile={...landlord};
+   expect(()=>validateLandlordForPublish({...profile,fullName:'Jo'}, {...defaultPolicy,jurisdiction:'Vitória/ES'},defaultPayment)).toThrow();
+   expect(()=>validateLandlordForPublish({...profile,cpf:'12345678900'}, {...defaultPolicy,jurisdiction:'Vitória/ES'},defaultPayment)).toThrow();
+   expect(()=>validateLandlordForPublish({...profile,rg:''}, {...defaultPolicy,jurisdiction:'Vitória/ES'},defaultPayment)).toThrow();
+ });
+});
