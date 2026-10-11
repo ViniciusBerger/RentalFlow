@@ -61,7 +61,8 @@ export class FirebaseAuthAdapter implements IAuthPort {
             email: response.data.email,
         };
     } catch (error: any) {
-        console.log('FIREBASE AUTH ERROR:', error?.response?.data || error?.message || error);
+        // Do not log credentials, Firebase response bodies, or raw error objects.
+        console.error('Firebase authentication failed', { status: error?.response?.status ?? null });
         throw error;
     }
     }

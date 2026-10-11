@@ -21,7 +21,7 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
   const balances = { getYearlyBalance: jest.fn(), getMonthlyBalance: jest.fn() };
   const balance = new BalanceController(balances as any);
   const users = { findUsers: jest.fn(), deleteUser: jest.fn(), findUser: jest.fn() };
-  const user = new UserController({ findUsers: users.findUsers } as any, { deleteUser: users.deleteUser } as any, { findUser: users.findUser } as any);
+  const user = new UserController({ findUser: users.findUser } as any);
   beforeEach(() => jest.clearAllMocks());
 
   it('forwards a rental lookup with the requested dates', async () => {
@@ -74,13 +74,8 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
     expect(users.findUser).toHaveBeenCalledWith('host-1');
     await expect(user.getUser(request)).rejects.toBeInstanceOf(NotFoundException);
   });
-  it('returns the user list and runs deletion', async () => {
-    users.findUsers.mockResolvedValue([{ firebaseUid: 'host-1' }]);
-    expect(await user.getUsers()).toHaveLength(1);
-    users.deleteUser.mockResolvedValue(true);
-    await expect(user.DeleteUser('host-1')).resolves.toBe(true);
-    users.deleteUser.mockResolvedValue(false);
-    await expect(user.DeleteUser('missing')).resolves.toBe(false);
-    expect(users.deleteUser).toHaveBeenCalledWith('host-1');
+  it('does not expose account enumeration or arbitrary account deletion', () => {
+    expect((user as any).getUsers).toBeUndefined();
+    expect((user as any).DeleteUser).toBeUndefined();
   });
 });

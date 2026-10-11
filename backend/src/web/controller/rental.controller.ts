@@ -77,7 +77,7 @@ export class RentalController {
     @ApiResponse({ status: 200, description: 'Boolean indicating if update was successful' })
     async updateRental(@Req() req, @Body() dto: UpdateRentalWebDto) {
         const {id, toBeUpdated} = dto
-        return await this.updateRentalUseCase.updateRental(req.user.uid, id, toBeUpdated) 
+        return await this.updateRentalUseCase.updateRental(req.user.uid, id, toBeUpdated as Record<string, unknown>) 
     }
 
     @Patch('cancel') 
