@@ -5,7 +5,7 @@ import {ContractWorkspaceService} from './contract-workspace.service';
 describe('contract workspace session and deployment boundaries',()=>{
  const key='33333333-3333-4333-8333-333333333333';
  const uid='verified-account-A',req={user:{uid}};
- const service={list:jest.fn(),detail:jest.fn(),save:jest.fn()};
+ const service={list:jest.fn(),detail:jest.fn(),save:jest.fn(),auditPdfPreview:jest.fn()};
  const controller=new ContractWorkspaceController(service as unknown as ContractWorkspaceService);
  const previous=process.env.CONTRACT_WORKSPACE_ENABLED;
  beforeEach(()=>{jest.clearAllMocks();delete process.env.CONTRACT_WORKSPACE_ENABLED;});
@@ -39,6 +39,7 @@ describe('contract workspace session and deployment boundaries',()=>{
    send:jest.fn()};
   await controller.pdf(req,key,'1',res);
   expect(service.detail).toHaveBeenCalledWith(uid,key);
+  expect(service.auditPdfPreview).toHaveBeenCalledWith(uid,key);
   expect(headers.get('Content-Type')).toBe('application/pdf');
   expect(headers.get('Cache-Control')).toContain('no-store');
   expect(headers.get('Content-Disposition')).toContain('attachment');
