@@ -60,3 +60,5 @@ body{margin:0;min-width:320px}button{cursor:pointer}button:disabled{cursor:not-a
 .rf-booking-groups .rf-viewall{display:none}
 @media(max-width:780px){.rf-chart-toolbar{padding:13px}.rf-chart-period{font-size:11px}.rf-trend-scroll{padding:6px 10px 0}.rf-chart-footnote{padding:12px 16px}}
 @media(max-width:520px){.rf-chart-header{flex-direction:column}.rf-trend-legend{padding-inline:16px}.rf-trend-tooltip{top:5px;right:14px}}
+
+.rf-refresh-warning{padding:10px 24px;background:#fff7e6;border-bottom:1px solid #f4dba5;color:#654820;font-size:13px}.rf-refresh-warning button{margin-left:8px;text-decoration:underline;font-weight:700}

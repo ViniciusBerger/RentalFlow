@@ -70,7 +70,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should return true if rows were affected', async () => {
       dbMock.where.mockResolvedValue({ rowCount: 1 });
 
-      const result = await adapter.update('id', { revenue: 100 });
+      const result = await adapter.update('host-1','id', { revenue: 100 });
 
       expect(result).toBe(true);
     });
@@ -78,7 +78,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should throw PersistenceError if no rows were affected', async () => {
       dbMock.where.mockResolvedValue({ rowCount: 0 });
 
-      await expect(adapter.update('id', { revenue: 100 })).rejects.toThrow(
+      await expect(adapter.update('host-1','id', { revenue: 100 })).rejects.toThrow(
         PersistenceError,
       );
     });
@@ -124,7 +124,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should return true on successful deletion', async () => {
       dbMock.where.mockResolvedValue({ rowCount: 1 });
 
-      const result = await adapter.delete('id');
+      const result = await adapter.delete('host-1','id');
 
       expect(result).toBe(true);
     });
@@ -132,7 +132,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should throw PersistenceError if ID not found', async () => {
       dbMock.where.mockResolvedValue({ rowCount: 0 });
 
-      await expect(adapter.delete('id')).rejects.toThrow(PersistenceError);
+      await expect(adapter.delete('host-1','id')).rejects.toThrow(PersistenceError);
     });
   });
 
@@ -159,7 +159,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should return null if no rental found', async () => {
       dbMock.where.mockResolvedValue([]);
 
-      const result = await adapter.findOne('start', 'end');
+      const result = await adapter.findOne('host-1','start', 'end');
 
       expect(result).toBeNull();
     });
@@ -174,7 +174,7 @@ describe('DrizzleOrmAdapter', () => {
 
       dbMock.where.mockResolvedValue([dbRow]);
 
-      const result = await adapter.findOne('S', 'E');
+      const result = await adapter.findOne('host-1','S', 'E');
 
       expect(result).toBeInstanceOf(Rental);
     });
@@ -233,7 +233,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should return true if overlap found', async () => {
       dbMock.limit.mockResolvedValue([{ id: '1' }]);
 
-      const result = await adapter.checkOverlapDate('S', 'E');
+      const result = await adapter.checkOverlapDate('host-1','S', 'E');
 
       expect(result).toBe(true);
     });
@@ -241,7 +241,7 @@ describe('DrizzleOrmAdapter', () => {
     it('should return false if no overlap found', async () => {
       dbMock.limit.mockResolvedValue([]);
 
-      const result = await adapter.checkOverlapDate('S', 'E');
+      const result = await adapter.checkOverlapDate('host-1','S', 'E');
 
       expect(result).toBe(false);
     });

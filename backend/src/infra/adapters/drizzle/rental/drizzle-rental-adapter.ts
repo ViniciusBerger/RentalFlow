@@ -45,8 +45,14 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * Updates specific fields of a rental record by ID.
    * @returns Promise resolving to true if a row was updated, false otherwise.
    */
-  async update(id: string, toBeUpdated: Partial<RentalRow>): Promise<boolean> {
-    const operationResult = await this.db.update(RentalSchema).set(toBeUpdated).where(eq(RentalSchema.id, id));
+  async update(userId: string, id: string, toBeUpdated: Partial<RentalRow>): Promise<boolean> {
+    const patch = {...toBeUpdated};
+    // Keep profit consistent if only revenue or fee changes. Uses current DB values atomically.
+    if (patch.revenue !== undefined || patch.fee !== undefined) {
+      patch.profit = sql`${patch.revenue === undefined ? RentalSchema.revenue : patch.revenue} - ${patch.fee === undefined ? RentalSchema.fee : patch.fee}` as unknown as number;
+    }
+    const operationResult = await this.db.update(RentalSchema).set(patch)
+      .where(and(eq(RentalSchema.id,id),eq(RentalSchema.userId,userId)));
     if (operationResult.rowCount === 0) throw new PersistenceError('cannot update item');
     return true;
   }
@@ -55,8 +61,8 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * Removes a rental record by its unique ID.
    * @returns Promise resolving to true if deleted, false if ID not found.
    */
-  async delete(id: string): Promise<boolean> {
-    const operationResult = await this.db.delete(RentalSchema).where(eq(RentalSchema.id, id))
+  async delete(userId: string, id: string): Promise<boolean> {
+    const operationResult = await this.db.delete(RentalSchema).where(and(eq(RentalSchema.id,id),eq(RentalSchema.userId,userId)))
     if (operationResult.rowCount === 0) throw new PersistenceError('cannot delete item')
     return true;
   }
@@ -65,12 +71,13 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * Finds a specific rental record by its start and end date.
    * @returns Rental entity if found, otherwise null.
    */
-  async findOne(startDate: string, endDate: string): Promise<Rental> {
+  async findOne(userId: string, startDate: string, endDate: string): Promise<Rental> {
     const operationResult = await this.db.select().
       from(RentalSchema)
       .where(and(
           eq(RentalSchema.startDate, startDate),
-          eq(RentalSchema.endDate, endDate)
+          eq(RentalSchema.endDate, endDate),
+          eq(RentalSchema.userId, userId)
         ))
 
     const rental = operationResult[0] ?? null
@@ -109,12 +116,14 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * Checks if any existing rental dates conflict with the provided date range.
    * @returns True if an overlap exists, false otherwise.
    */
-  async checkOverlapDate(startDate: string, endDate: string) {
+  async checkOverlapDate(userId: string, startDate: string, endDate: string) {
     const overlap = await this.db.select()
       .from(RentalSchema)
       .where(and(
         lt(RentalSchema.startDate, endDate),
-        gt(RentalSchema.endDate, startDate)
+        gt(RentalSchema.endDate, startDate),
+        eq(RentalSchema.userId,userId),
+        eq(RentalSchema.isActive,true)
       )).limit(1)
 
     return overlap.length > 0

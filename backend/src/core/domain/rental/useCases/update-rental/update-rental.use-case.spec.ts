@@ -25,11 +25,11 @@ describe('UpdateRentalUseCase (Manual Injection)', () => {
       repository.update.mockResolvedValue(true as any);
 
       // WHEN
-      const result = await useCase.updateRental(rentalId, updateData);
+      const result = await useCase.updateRental("host-1", rentalId, updateData);
 
       // THEN
       expect(result).toBe(true);
-      expect(repository.update).toHaveBeenCalledWith(rentalId, updateData);
+      expect(repository.update).toHaveBeenCalledWith("host-1", rentalId, updateData);
     });
 
     it('should throw "Could not update user" when the repository returns false/null', async () => {
@@ -37,8 +37,8 @@ describe('UpdateRentalUseCase (Manual Injection)', () => {
       repository.update.mockResolvedValue(false as any);
 
       // WHEN & THEN
-      await expect(useCase.updateRental(rentalId, updateData))
-        .rejects.toThrow('Could not update user');
+      await expect(useCase.updateRental("host-1", rentalId, updateData))
+        .rejects.toThrow('Could not update rental');
       
       expect(repository.update).toHaveBeenCalledTimes(1);
     });

@@ -22,7 +22,7 @@ export interface IRentalRepository {
      * Finds a specific rental record by its exact start and end dates.
      * @returns The Rental entity if found, or null/undefined.
      */
-    findOne(startDate: string, endDate: string): Promise<Rental>;
+    findOne(userId: string, startDate: string, endDate: string): Promise<Rental>;
 
     /**
      * Finds next three rentals based on today's date. 
@@ -34,7 +34,7 @@ export interface IRentalRepository {
      * Removes a rental record from the system by its unique identifier.
      * @param id - The UUID or unique string of the rental.
      */
-    delete(id: string): Promise<boolean>;
+    delete(userId: string, id: string): Promise<boolean>;
 
     /**
      * Updates an existing rental's properties.
@@ -42,13 +42,13 @@ export interface IRentalRepository {
      * @param toBeUpdated - Partial data containing the fields to change.
      * @returns Promise resolving to true if a row was updated, false otherwise.
      */
-    update(id: string, toBeUpdated: any): Promise<boolean>; 
+    update(userId: string, id: string, toBeUpdated: any): Promise<boolean>; 
 
     /**
      * Business Rule check: Determines if a car is already booked within a specific timeframe.
      * Uses the logic: (ExistingStart < NewEnd) AND (ExistingEnd > NewStart).
      */
-    checkOverlapDate(startDate: string, endDate: string): Promise<boolean>;
+    checkOverlapDate(userId: string, startDate: string, endDate: string): Promise<boolean>;
 
 
     /**

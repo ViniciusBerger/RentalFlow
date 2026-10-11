@@ -26,8 +26,8 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
 
   it('forwards a rental lookup with the requested dates', async () => {
     const item = { id: 'r-1' }; rentals.findOne.mockResolvedValue(item);
-    await expect(rental.getRental({ startDate: '2026-11-01', endDate: '2026-11-03' } as any)).resolves.toBe(item);
-    expect(rentals.findOne).toHaveBeenCalledWith('2026-11-01', '2026-11-03');
+    await expect(rental.getRental(request, { startDate: '2026-11-01', endDate: '2026-11-03' } as any)).resolves.toBe(item);
+    expect(rentals.findOne).toHaveBeenCalledWith('host-1','2026-11-01', '2026-11-03');
   });
   it('scopes the list query to the authenticated host', async () => {
     rentals.findAll.mockResolvedValue([{ id: 'r-1' }]);
@@ -48,17 +48,17 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
   });
   it('delegates updates and propagates failures', async () => {
     rentals.updateRental.mockResolvedValue(true);
-    expect(await rental.updateRental({ id: 'r-1', toBeUpdated: { guests: 3 } } as any)).toBe(true);
-    expect(rentals.updateRental).toHaveBeenCalledWith('r-1', { guests: 3 });
+    expect(await rental.updateRental(request, { id: 'r-1', toBeUpdated: { guests: 3 } } as any)).toBe(true);
+    expect(rentals.updateRental).toHaveBeenCalledWith('host-1','r-1', { guests: 3 });
     rentals.updateRental.mockRejectedValue(new Error('storage offline'));
-    await expect(rental.updateRental({ id: 'r-1', toBeUpdated: {} } as any)).rejects.toThrow('storage offline');
+    await expect(rental.updateRental(request, { id: 'r-1', toBeUpdated: {} } as any)).rejects.toThrow('storage offline');
   });
   it('delegates cancel and delete without confusing them', async () => {
     rentals.cancelRental.mockResolvedValue(true); rentals.deleteRental.mockResolvedValue(true);
-    await expect(rental.cancelRental('r-1')).resolves.toBe(true);
-    await expect(rental.deleteRental('r-2')).resolves.toBe(true);
-    expect(rentals.cancelRental).toHaveBeenCalledWith('r-1');
-    expect(rentals.deleteRental).toHaveBeenCalledWith('r-2');
+    await expect(rental.cancelRental(request,'r-1')).resolves.toBe(true);
+    await expect(rental.deleteRental(request,'r-2')).resolves.toBe(true);
+    expect(rentals.cancelRental).toHaveBeenCalledWith('host-1','r-1');
+    expect(rentals.deleteRental).toHaveBeenCalledWith('host-1','r-2');
   });
   it('keeps monthly and yearly financial totals scoped to the host', async () => {
     balances.getMonthlyBalance.mockResolvedValue([{ label: '2026-11', totalRevenue: 300 }]);

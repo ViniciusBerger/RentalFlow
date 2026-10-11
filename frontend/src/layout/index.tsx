@@ -16,9 +16,9 @@ export const AppLayout = () => {
   const { pathname } = useLocation();
   const isBookings = pathname.startsWith("/bookings");
   const [isAddRentalOpen, setIsAddRentalOpen] = useState(false);
-  const {loadingError, loadData, isLoading} = UseLoadData()
+  const {loadingError, refreshError, loadData, isLoading, refreshAfterMutation} = UseLoadData()
   const [isSaving, setIsSaving] = useState(false);
-  const {createRentalAndRefresh, error:rentalError} = useRentalActions()
+  const {createRentalAndRefresh, error:rentalError} = useRentalActions(refreshAfterMutation)
 
   const handleOpenAddRental = () => {
     setIsAddRentalOpen(true);
@@ -31,7 +31,7 @@ export const AppLayout = () => {
   if (isLoading) return <LoadingState />;
   if (loadingError?.status === 401) return <Navigate to="/auth" replace />;
   if (loadingError) {
-    return <DashboardErrorState message={loadingError.message} onRetry={() => { loadData(); }} />;
+    return <DashboardErrorState message={loadingError.message} onRetry={() => { void loadData().catch(()=>{}); }} />;
   }
 
   const handleSubmitRental = async (formData: any) => {
@@ -58,6 +58,7 @@ export const AppLayout = () => {
             <button className="rf-button" onClick={handleOpenAddRental}><Plus size={18}/> {t("newBooking")}</button>
           </div>
         </header>
+        {refreshError && <div role="status" className="rf-refresh-warning">{t("connectionError")} <button type="button" onClick={()=>void refreshAfterMutation()}>{t("tryAgain")}</button></div>}
         <div className="rf-page"><Outlet /></div>
       </main>
 

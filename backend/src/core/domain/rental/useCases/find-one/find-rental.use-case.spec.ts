@@ -27,11 +27,11 @@ describe('FindRentalUseCase (Pure Unit Test)', () => {
       repository.findOne.mockResolvedValue(mockRental);
 
       // WHEN
-      const result = await useCase.findOne(startDate, endDate);
+      const result = await useCase.findOne("host-1",startDate, endDate);
 
       // THEN
       expect(result).toEqual(mockRental);
-      expect(repository.findOne).toHaveBeenCalledWith(startDate, endDate);
+      expect(repository.findOne).toHaveBeenCalledWith("host-1",startDate, endDate);
     });
 
     it('should return Error when the repository cannot find a rental', async () => {
@@ -39,7 +39,7 @@ describe('FindRentalUseCase (Pure Unit Test)', () => {
       repository.findOne.mockRejectedValue(new Error());
 
       // THEN
-     await expect(useCase.findOne(startDate, endDate)).rejects.toThrow(Error);
+     await expect(useCase.findOne("host-1",startDate, endDate)).rejects.toThrow(Error);
     });
 
     it('should throw "End date must be after start date" when end date is before start date', async () => {
@@ -48,7 +48,7 @@ describe('FindRentalUseCase (Pure Unit Test)', () => {
       const invalidEnd = '2026-05-01';
 
       // WHEN & THEN
-      await expect(useCase.findOne(invalidStart, invalidEnd))
+      await expect(useCase.findOne("host-1",invalidStart, invalidEnd))
         .rejects.toThrow('End date must be after start date');
       
       expect(repository.findOne).not.toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('FindRentalUseCase (Pure Unit Test)', () => {
       const sameDate = '2026-05-01';
 
       // WHEN & THEN
-      await expect(useCase.findOne(sameDate, sameDate))
+      await expect(useCase.findOne("host-1",sameDate, sameDate))
         .rejects.toThrow('End date must be after start date');
     });
   });

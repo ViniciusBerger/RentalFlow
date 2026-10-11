@@ -10,8 +10,8 @@ import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
 export class DeleteRentalUseCase {
     constructor(private readonly rentalRepository: IRentalRepository) {}
 
-    async deleteRental(id: string): Promise<boolean> {
-        const deleted = await this.rentalRepository.delete(id)
+    async deleteRental(userId: string, id: string): Promise<boolean> {
+        const deleted = await this.rentalRepository.delete(userId, id)
         // if couldnt delete throw an error
         if (!deleted) throw new ServiceError("Could not delete rental")
         // do not pass error to keep controller clean

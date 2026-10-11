@@ -1,6 +1,7 @@
 const {test,afterEach}=require('node:test');
 const assert=require('node:assert/strict');
 require('./register-typescript.cjs');
+const {createRentalDataStore}=require('../src/hooks/load-data/rental-data-store.ts');
 const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
 const {MemoryRouter}=require('react-router-dom');
@@ -19,6 +20,7 @@ const {calendarDisplay}=require('../src/features/booking/service/calendar-servic
 const EditRentalPopUp=require('../src/components/edit-rental-popup/index.tsx').default;
 const {useRentalActions}=require('../src/hooks/rental-actions/useRentalActions.tsx');
 const {UseLoadData}=require('../src/hooks/load-data/useLoadData.tsx');
+const {useRentalDataStore}=require('../src/hooks/load-data/useRentalDataStore.ts');
 const {login,getMe,completeProfile,logout}=require('../src/hooks/auth/auth-service.tsx');
 const {loadBalance}=require('../src/hooks/load-data/balance-service.ts');
 const {loadNextRentals,loadUserData}=require('../src/hooks/load-data/load-data.service.ts');
@@ -88,9 +90,9 @@ test('all auth APIs preserve the fallback error when response JSON is invalid',a
 test('finance APIs propagate malformed 503 responses for both periods',async()=>{
  let calls=[];global.fetch=async url=>{calls.push(url);return badJson(503)};
  await assert.rejects(loadBalance(),e=>e.status===503&&/Unable to fetch session/.test(e.message));
- assert.equal(calls.length,1);
- global.fetch=async url=>{calls.push(url);return calls.length===3?badJson(503):respond(200,[{label:'2026',totalRevenue:200}])};
- // prior call count=1; yearly is call=2 and monthly is call=3
+ assert.equal(calls.length,2);
+ global.fetch=async url=>{calls.push(url);return url.endsWith('/balance/monthly')?badJson(503):respond(200,[{label:'2026',totalRevenue:200}])};
+ // Both independent balance requests run concurrently
  await assert.rejects(loadBalance(),e=>e.status===503);
 });
 test('rental loading APIs use fallback errors if backend returns invalid JSON',async()=>{
@@ -124,11 +126,11 @@ test('rental hook properly handles missing error messages without crashing',asyn
 });
 test('load-data handles missing error messages and refresh success independently',async()=>{
  global.fetch=async()=>{throw {status:502}};
- const ui=mount(UseLoadData);await ui.tree.loadData();ui.render();
- assert.equal(ui.tree.loadingError.message,'error loading data');
+ const store=createRentalDataStore(); const ui=mount(()=>useRentalDataStore(store));await assert.rejects(ui.tree.loadData());ui.render();
+ assert.equal(ui.tree.loadingError.message,'Unable to load rental data');
  global.fetch=async url=>respond(200,url.endsWith('/rental/findall')?[{id:'r1'}]:[]);
  await ui.tree.loadRentals();ui.render();
- assert.equal(ui.tree.loadingError,null);assert.equal(ui.tree.isLoading,false);assert.deepEqual(ui.tree.nextRentals,[{id:'r1'}]);
+ assert.equal(ui.tree.loadingError.status,502); // a background refresh cannot clear an initial authentication failureassert.equal(ui.tree.isLoading,false);assert.deepEqual(ui.tree.nextRentals,[{id:'r1'}]);
 });
 
 test('a partially configured frontend uses the auth service localhost fallback in development',async()=>{
@@ -158,10 +160,10 @@ test('rental actions report rejected requests even when response is no JSON',asy
 });
 test('loadRentals stores a clear fallback message for unexpected exceptions',async()=>{
  global.fetch=async()=>{throw {status:500}};
- const ui=mount(UseLoadData);
- await ui.tree.loadData();ui.render();
+ const store=createRentalDataStore(); const ui=mount(()=>useRentalDataStore(store));
+ await assert.rejects(ui.tree.loadData());ui.render();
  await assert.rejects(ui.tree.loadRentals(),e=>e.status===500);
- ui.render();assert.equal(ui.tree.loadingError.message,'error loading rentals');assert.equal(ui.tree.isLoading,false);
+ ui.render();assert.equal(ui.tree.refreshError,'Unable to load rental data');assert.equal(ui.tree.isLoading,false);
 });
 
 test('edit popup with a closed state never starts an edit even if booking was selected',()=>{

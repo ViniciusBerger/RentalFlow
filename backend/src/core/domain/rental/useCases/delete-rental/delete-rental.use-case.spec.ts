@@ -27,11 +27,11 @@ describe('DeleteRentalUseCase (Manual Injection)', () => {
       repository.delete.mockResolvedValue(true);
 
       // WHEN
-      const result = await useCase.deleteRental(id);
+      const result = await useCase.deleteRental("host-1",id);
 
       // THEN
       expect(result).toBe(true);
-      expect(repository.delete).toHaveBeenCalledWith(id);
+      expect(repository.delete).toHaveBeenCalledWith("host-1",id);
     });
 
     it('should throw an error when the repository fails to delete (returns false)', async () => {
@@ -40,10 +40,10 @@ describe('DeleteRentalUseCase (Manual Injection)', () => {
       repository.delete.mockResolvedValue(false);
 
       // WHEN & THEN
-      await expect(useCase.deleteRental(id))
+      await expect(useCase.deleteRental("host-1",id))
         .rejects.toThrow('Could not delete rental'); 
       
-      expect(repository.delete).toHaveBeenCalledWith(id);
+      expect(repository.delete).toHaveBeenCalledWith("host-1",id);
     });
   });
 });

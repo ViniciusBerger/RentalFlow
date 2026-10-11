@@ -26,7 +26,7 @@ export class CancelRentalUseCase {
      * @param id - The unique identifier of the rental to cancel
      * @returns true if the update operation succeeds
      */
-    async cancelRental(id: string): Promise<boolean> {
-        return await this.rentalRepository.update(id, { isActive: false })
+    async cancelRental(userId: string, id: string): Promise<boolean> {
+        return await this.rentalRepository.update(userId, id, { isActive: false })
     }
 }
