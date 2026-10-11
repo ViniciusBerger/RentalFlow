@@ -43,6 +43,13 @@
       "when": 1791727000000,
       "tag": "0005_contract_security_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791728000000,
+      "tag": "0006_fix_published_template_guard",
+      "breakpoints": true
     }
   ]
 }

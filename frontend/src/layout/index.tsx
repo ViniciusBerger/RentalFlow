@@ -16,6 +16,7 @@ export const AppLayout = () => {
   const { pathname } = useLocation();
   const isBookings = pathname.startsWith("/bookings");
   const isProperties = pathname.startsWith("/properties");
+  const isContracts = pathname.startsWith("/contracts");
   const [isAddRentalOpen, setIsAddRentalOpen] = useState(false);
   const {loadingError, refreshError, loadData, isLoading, refreshAfterMutation} = UseLoadData()
   const [isSaving, setIsSaving] = useState(false);
@@ -51,10 +52,10 @@ export const AppLayout = () => {
 
       <main className="rf-main flex-1 min-w-0" id="main-content">
         <header className="rf-topbar">
-          <div><p className="rf-eyebrow">RentalFlow / {t("workspace")}</p><h1 className="rf-title">{isProperties ? t("properties") : isBookings ? t("bookingsAndCalendar") : t("overview")}</h1><p className="rf-subtitle">{isProperties ? t("propertiesHelp") : isBookings ? t("manageStays") : t("businessAtGlance")}</p></div>
+          <div><p className="rf-eyebrow">RentalFlow / {t("workspace")}</p><h1 className="rf-title">{isContracts ? t("contractSetup") : isProperties ? t("properties") : isBookings ? t("bookingsAndCalendar") : t("overview")}</h1><p className="rf-subtitle">{isContracts ? t("contractSetupHelp") : isProperties ? t("propertiesHelp") : isBookings ? t("manageStays") : t("businessAtGlance")}</p></div>
           <div className="rf-top-actions">
             <LanguageSwitcher />
-            <Link to="/dashboard" className={'rf-pill '+(!isBookings&&!isProperties?'selected':'')}><LayoutDashboard size={17}/> {t("overview")}</Link>
+            <Link to="/dashboard" className={'rf-pill '+(!isBookings&&!isProperties&&!isContracts?'selected':'')}><LayoutDashboard size={17}/> {t("overview")}</Link>
             <Link to="/bookings" className={'rf-pill '+(isBookings?'selected':'')}><CalendarDays size={17}/> {t("bookings")}</Link>
             <Link to="/properties" className={'rf-pill '+(isProperties?'selected':'')}><Building2 size={17}/>{t("properties")}</Link>
             <button className="rf-button" onClick={handleOpenAddRental}><Plus size={18}/> {t("newBooking")}</button>

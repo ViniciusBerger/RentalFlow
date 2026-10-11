@@ -2,13 +2,23 @@ const { test, afterEach }=require('node:test');
 const assert=require('node:assert/strict');
 require('./register-typescript.cjs');
 const {createRentalDataStore}=require('../src/hooks/load-data/rental-data-store.ts');
-const { mount }=require('./test-dispatcher.cjs');
+const {mount:originalMount}=require('./test-dispatcher.cjs');
 process.env.VITE_API_URL='http://localhost:3000';
 const { useRentalActions }=require('../src/hooks/rental-actions/useRentalActions.tsx');
 const {UseLoadData}=require('../src/hooks/load-data/useLoadData.tsx');
 const {useRentalDataStore}=require('../src/hooks/load-data/useRentalDataStore.ts');
-afterEach(()=>{delete global.fetch});
+afterEach(()=>{delete global.fetch;clearCsrfToken();});
 const respond=(status,payload)=>({ok:status>=200&&status<300,status,json:async()=>payload});
+const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
+const secure=(fetchImpl)=>{
+ if(typeof fetchImpl!=='function'||fetchImpl.__csrfWrapped)return fetchImpl;
+ const wrapper=async (url,opts)=>String(url).endsWith('/auth/csrf')?
+  respond(200,{csrfToken:'test-session-bound-token'}):fetchImpl(url,opts);
+ wrapper.__csrfWrapped=true;return wrapper;
+};
+const protect=()=>{global.fetch=secure(global.fetch);};
+
+const mount=(...args)=>{protect();return originalMount(...args)};
 
 test('create action returns true only after API success and a completed refresh',async()=>{
  const calls=[];global.fetch=async(url)=>{calls.push(url);return respond(201,{id:'r-1'})};
