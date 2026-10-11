@@ -57,13 +57,13 @@ function step(view,index){
  buttons[index].props.onClick();
  view.render();
 }
-function clickButton(view,label){
+async function clickButton(view,label){
  const button=all(view.tree,n=>n.type==='button').find(n=>{
   const children=Array.isArray(n.props.children)?n.props.children:[n.props.children];
   return children.some(x=>x===label);
  });
  assert.ok(button,'Missing button '+label);
- return button.props.onClick();
+ const result=button.props.onClick();await sleep();await sleep();return result;
 }
 afterEach(()=>{global.fetch=original;clearCsrfToken();});
 test('complete questionaire works across all six steps without client-side authoritative flags',async()=>{
