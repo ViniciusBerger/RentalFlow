@@ -107,7 +107,7 @@ export const ContractQuestionnairePage=()=>{
  const editClause=(id:string,change:Partial<Clause>)=>{setClauses(list=>list.map(c=>c.id===id?{...c,...change}:c));setApproved(false)};
  const addClause=()=>{setClauses(list=>[...list,{id:`extra-${Math.random().toString(36).slice(2,10)}`,title:locale==='pt-BR'?'Cláusula adicional':'Additional clause',body:'',enabled:false}])};
  const field=(label:string,key:keyof Landlord,type='text')=><label className="rf-contract-field" key={key}>{label}
-  <input type={type} maxLength={key==='address'?500:254} value={landlord[key]} onChange={e=>setLandlord(x=>({...x,[key]:e.target.value}))} autoComplete="off"/></label>;
+  <input type={type} maxLength={key==='addressStreet'?120:254} value={landlord[key]} onChange={e=>setLandlord(x=>({...x,[key]:e.target.value}))} autoComplete="off"/></label>;
  const number=(label:string,key:keyof Policy)=><label className="rf-contract-field" key={key}>{label}
   <input type="number" min="0" max={key==='cancellationDays'?365:100} value={policy[key] as number}
    onChange={e=>setPolicy(x=>({...x,[key]:Number(e.target.value)}))}/></label>;
