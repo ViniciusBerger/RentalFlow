@@ -19,13 +19,15 @@ const {Pool}=require('pg');
  }
  try{
   await client.query('BEGIN');
-  for(const n of ['0000','0001','0002','0003','0004','0005'])await migrate(n);
+  for(const n of ['0000','0001','0002','0003','0004','0005','0006'])await migrate(n);
   for(const uid of ['owner-a','owner-b'])await client.query('INSERT INTO users(firebase_uid,first_name,last_name,email) VALUES($1,$2,$3,$4)',[uid,'Test','Owner',uid+'@example.test']);
   const template=(await client.query("INSERT INTO contract_templates(user_id,name,is_default) VALUES('owner-a','Seasonal',true) RETURNING id")).rows[0].id;
   const draft=(await client.query("INSERT INTO contract_template_versions(template_id,user_id,version_number,status) VALUES($1,'owner-a',1,'DRAFT') RETURNING id",[template])).rows[0].id;
   await denied('23503',"INSERT INTO contract_template_versions(template_id,user_id,version_number,status,published_at) VALUES($1,'owner-b',2,'PUBLISHED',now())",[template]);
   await denied('23505',"INSERT INTO contract_template_versions(template_id,user_id,version_number) VALUES($1,'owner-a',1)",[template]);
   await client.query("UPDATE contract_template_versions SET clauses=$2,status='PUBLISHED',published_at=now() WHERE id=$1",[draft,JSON.stringify([{id:'1',body:'Owner-approved test'}])]);
+  const state=(await client.query("SELECT status,published_at,clauses FROM contract_template_versions WHERE id=$1",[draft])).rows[0];
+  assert.equal(state.status,'PUBLISHED');assert.ok(state.published_at);assert.deepEqual(state.clauses,[{id:'1',body:'Owner-approved test'}]);assertions+=3;
   await denied('23514',"UPDATE contract_template_versions SET clauses='[]' WHERE id=$1",[draft]);
   await denied('23514',"DELETE FROM contract_template_versions WHERE id=$1",[draft]);
   await denied('23514',"INSERT INTO contract_settings(user_id,profile_ciphertext) VALUES('owner-a',decode('aa','hex'))");
