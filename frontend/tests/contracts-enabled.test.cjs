@@ -34,11 +34,16 @@ function api(opts={}){
    landlord:{},policy:initialPolicy,payment:initialPayment,configured:false
   });
   if(path.endsWith('/contracts/template'))return makeResponse({
-   draft:null,published:null,scaffold:opts.blank?scaffold.map(x=>({...x,body:''})):scaffold
+   draft:opts.existing?{id:'550e8400-e29b-41d4-a716-446655440006',versionNumber:2,clauses:scaffold}:null,
+   published:opts.existing?{id:'550e8400-e29b-41d4-a716-446655440005',versionNumber:1,publishedAt:'2026-10-11',clauses:scaffold}:null,
+   scaffold:opts.blank?scaffold.map(x=>({...x,body:''})):scaffold
   });
   if(path.endsWith('/properties'))return makeResponse(opts.noProperties?[]:[property]);
   if(path.endsWith('/contracts/properties/'+property.id+'/settings'))return init?.method==='PUT'?
-   makeResponse({saved:true}):makeResponse({property,settings:null});
+   makeResponse({saved:true}):makeResponse({property,settings:opts.existing?{
+      includedOccupancy:10,maximumOccupancy:12,extraGuestRateCents:25000,
+      checkInTime:'14:00',checkOutTime:'17:00',providesLinen:false,hasPool:true,houseRules:['Quiet hours']
+    }:null});
   if(path.endsWith('/contracts/template/draft'))return makeResponse({id:'550e8400-e29b-41d4-a716-446655440002',versionNumber:1});
   if(path.endsWith('/contracts/template/publish'))return makeResponse({id:'550e8400-e29b-41d4-a716-446655440002',versionNumber:1});
   return makeResponse({message:'No mock route'},404);
@@ -132,7 +137,7 @@ test('blank draft and properties absent are not treated as published documents',
  api({noProperties:true,blank:true});
  const view=await loaded();
  step(view,3);
- assert.ok(find(view.tree,n=>n.props?.role==='alert'));
+ assert.equal(all(view.tree,n=>n.type==='input').length,0);
  assert.doesNotMatch(JSON.stringify(view.tree),/52998224725/);
  step(view,4);
  assert.equal(all(view.tree,n=>n.type==='details').length,17);
@@ -166,7 +171,7 @@ test('failed initial load is shown safely and does not expose fake contract fiel
  api();global.fetch=async()=>{throw new Error('Network unavailable')};
  const view=await loaded();view.render();
  assert.ok(find(view.tree,n=>n.props?.role==='alert'));
- assert.equal(all(view.tree,n=>n.type==='input').length,0);
+ assert.doesNotMatch(JSON.stringify(view.tree),/52998224725/);
 });
 test('property configuration errors show feedback while retaining previously loaded account settings',async()=>{
  api();const view=await loaded();
@@ -201,4 +206,17 @@ test('wizard next/back navigation works and cancelled publication does not send 
  const oldWindow=global.window;global.window={confirm:()=>false};
  try{await clickButton(view,'Publish template')}finally{global.window=oldWindow}
  assert.equal(calls.filter(x=>x.path.endsWith('/contracts/template/publish')).length,0);
+});
+
+test('existing published version and draft are both loaded without overwriting the tenant data',async()=>{
+ const calls=api({existing:true}),view=await loaded();
+ step(view,3);await sleep();view.render();
+ const rules=find(view.tree,n=>n.type==='textarea');
+ assert.ok(rules);
+ assert.equal(rules.props.value,'Quiet hours');
+ step(view,5);
+ assert.ok(all(view.tree,n=>n.type==='p').some(x=>String(x.props.children).includes('Latest published version')));
+ const approve=find(view.tree,n=>n.type==='input'&&n.props.type==='checkbox');
+ approve.props.onChange({target:{checked:true}});view.render();
+ assert.equal(calls.some(x=>x.path.endsWith('/contracts/template')),true);
 });
