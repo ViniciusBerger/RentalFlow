@@ -175,3 +175,40 @@ test('bad responses do not masquerade as private contract details or PDF documen
  global.fetch=async()=>({ok:true,status:200,blob:async()=>new Blob(['not a PDF'],{type:'text/html'})});
  await assert.rejects(downloadDraftPdf(key),/Invalid PDF/);
 });
+
+test('PDF preview and download create only temporary private local object URLs',async()=>{
+ server();const view=await loaded();
+ const oldCreate=URL.createObjectURL,oldRevoke=URL.revokeObjectURL;
+ const links=[],revoked=[];
+ URL.createObjectURL=()=> 'blob:local-private-contract-test';
+ URL.revokeObjectURL=(url)=>revoked.push(url);
+ global.window={setTimeout:fn=>fn()};
+ global.document={
+  body:{appendChild:()=>{}},
+  createElement:()=>({
+   href:'',target:'',rel:'',download:'',
+   click(){links.push({href:this.href,download:this.download,target:this.target});},
+   remove(){}
+  })
+ };
+ try {
+  let button=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Preview draft PDF'));
+  assert.ok(button);button.props.onClick();
+  for(let i=0;i<4;i++){await pause();view.render();}
+  button=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Download preview'));
+  assert.ok(button);button.props.onClick();
+  for(let i=0;i<4;i++){await pause();view.render();}
+  assert.equal(links.length,2);
+  assert.equal(links[0].target,'_blank');
+  assert.equal(links[1].download,'contrato-rascunho.pdf');
+  assert.equal(revoked.length,2);
+  assert.equal(links.every(x=>x.href.startsWith('blob:')),true);
+ } finally {
+  URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;
+ }
+});
+test('network failures show a localized error, not a success message',async()=>{
+ global.fetch=async()=>{throw new Error('Network unavailable')};
+ const view=await loaded();
+ assert.match(JSON.stringify(view.tree),/Network unavailable/);
+});
