@@ -111,6 +111,10 @@ export class ContractBookingService {
    try{verifyInstallments(quote.totalCents,draft.installments?.map(x=>x.agreedCents)??[quote.totalCents]);}
    catch{throw new BadRequestException('Installments must total agreed booking amount');}
    if(draft.paymentDueEvent&&draft.paymentDueDate)throw new BadRequestException('Only one default due rule allowed');
+   if(draft.paymentDueDate&&(!/^\d{4}-\d{2}-\d{2}$/.test(draft.paymentDueDate)||
+    Number.isNaN(Date.parse(draft.paymentDueDate))||
+    new Date(draft.paymentDueDate).toISOString().slice(0,10)!==draft.paymentDueDate))
+    throw new BadRequestException('Invalid default payment date');
    for(const item of draft.installments??[]){
     if(item.dueDate&&item.dueEvent)throw new BadRequestException('Only one due rule per installment');
     if(item.dueDate&&(!/^\d{4}-\d{2}-\d{2}$/.test(item.dueDate)||
