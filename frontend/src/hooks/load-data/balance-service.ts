@@ -1,3 +1,4 @@
+import { brazilToday } from '../../features/booking/service/booking-timeline';
 /**
  * This service handles balance fetching on database. 
  * 
@@ -37,14 +38,14 @@ const fetchMonthlyBalance = async()=> {
     const data = await response.json()
 
 
-    // return data on position [0] because API returns an array of objects
-    return data[0]
+    return data as Array<{label:string,totalRevenue:number,totalProfit:number,bookingCount?:number}>
 }
 
 // export consts to keep other methods private and avoid dependency leakeage
 export const loadBalance = async() => {
     const dataYearlyBalance = await fetchYearlyBalance()
-    const dataMonthlyBalance = await fetchMonthlyBalance()
-
-    return [dataYearlyBalance, dataMonthlyBalance]
+    const months = await fetchMonthlyBalance()
+    const yearMonth = brazilToday().slice(0, 7);
+    const currentMonth = months.find(row => row.label === yearMonth);
+    return [dataYearlyBalance, currentMonth, months]
 }

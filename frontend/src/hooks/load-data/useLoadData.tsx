@@ -16,7 +16,8 @@ import { useEffect, useState } from "react";
 export const UseLoadData = ()=>{
 
   const [balances, setBalances] = useState<any[]>([]); // yearly and monthly balances (revenue and profit) 
-  const [nextRentals, setNextRentals] = useState<any[]>([]); // list of all rental (from today and on)
+  const [nextRentals, setNextRentals] = useState<any[]>([]);
+  const [monthlySeries, setMonthlySeries] = useState<any[]>([]); // list of all active rentals, including past and ongoing
   const [isLoading, setIsLoading] = useState(true); 
   const [loadingError, setLoadingError] = useState<{message:string, status:number} | null>(null);
   const [userData, setUserData] = useState<any>(null)
@@ -31,7 +32,8 @@ export const UseLoadData = ()=>{
       setLoadingError(null);
       
       const [balancesResult, rentalsResult, userDataResult] = await Promise.all([loadDashboardBalance(), loadNextRentals(), loadUserData()]);
-      setBalances(balancesResult);
+      setBalances(balancesResult.slice(0,2));
+      setMonthlySeries(balancesResult[2] ?? []);
       setNextRentals(rentalsResult);
       setUserData(userDataResult)
     } 
@@ -68,5 +70,5 @@ export const UseLoadData = ()=>{
   // run loadData once when app starts
   useEffect(() => { loadData() }, []);
 
-  return { balances, nextRentals, isLoading, loadingError, userData, loadData, loadRentals, resetError};
+  return { balances, nextRentals, monthlySeries, isLoading, loadingError, userData, loadData, loadRentals, resetError};
 };

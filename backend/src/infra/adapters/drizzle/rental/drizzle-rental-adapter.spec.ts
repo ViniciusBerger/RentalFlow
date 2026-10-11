@@ -3,6 +3,7 @@ import { DrizzleOrmRentalAdapter } from './drizzle-rental-adapter';
 import { DRIZZLE } from '../../../persistence/database.module';
 import { Rental } from '../../../../core/domain/rental/entity/rental';
 import { PersistenceError } from '../../../../core/app/errors/persistence.error';
+import { PgDialect } from 'drizzle-orm/pg-core';
 
 describe('DrizzleOrmAdapter', () => {
   let adapter: DrizzleOrmRentalAdapter;
@@ -189,14 +190,14 @@ describe('DrizzleOrmAdapter', () => {
         }),
         createRentalRow({
           id: '2',
-          userId: 'testid123457',
+          userId: 'testid123456',
           startDate: '2026-06-01',
         }),
       ];
 
       dbMock.limit.mockResolvedValue(dbRows);
 
-      const result = await adapter.findNextThree();
+      const result = await adapter.findNextThree('testid123456');
 
       expect(result).toHaveLength(2);
       expect(result[0]).toBeInstanceOf(Rental);
@@ -214,13 +215,17 @@ describe('DrizzleOrmAdapter', () => {
       };
       const sqlFragments = literals(queryFilter);
       expect(sqlFragments).toContain('CURRENT_DATE');
+      expect(dbMock.where).toHaveBeenCalledTimes(1);
+      const query = new PgDialect().sqlToQuery(queryFilter);
+      expect(query.sql).toContain('user_id');
+      expect(query.params).toContain('testid123456');
       expect(sqlFragments).not.toContain("DATE_TRUNC('year'");
     });
 
     it('should return an empty list if no rentals are found', async () => {
       dbMock.limit.mockResolvedValue([]);
 
-      await expect(adapter.findNextThree()).resolves.toEqual([]);
+      await expect(adapter.findNextThree('testid123456')).resolves.toEqual([]);
     });
   });
 
@@ -259,6 +264,14 @@ describe('DrizzleOrmAdapter', () => {
       const result = await adapter.getMonthlyBalanceCurrentYear(userId);
 
       expect(result).toEqual(mockData);
+      const queryFilter = dbMock.where.mock.calls[0][0];
+      const dialect = new PgDialect();
+      const filter = dialect.sqlToQuery(queryFilter);
+      expect(filter.sql).toMatch(/DATE_TRUNC.*year/);
+      expect(filter.sql).toContain('INTERVAL \'1 year\'');
+      expect(filter.params).toContain(userId);
+      const selection = dbMock.select.mock.calls[0][0];
+      expect(dialect.sqlToQuery(selection.bookingCount).sql).toContain('COUNT(*)::int');
     });
   });
 

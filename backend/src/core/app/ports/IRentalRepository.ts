@@ -28,7 +28,7 @@ export interface IRentalRepository {
      * Finds next three rentals based on today's date. 
      * @returns a list with three rentals
      */
-    findNextThree(): Promise<Rental[]>
+    findNextThree(userId: string): Promise<Rental[]>
 
     /**
      * Removes a rental record from the system by its unique identifier.

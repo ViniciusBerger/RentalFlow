@@ -94,10 +94,11 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * It retrieves the next three rentals from today's date and on.
    * @returns return a list with these three rentals
    */
-  async findNextThree(): Promise<Rental[]> {
+  async findNextThree(userId: string): Promise<Rental[]> {
     const operationResult:RentalRow[] = await this.db.select().from(RentalSchema).where(and(
       sql`${RentalSchema.startDate} >= CURRENT_DATE`, 
-      eq(RentalSchema.isActive, true)
+      eq(RentalSchema.isActive, true),
+      eq(RentalSchema.userId, userId)
     )).orderBy(asc(RentalSchema.startDate)).limit(3);
     
     return operationResult.map(rental => Rental.create(rental))
@@ -129,13 +130,15 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY-MM')`.as('month_label'),
         totalRevenue: sum(RentalSchema.revenue).mapWith(Number),
-        totalProfit: sum(RentalSchema.profit).mapWith(Number)
+        totalProfit: sum(RentalSchema.profit).mapWith(Number),
+        bookingCount: sql<number>`COUNT(*)::int`
       })
       .from(RentalSchema)
       .where(and(
         eq(RentalSchema.isActive, true),
         eq(RentalSchema.userId, userUid),
-        sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`
+        sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`,
+        sql`${RentalSchema.startDate} < DATE_TRUNC('year', NOW()) + INTERVAL '1 year'`
       ))
       .groupBy(sql`month_label`)
       .orderBy(sql`month_label`);
@@ -151,13 +154,15 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
       .select({
         label: sql<string>`TO_CHAR(${RentalSchema.startDate}, 'YYYY')`.as('year_label'),
         totalRevenue: sum(RentalSchema.revenue).mapWith(Number),
-        totalProfit: sum(RentalSchema.profit).mapWith(Number)
+        totalProfit: sum(RentalSchema.profit).mapWith(Number),
+        bookingCount: sql<number>`COUNT(*)::int`
       })
       .from(RentalSchema)
       .where(and(
         eq(RentalSchema.isActive, true),
         eq(RentalSchema.userId, userUid),
-        sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`
+        sql`${RentalSchema.startDate} >= DATE_TRUNC('year', NOW())`,
+        sql`${RentalSchema.startDate} < DATE_TRUNC('year', NOW()) + INTERVAL '1 year'`
       ))
       .groupBy(sql`year_label`)
       .orderBy(desc(sql`year_label`));

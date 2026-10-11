@@ -55,8 +55,9 @@ export class RentalController {
     @Get('findnext')
     @ApiOperation({ summary: 'Get next three rentals from today' })
     @ApiResponse({ status: 200, description: 'List next three rentals' })
-    async getNextRentals(): Promise<Rental[]> {
-        const rentals = await this.findNextThreeUseCase.find()
+    async getNextRentals(@Req() req): Promise<Rental[]> {
+        const userId = (req as any).user?.uid;
+        const rentals = await this.findNextThreeUseCase.find(userId)
         return rentals
     }
 

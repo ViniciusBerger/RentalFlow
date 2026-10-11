@@ -36,8 +36,9 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
   });
   it('loads only upcoming rentals', async () => {
     rentals.find.mockResolvedValue([]);
-    await expect(rental.getNextRentals()).resolves.toEqual([]);
+    await expect(rental.getNextRentals({user:{uid:'user-1'}})).resolves.toEqual([]);
     expect(rentals.find).toHaveBeenCalledTimes(1);
+    expect(rentals.find).toHaveBeenCalledWith('user-1');
   });
   it('creates bookings under the signed-in host instead of a client-provided userId', async () => {
     const input = { userId: 'host-2', clientFirstName: 'A', clientLastName: 'B', startDate: '2026-11-01', endDate: '2026-11-02', guests: 2, revenue: 100, fee: 15 };

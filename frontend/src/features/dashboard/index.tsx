@@ -11,7 +11,7 @@ import { useLanguage } from "../../i18n/context";
 
 export const Dashboard = () => {
   const {t}=useLanguage();
-  const { balances, nextRentals, isLoading, userData, loadData } = UseLoadData();
+  const { balances, nextRentals, monthlySeries, isLoading, userData, loadData } = UseLoadData();
   const { isSaving, error: actionError, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh } = // 
     useRentalActions(loadData);
 
@@ -69,6 +69,7 @@ export const Dashboard = () => {
         onOpenPopUp={() => setIsRentalDetailPopUpOpen(true)}
         props={{ yearly: yearlyBalance, monthly: monthlyBalance }}
         threeNextRentals={nextRentals}
+        monthlySeries={monthlySeries ?? []}
         userData={userData}
       />
 
