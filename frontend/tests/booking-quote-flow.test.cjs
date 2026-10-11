@@ -7,6 +7,8 @@ const {mount}=require('./test-dispatcher.cjs');
 const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
 const Popup=require('../src/components/add-rental-popup/index.tsx').default;
 const original=global.fetch;
+const property=[{id:'11111111-1111-4111-8111-111111111111',name:'Test house',isActive:true}];
+const respond=(body,status=200)=>({status,ok:status>=200&&status<300,json:async()=>body});
 const find=(node,fn)=>{
  if(!node||typeof node!=='object')return null;
  if(Array.isArray(node))return node.map(x=>find(x,fn)).find(Boolean)||null;
@@ -21,7 +23,8 @@ afterEach(()=>{global.fetch=original;clearCsrfToken();});
 test('booking requires server quote and confirms server result rather than a client price',async()=>{
  let requested=null,received=null,closed=0;
  global.fetch=async(url,init)=>{
-  if(String(url).endsWith('/auth/csrf'))return {status:200,ok:true,json:async()=>({csrfToken:'test'})};
+  if(String(url).endsWith('/auth/csrf'))return respond({csrfToken:'test'});
+  if(String(url).endsWith('/properties'))return respond(property);
   requested={url,init};
   return {status:201,ok:true,json:async()=>quote};
  };
@@ -57,8 +60,8 @@ test('booking requires server quote and confirms server result rather than a cli
 test('changing the number of guests invalidates the previously confirmed total',async()=>{
  let submitted=0;
  global.fetch=async url=>String(url).endsWith('/auth/csrf')
-  ?{status:200,ok:true,json:async()=>({csrfToken:'test'})}
-  :{status:200,ok:true,json:async()=>quote};
+  ?respond({csrfToken:'test'})
+  :String(url).endsWith('/properties')?respond(property):respond(quote);
  const ui=mount(Popup,{isOpen:true,onSubmit:async()=>{submitted++;return true},
   onClose:()=>{},isSaving:false,error:null});
  for(const [name,value] of Object.entries({
