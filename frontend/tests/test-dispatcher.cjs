@@ -8,6 +8,7 @@ function mount(Component,props={}){
   useRef(initial){const i=index++;if(!(i in slots))slots[i]={current:initial};return slots[i]},
   useState(initial){const i=index++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return [slots[i],next=>{slots[i]=typeof next==='function'?next(slots[i]):next}]},
   useEffect(fn,deps){const i=index++;const prev=slots[i];if(!prev||!deps||deps.some((d,k)=>!Object.is(d,prev[k]))){slots[i]=deps;fn()}},
+  useMemo(fn,deps){const i=index++;const prev=slots[i];if(!prev||!deps||deps.some((d,k)=>!Object.is(d,prev.deps[k]))){slots[i]={deps,value:fn()}}return slots[i].value},
  };
  const render=()=>{index=0;const original=internals.H;internals.H=dispatcher;try{tree=Component(props);return tree}finally{internals.H=original}};
  render();return {render,get tree(){return tree}};
