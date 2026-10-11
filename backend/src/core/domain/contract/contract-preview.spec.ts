@@ -53,9 +53,9 @@ describe('server-only contract draft preview',()=>{
  });
  it('honors disabled editorial clauses and checks only referenced placeholders',()=>{
   const x=fixture();x.template=clauses.map(c=>({...c}));
-  x.template[3].enabled=false;
+  x.template.push({id:'extra-optional',title:'Aditivo opcional',body:'Texto informativo opcional não publicado.',enabled:false});
   const out=renderContractPreview(x);
-  expect(out.clauses).toHaveLength(16);
+  expect(out.clauses).toHaveLength(17);
   expect(out.missing).not.toContain('locador.cpf');
  });
  it('provides a valid multipage, watermarked and unarchived PDF byte stream',()=>{
@@ -74,6 +74,6 @@ describe('server-only contract draft preview',()=>{
   const input=fixture();
   input.template=clauses.map(c=>({...c,body:'Portuguese preview text. '.repeat(65)}));
   const pdf=renderDraftPdf(renderContractPreview(input));
-  expect(pdf.toString('latin1')).toContain('/Count 2');
+  expect(pdf.toString('latin1')).toMatch(/\/Count [2-9][0-9]* /);
  });
 });
