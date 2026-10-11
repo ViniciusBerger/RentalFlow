@@ -37,7 +37,7 @@ The questionnaire flags may additionally be required to let admins edit property
    occupancy is enforced; surcharges are per person per night, rounded in integer cents.
 5. Check WAIVED and ADJUSTED require an owner-session, a reason, valid amounts, and audit
    metadata. The client cannot submit confirmed payment/receipt: receivedCents starts at 0.
-   Check installments sum EXACTLY to the backend-calculated booking amount.
+   Check installments sum EXACTLY to the backend-calculated booking amount. Review POST /rental/quote totals and confirm changing prices are rejected on POST /rental/add.
 6. Verify malformed guest fields, invalid ISO dates, nested unknown keys, old/duplicate
    request keys, pricing mismatch, and simultaneous retries fail safely. Same-key replay
    must return the same rental/contract without duplicates. A unique key cannot be reused
@@ -59,7 +59,7 @@ The questionnaire flags may additionally be required to let admins edit property
 - No full multi-installment editing UI yet. The API can validate 1–12 installments, while
   the current form starts a single unpaid installment for the calculated total.
 - The booking form shows base price; the server returns final total and charged extra guest
-  fees. A pre-submit, server-calculated quote UX is still recommended before release.
+  fees. A pre-submit, backend-calculated quote now shows the base, calculated surcharge, charged surcharge, and total. Saving requires the reviewed `confirmedTotalCents`; the transaction recalculates and rejects stale prices.
 - Draft guest data may remain incomplete and requires validated data and reviewed published
   legal text before future finalization. Template clauses are never invented.
 - The 24h idempotency expiry timestamp is not an automatic key-reuse rule; the unique

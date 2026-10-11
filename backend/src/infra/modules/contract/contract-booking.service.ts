@@ -27,8 +27,13 @@ export function checkedNights(start:string,end:string):number {
  };
  const a=parsed(start),b=parsed(end);
  if(b<=a)throw new BadRequestException('End date must follow start date');
- if(start<new Date().toISOString().slice(0,10))
-  throw new BadRequestException('Start date cannot be in the past');
+ // Rental properties operate in Brazil. Avoid rejecting a valid same-day
+ // reservation during the UTC/Brazil midnight offset.
+ const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',
+  year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+ const datePart=(key:string)=>parts.find(x=>x.type===key)?.value;
+ const today=[datePart('year'),datePart('month'),datePart('day')].join('-');
+ if(start<today)throw new BadRequestException('Start date cannot be in the past');
  const nights=(b-a)/86_400_000;
  if(nights>365)throw new BadRequestException('Stay exceeds supported duration');
  return nights;

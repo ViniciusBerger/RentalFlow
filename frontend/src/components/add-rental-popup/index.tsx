@@ -12,10 +12,11 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
   const {properties}=useProperties();
   const [contractForm,setContractForm]=useState(initialContract);
   const requestKey=useRef<string|null>(null);
+  const quoteSequence=useRef(0);
   const [quote,setQuote]=useState<BookingPriceQuote|null>(null);
   const [quoteBusy,setQuoteBusy]=useState(false);
   const [quoteError,setQuoteError]=useState('');
-  const resetQuote=()=>{setQuote(null);setQuoteError('');};
+  const resetQuote=()=>{quoteSequence.current+=1;setQuote(null);setQuoteError('');setQuoteBusy(false);};
   const propertyForForm=()=>{
     const active=properties.filter(p=>p.isActive);
     return formData.propertyId||(active.length===1?active[0].id:'');
@@ -28,6 +29,7 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
   };
   const requestQuote=async()=>{
     if(!contractBookingEnabled)return;
+    const current=++quoteSequence.current;
     setQuoteBusy(true);setQuoteError('');setQuote(null);
     try{
       const price=await getBookingQuote({
@@ -35,10 +37,10 @@ export default function AddRentalPopUp({ onSubmit,isOpen, onClose, isSaving, err
         startDate:formData.startDate,endDate:formData.endDate,
         guests:Number(formData.guests),revenue:Number(formData.revenue),guestFee:feeChoice()
       });
-      setQuote(price);
+      if(current===quoteSequence.current)setQuote(price);
     }catch(err){
-      setQuoteError(err instanceof Error?err.message:'Unable to review rental price');
-    }finally{setQuoteBusy(false);}
+      if(current===quoteSequence.current)setQuoteError(err instanceof Error?err.message:'Unable to review rental price');
+    }finally{if(current===quoteSequence.current)setQuoteBusy(false);}
   };
   const handleContractChange=(e:React.ChangeEvent<HTMLInputElement|HTMLSelectElement>)=>{
     requestKey.current=null;

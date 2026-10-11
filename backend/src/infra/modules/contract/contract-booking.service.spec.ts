@@ -59,6 +59,11 @@ describe('Atomic contract booking',()=>{
   } as any)).rejects.toBeInstanceOf(BadRequestException);
   expect(db.transaction).not.toHaveBeenCalled();
  });
+ it('uses Brazil calendar date rather than UTC for same-day bookings',()=>{
+  jest.setSystemTime(new Date('2026-10-12T02:30:00Z')); // Oct 11 in São Paulo
+  expect(checkedNights('2026-10-11','2026-10-12')).toBe(1);
+  expect(()=>checkedNights('2026-10-10','2026-10-12')).toThrow(BadRequestException);
+ });
  it('quotes the final amount from account-owned occupancy settings',async()=>{
   const {db}=mockDatabase([[{id:propertyId}],
     [{includedOccupancy:2,maximumOccupancy:4,extraGuestRateCents:500}]]);
