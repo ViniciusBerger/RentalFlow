@@ -50,6 +50,13 @@
       "when": 1791728000000,
       "tag": "0006_fix_published_template_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791729000000,
+      "tag": "0007_contract_draft_mutation_guard",
+      "breakpoints": true
     }
   ]
 }
