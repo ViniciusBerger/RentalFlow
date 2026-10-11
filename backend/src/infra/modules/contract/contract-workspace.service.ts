@@ -155,6 +155,10 @@ export class ContractWorkspaceService {
     authTag:current.snapshotAuthTag,keyVersion:current.snapshotKeyVersion,
     sha256:current.snapshotSha256??undefined
    },uid,'contract-snapshot',current.id).toString('utf8')) as Record<string,unknown>:null;
+  await this.db.insert(ContractAuditEventSchema).values({
+   userId:uid,actorId:uid,action:'VIEW_CONTRACT_DRAFT',targetType:'CONTRACT',
+   targetId:contractId,outcome:'SUCCESS'
+  });
   return {
    id:contractId,rentalId:rental.id,property:{id:property.id,name:property.name,address:property.address},
    booking:{clientFirstName:rental.clientFirstName,clientLastName:rental.clientLastName,
@@ -172,6 +176,12 @@ export class ContractWorkspaceService {
    templateVersion:template?.versionNumber??null,
    preview,editable:current.status==='DRAFT'
   };
+ }
+ async auditPdfPreview(uid:string,contractId:string){
+  await this.db.insert(ContractAuditEventSchema).values({
+   userId:uid,actorId:uid,action:'VIEW_DRAFT_PDF',targetType:'CONTRACT',
+   targetId:contractId,outcome:'SUCCESS'
+  });
  }
  async save(uid:string,contractId:string,input:ContractDraftEditDto){
   if(!uid)throw new NotFoundException();

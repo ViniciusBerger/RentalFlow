@@ -37,6 +37,7 @@ export class ContractWorkspaceController {
   this.enabled();
   const detail=await this.workspace.detail(req.user.uid,id);
   const pdf=renderDraftPdf(detail.preview);
+  await this.workspace.auditPdfPreview(req.user.uid,id);
   res.setHeader('Content-Type','application/pdf');
   res.setHeader('Cache-Control','private, no-store, max-age=0');
   res.setHeader('X-Content-Type-Options','nosniff');

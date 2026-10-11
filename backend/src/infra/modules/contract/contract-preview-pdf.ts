@@ -51,7 +51,7 @@ export function renderDraftPdf(preview:RenderedPreview):Buffer{
  if(pages.length===0)pages.push(['RASCUNHO']);
  const content:string[]=[];
  for(const [page,chunk] of pages.entries()){
-  let stream='BT /F1 10 Tf 45 778 Td 15 TL\n';
+  let stream='BT /F1 10 Tf 45 778 Td 15 TL\n<'+winAnsiHex('RASCUNHO - PREVIA NAO FINALIZADA - PAGINA '+(page+1)) +'> Tj T*\n';
   for(const [index,line] of chunk.entries()){
    // No raw PDF control sequences or HTML from user-controlled contract text.
    const label=(index===0&&page===0)?line:' '+line;
