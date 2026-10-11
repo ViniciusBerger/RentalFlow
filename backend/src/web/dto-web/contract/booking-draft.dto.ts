@@ -1,5 +1,5 @@
 import {Type} from 'class-transformer';
-import {IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateNested} from 'class-validator';
+import {ArrayMaxSize,ArrayMinSize,IsArray,IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateNested} from 'class-validator';
 
 export class GuestDraftDto {
  @IsOptional() @IsString() @MaxLength(20) cpf?:string;
@@ -30,5 +30,6 @@ export class BookingDraftDto {
  @IsOptional() @IsIn(['PIX','BANK_TRANSFER','CUSTOM']) paymentMethod?:string;
  @IsOptional() @IsIn(['CHECKIN','KEY_HANDOVER','AGREED_EVENT']) paymentDueEvent?:string;
  @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) paymentDueDate?:string;
- @IsOptional() @ValidateNested({each:true}) @Type(()=>InstallmentDto) installments?:InstallmentDto[];
+ @IsOptional() @IsArray() @ArrayMinSize(1) @ArrayMaxSize(12)
+ @ValidateNested({each:true}) @Type(()=>InstallmentDto) installments?:InstallmentDto[];
 }
