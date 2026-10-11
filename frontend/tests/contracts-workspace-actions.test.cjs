@@ -212,3 +212,44 @@ test('network failures show a localized error, not a success message',async()=>{
  const view=await loaded();
  assert.match(JSON.stringify(view.tree),/Network unavailable/);
 });
+
+test('Portuguese contract workspace covers localized draft, due-date and payment controls',async()=>{
+ const {LanguageContext}=require('../src/i18n/context.ts');
+ const {translate}=require('../src/i18n/messages.ts');
+ const previous=LanguageContext._currentValue;
+ LanguageContext._currentValue={locale:'pt-BR',setLocale:()=>{},t:key=>translate('pt-BR',key)};
+ try{
+  const calls=server(),view=await loaded();
+  let html=JSON.stringify(view.tree);
+  assert.match(html,/Contratos de temporada/);
+  assert.match(html,/Parcela/);
+  assert.match(html,/500,00/);
+  const event=all(view.tree,n=>n.type==='select').find(n=>n.props.value==='KEY_HANDOVER');
+  assert.ok(event);event.props.onChange({target:{value:'AGREED_EVENT'}});view.render();
+  const date=find(view.tree,n=>n.type==='input'&&n.props.type==='date');
+  assert.ok(date);date.props.onChange({target:{value:'2027-01-01'}});view.render();
+  const method=all(view.tree,n=>n.type==='select').find(n=>n.props.value==='PIX');
+  assert.ok(method);method.props.onChange({target:{value:'BANK_TRANSFER'}});view.render();
+  const deposit=find(view.tree,n=>n.type==='input'&&n.props.type==='checkbox');
+  assert.ok(deposit);deposit.props.onChange({target:{checked:true}});view.render();
+  const add=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Adicionar parcela'));
+  assert.ok(add);add.props.onClick();view.render();
+  const remove=all(view.tree,n=>n.type==='button').find(n=>n.props['aria-label']==='Remover parcela');
+  assert.ok(remove);remove.props.onClick();view.render();
+  const save=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Salvar rascunho'));
+  assert.ok(save);save.props.onClick();
+  for(let i=0;i<5;i++){await pause();view.render();}
+  const patch=calls.find(x=>x.path.endsWith('/draft'));
+  assert.ok(patch);
+  const body=JSON.parse(patch.init.body);
+  assert.equal(body.installments[0].paymentMethod,'BANK_TRANSFER');
+  assert.equal(body.installments[0].dueDate,'2027-01-01');
+  assert.equal(body.installments[0].isDeposit,true);
+  assert.equal(body.installments[0].dueEvent,undefined);
+ }finally{LanguageContext._currentValue=previous;}
+});
+test('HTTP client rejects invalid lists and offers no fallback public PDF URL',async()=>{
+ global.fetch=async()=>({ok:false,status:500,json:async()=>({message:'Service unavailable'})});
+ await assert.rejects(listContracts(),/Service unavailable/);
+ await assert.rejects(getContract(key),/Service unavailable/);
+});
