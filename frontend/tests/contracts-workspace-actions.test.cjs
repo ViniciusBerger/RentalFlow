@@ -46,9 +46,14 @@ function server(opts={}){
   const path=String(url);calls.push({path,init});
   if(path.endsWith('/auth/csrf'))return response({csrfToken:'session-csrf'});
   if(path.endsWith('/workspace'))return response({items:opts.empty?[]:[item]});
-  if(path.endsWith('/draft'))return response({...data(),editToken:'b'.repeat(64)});
+  if(path.endsWith('/draft'))return opts.rejectPatch?{ok:false,status:409,json:async()=>({message:'Draft changed'})}:response({...data(),editToken:'b'.repeat(64)});
   if(path.endsWith('/preview.pdf'))return response({});
-  if(path.endsWith('/workspace/'+key))return response(data(!opts.finalized));
+  if(path.endsWith('/workspace/'+key)){
+   const result=data(!opts.finalized);
+   if(opts.paid)result.installments[0].receivedCents=10000;
+   if(opts.noTemplate)result.preview={watermark:'RASCUNHO',missing:['modelo.publicado'],clauses:[]};
+   return response(result);
+  }
   return {ok:false,status:404,json:async()=>({message:'Unknown path'})};
  };
  return calls;
@@ -93,7 +98,7 @@ test('finalized versions do not render a mutable save action',async()=>{
  server({finalized:true});const view=await loaded();
  const cpf=find(view.tree,n=>n.type==='input'&&n.props.name==='cpf');
  assert.equal(cpf.props.disabled,true);
- const button=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Salvar rascunho'));
+ const button=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Save draft'));
  assert.equal(button,undefined);
 });
 test('workspace handles empty lists, and private API forbids guessed routes',async()=>{
@@ -108,4 +113,65 @@ test('API client enforces CSRF and only accepts genuine PDF mime types',async()=
  const result=await downloadDraftPdf(key);
  assert.equal(result.type,'application/pdf');
  assert.ok(calls.some(c=>c.path.endsWith('/preview.pdf')));
+});
+
+test('saving two installments uses exact centavo values without declaring payments received',async()=>{
+ const calls=server(),view=await loaded();
+ const amount=find(view.tree,n=>n.type==='input'&&n.props.type==='number');
+ amount.props.onChange({target:{value:'250'}});
+ view.render();
+ const add=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Add installment'));
+ add.props.onClick();view.render();
+ const amounts=all(view.tree,n=>n.type==='input'&&n.props.type==='number');
+ amounts[1].props.onChange({target:{value:'250'}});
+ view.render();
+ const save=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Save draft'));
+ save.props.onClick();
+ for(let i=0;i<5;i++){await pause();view.render();}
+ const patch=calls.find(x=>x.path.endsWith('/draft'));
+ assert.ok(patch);const sent=JSON.parse(patch.init.body);
+ assert.deepEqual(sent.installments.map(x=>x.agreedCents),[25000,25000]);
+ assert.equal(sent.installments.some(x=>x.receivedCents!==undefined),false);
+});
+test('recorded payments disable schedule changes but leave guest edits possible',async()=>{
+ server({paid:true});const view=await loaded();
+ const amount=find(view.tree,n=>n.type==='input'&&n.props.type==='number');
+ assert.equal(amount.props.disabled,true);
+ const add=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Add installment'));
+ assert.equal(add,undefined);
+ const guest=find(view.tree,n=>n.type==='input'&&n.props.name==='email');
+ assert.equal(guest.props.disabled,false);
+});
+test('missing approved template is never silently represented as a complete document',async()=>{
+ server({noTemplate:true});const view=await loaded();
+ assert.match(JSON.stringify(view.tree),/Publish an approved template first/);
+ assert.match(JSON.stringify(view.tree),/modelo.publicado/);
+});
+test('review list can refresh and changes guest searches and property filters',async()=>{
+ const calls=server(),view=await loaded();
+ const refresh=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Refresh'));
+ refresh.props.onClick();for(let i=0;i<3;i++){await pause();view.render();}
+ assert.ok(calls.filter(x=>x.path.endsWith('/workspace')).length>=2);
+ const search=find(view.tree,n=>n.type==='input'&&n.props.type==='search');
+ search.props.onChange({target:{value:'nonmatching'}});view.render();
+ assert.match(JSON.stringify(view.tree),/No contracts found/);
+ search.props.onChange({target:{value:'Ana'}});view.render();
+ assert.ok(find(view.tree,n=>n.type==='button'&&String(n.props.className).includes('rf-contract-workspace-item')));
+});
+test('stale server edits show an error instead of claiming success',async()=>{
+ server({rejectPatch:true});const view=await loaded();
+ const field=find(view.tree,n=>n.type==='input'&&n.props.name==='rg');
+ field.props.onChange({target:{value:'draft'}});
+ view.render();
+ const save=all(view.tree,n=>n.type==='button').find(n=>JSON.stringify(n.props.children).includes('Save draft'));
+ save.props.onClick();for(let i=0;i<6;i++){await pause();view.render();}
+ assert.match(JSON.stringify(view.tree),/Draft changed/);
+});
+test('bad responses do not masquerade as private contract details or PDF documents',async()=>{
+ global.fetch=async()=>({ok:false,status:403,json:async()=>({message:'Denied'})});
+ await assert.rejects(getContract(key),/Denied/);
+ await assert.rejects(listContracts(),/Denied/);
+ await assert.rejects(downloadDraftPdf(key),/Denied/);
+ global.fetch=async()=>({ok:true,status:200,blob:async()=>new Blob(['not a PDF'],{type:'text/html'})});
+ await assert.rejects(downloadDraftPdf(key),/Invalid PDF/);
 });
