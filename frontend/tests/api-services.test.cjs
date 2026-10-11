@@ -95,9 +95,9 @@ test('balance loads annual and monthly financial summaries in their UI order',as
  assert.match(calls[1][0],/\/balance\/monthly$/);
 });
 test('balance errors stop loading and do not show partial financial totals',async()=>{
- const calls=track(respond(401,{message:'No session'}));
+ const calls=track(respond(401,{message:'No session'}),respond(200,[]));
  await assert.rejects(loadBalance(),e=>e.status===401);
- assert.equal(calls.length,1);
+ assert.equal(calls.length,2);
 });
 test('balance requests default to missing data safely',async()=>{
  track(respond(200,[]),respond(200,[]));

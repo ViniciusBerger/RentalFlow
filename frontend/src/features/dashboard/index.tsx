@@ -11,9 +11,9 @@ import { useLanguage } from "../../i18n/context";
 
 export const Dashboard = () => {
   const {t}=useLanguage();
-  const { balances, nextRentals, monthlySeries, isLoading, userData, loadData } = UseLoadData();
+  const { balances, nextRentals, monthlySeries, isLoading, userData, loadData, refreshAfterMutation } = UseLoadData();
   const { isSaving, error: actionError, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh } = // 
-    useRentalActions(loadData);
+    useRentalActions(refreshAfterMutation);
 
   const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false);
   const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
@@ -55,7 +55,7 @@ export const Dashboard = () => {
     <DashboardErrorState
       message={t("profileNotLoaded")}
       onRetry={() => {
-        loadData();
+        void loadData().catch(()=>{});
       }}
     />
   );

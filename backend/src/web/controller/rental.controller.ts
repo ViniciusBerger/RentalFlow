@@ -34,10 +34,10 @@ export class RentalController {
     @Get('find')
     @ApiOperation({ summary: 'Find a specific rental by rental duration' })
     @ApiResponse({ status: 200, description: 'The found rental record' })
-    async getRental(@Body() dto: FindRentalWebDto): Promise<Rental> {
+    async getRental(@Req() req, @Body() dto: FindRentalWebDto): Promise<Rental> {
         const {startDate, endDate} = dto
 
-        const rental = await this.findRentalUseCase.findOne(startDate, endDate)
+        const rental = await this.findRentalUseCase.findOne(req.user.uid, startDate, endDate)
         return rental
     }
 
@@ -75,23 +75,23 @@ export class RentalController {
     @Patch('update') 
     @ApiOperation({ summary: 'Update an existing rental' })
     @ApiResponse({ status: 200, description: 'Boolean indicating if update was successful' })
-    async updateRental(@Body() dto: UpdateRentalWebDto) {
+    async updateRental(@Req() req, @Body() dto: UpdateRentalWebDto) {
         const {id, toBeUpdated} = dto
-        return await this.updateRentalUseCase.updateRental(id, toBeUpdated) 
+        return await this.updateRentalUseCase.updateRental(req.user.uid, id, toBeUpdated) 
     }
 
     @Patch('cancel') 
     @ApiOperation({ summary: 'Update an existing rental' })
     @ApiResponse({ status: 200, description: 'Boolean indicating if update was successful' })
-    async cancelRental(@Body('id') id: string) {
-        return await this.cancelRentalUseCase.cancelRental(id) 
+    async cancelRental(@Req() req, @Body('id') id: string) {
+        return await this.cancelRentalUseCase.cancelRental(req.user.uid, id) 
     }
 
     @Delete('delete/:id')
     @ApiOperation({ summary: 'Delete a rental by ID' })
     @ApiParam({ name: 'id', description: 'The unique ID of the rental' })
     @ApiResponse({ status: 200, description: 'Boolean indicating if deletion was successful' })
-    async deleteRental(@Param("id") id: string) {
-        return await this.deletRentalUseCase.deleteRental(id);
+    async deleteRental(@Req() req, @Param("id") id: string) {
+        return await this.deletRentalUseCase.deleteRental(req.user.uid, id);
     }
 }

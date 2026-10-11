@@ -24,10 +24,10 @@ describe("CancelRentalUseCase", () => {
             repository.update.mockResolvedValue(true)
 
             // WHEN
-            const result = await useCase.cancelRental(rentalId)
+            const result = await useCase.cancelRental("host-1",rentalId)
 
             // THEN
-            expect(repository.update).toHaveBeenCalledWith(rentalId, { isActive: false })
+            expect(repository.update).toHaveBeenCalledWith("host-1",rentalId, { isActive: false })
             expect(repository.update).toHaveBeenCalledTimes(1)
             expect(result).toBe(true)
         })
@@ -40,7 +40,7 @@ describe("CancelRentalUseCase", () => {
             repository.update.mockResolvedValue(false)
 
             // WHEN
-            const result = await useCase.cancelRental(rentalId)
+            const result = await useCase.cancelRental("host-1",rentalId)
 
             // THEN
             expect(result).toBe(false)

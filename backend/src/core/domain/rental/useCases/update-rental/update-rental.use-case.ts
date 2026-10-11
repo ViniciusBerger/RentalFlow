@@ -1,14 +1,18 @@
 import { IRentalRepository } from "../../../../app/ports/IRentalRepository";
 import { ServiceError } from "../../../../app/errors/service.error";
 
+const allowedFields = ['clientFirstName','clientLastName','startDate','endDate','guests','revenue','fee'] as const;
 export class UpdateRentalUseCase {
-     // inject rental repository
-    constructor(private readonly rentalRepository: IRentalRepository){}
-
-    async updateRental(id: string, toBeUpdated: any): Promise<boolean> {
-        const rental = await this.rentalRepository.update(id, toBeUpdated)
-        
-        if (!rental) throw new ServiceError("Could not update user")
-        return true;
+  constructor(private readonly rentalRepository: IRentalRepository){}
+  async updateRental(userId: string, id: string, input: Record<string, unknown>): Promise<boolean> {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new ServiceError('Invalid update payload');
+    // Ignore legacy frontend's readonly profit field, but never accept owner/status changes.
+    const keys=Object.keys(input).filter(k=>k!=='profit');
+    if (!keys.length || keys.some(k=>!(allowedFields as readonly string[]).includes(k))) {
+      throw new ServiceError('Invalid update fields');
     }
+    const update=Object.fromEntries(keys.map(k=>[k,input[k]]));
+    if (!await this.rentalRepository.update(userId,id,update)) throw new ServiceError('Could not update rental');
+    return true;
+  }
 }

@@ -14,8 +14,8 @@ import { useLanguage } from "../../i18n/context";
 
 export const BookingsPage = () => {
     const {t}=useLanguage();
-    const {nextRentals, isLoading, loadRentals } = UseLoadData()
-    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions(loadRentals)
+    const {nextRentals, isLoading, loadRentals, refreshAfterMutation } = UseLoadData()
+    const { isSaving, createRentalAndRefresh, deleteRentalAndRefresh, updateRentalAndRefresh, error } = useRentalActions(refreshAfterMutation)
     
     const [isCreateRentalPopUpOpen, setIsCreateRentalPopUpOpen] = useState(false)
     const [isRentalDetailsPopUpOpen, setIsRentalDetailPopUpOpen] = useState(false);
@@ -71,7 +71,7 @@ export const BookingsPage = () => {
 
   if (isLoading) return <LoadingState />;
   if (error) {
-        return <DashboardErrorState message={error.message} onRetry={() => { loadRentals(); }} />;
+        return <DashboardErrorState message={error.message} onRetry={() => { void loadRentals().catch(()=>{}); }} />;
       }
 
     return (

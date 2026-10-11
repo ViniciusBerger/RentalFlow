@@ -43,8 +43,7 @@ const fetchMonthlyBalance = async()=> {
 
 // export consts to keep other methods private and avoid dependency leakeage
 export const loadBalance = async() => {
-    const dataYearlyBalance = await fetchYearlyBalance()
-    const months = await fetchMonthlyBalance()
+    const [dataYearlyBalance, months] = await Promise.all([fetchYearlyBalance(), fetchMonthlyBalance()])
     const yearMonth = brazilToday().slice(0, 7);
     const currentMonth = months.find(row => row.label === yearMonth);
     return [dataYearlyBalance, currentMonth, months]

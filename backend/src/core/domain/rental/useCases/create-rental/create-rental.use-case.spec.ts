@@ -49,6 +49,7 @@ describe('CreateRentalUseCase', () => {
 
       expect(result).toEqual(expect.objectContaining({ userId: validData.userId, profit: 250 }));
       expect(repository.checkOverlapDate).toHaveBeenCalledWith(
+        validData.userId,
         validData.startDate,
         validData.endDate
       );

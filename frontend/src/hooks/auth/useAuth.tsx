@@ -1,3 +1,4 @@
+import { resetRentalData } from "../load-data/rental-data-store";
 import { useState } from "react";
 import { login, logout, getMe } from "./auth-service";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +18,7 @@ export const useAuth = () => {
       setError(null);
 
       await login(email, password);
+      resetRentalData();
 
       const me = await getMe();
 
@@ -59,6 +61,7 @@ export const useAuth = () => {
       setError(null);
 
       await logout();
+      resetRentalData();
       navigate("/auth");
     } catch (err: any) {
       setError(err.message ?? "Logout failed");

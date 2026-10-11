@@ -1,10 +1,12 @@
 const { test, afterEach }=require('node:test');
 const assert=require('node:assert/strict');
 require('./register-typescript.cjs');
+const {createRentalDataStore}=require('../src/hooks/load-data/rental-data-store.ts');
 const { mount }=require('./test-dispatcher.cjs');
 process.env.VITE_API_URL='http://localhost:3000';
 const { useRentalActions }=require('../src/hooks/rental-actions/useRentalActions.tsx');
-const { UseLoadData }=require('../src/hooks/load-data/useLoadData.tsx');
+const {UseLoadData}=require('../src/hooks/load-data/useLoadData.tsx');
+const {useRentalDataStore}=require('../src/hooks/load-data/useRentalDataStore.ts');
 afterEach(()=>{delete global.fetch});
 const respond=(status,payload)=>({ok:status>=200&&status<300,status,json:async()=>payload});
 
@@ -70,7 +72,7 @@ test('load-data hook fetches profile, financial summary and bookings and clears 
   if(url.endsWith('/user/host'))return respond(200,{firstName:'Ana'});
   throw Error(url);
  };
- const ui=mount(UseLoadData);await ui.tree.loadData();ui.render();
+ const store=createRentalDataStore(); const ui=mount(()=>useRentalDataStore(store));await ui.tree.loadData();ui.render();
  assert.equal(ui.tree.isLoading,false);
  assert.equal(ui.tree.userData.firstName,'Ana');
  assert.equal(ui.tree.nextRentals.length,1);
@@ -78,7 +80,7 @@ test('load-data hook fetches profile, financial summary and bookings and clears 
 });
 test('load-data hook records authorization failures and avoids leaking data',async()=>{
  global.fetch=async()=>respond(401,{message:'Session expired'});
- const ui=mount(UseLoadData);await ui.tree.loadData();ui.render();
+ const store=createRentalDataStore(); const ui=mount(()=>useRentalDataStore(store));await assert.rejects(ui.tree.loadData());ui.render();
  assert.equal(ui.tree.isLoading,false);
  assert.equal(ui.tree.loadingError.status,401);
  assert.equal(ui.tree.loadingError.message,'Session expired');
@@ -86,10 +88,10 @@ test('load-data hook records authorization failures and avoids leaking data',asy
 });
 test('refresh rentals recovers loading state after a rejected request',async()=>{
  global.fetch=async()=>respond(500,{message:'Offline'});
- const ui=mount(UseLoadData);
+ const store=createRentalDataStore(); const ui=mount(()=>useRentalDataStore(store));
  await assert.rejects(ui.tree.loadRentals(),e=>e.status===500);
  ui.render();assert.equal(ui.tree.isLoading,false);
- assert.equal(ui.tree.loadingError.message,'Offline');
+ assert.equal(ui.tree.refreshError,'Offline');
 });
 
 test('each mutation handles failed post-save refresh without reporting false success',async()=>{
@@ -102,8 +104,8 @@ test('each mutation handles failed post-save refresh without reporting false suc
 });
 test('loadData applies a default error message when the error object has none',async()=>{
  global.fetch=async()=>{throw {status:503}};
- const ui=mount(UseLoadData);
- await ui.tree.loadData();ui.render();
- assert.equal(ui.tree.loadingError.message,'error loading data');
+ const store=createRentalDataStore(); const ui=mount(()=>useRentalDataStore(store));
+ await assert.rejects(ui.tree.loadData());ui.render();
+ assert.equal(ui.tree.loadingError.message,'Unable to load rental data');
  assert.equal(ui.tree.loadingError.status,503);
 });
