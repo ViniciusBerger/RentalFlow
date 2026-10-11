@@ -2,7 +2,10 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import * as schema from './schemas/rental-schema';
+import * as rental from './schemas/rental-schema';
+import * as property from './schemas/property-schema';
+import * as user from './schemas/user-schema';
+const schema = {...rental,...property,...user};
 
 export const DRIZZLE = 'DRIZZLE_CONNECTION';
 

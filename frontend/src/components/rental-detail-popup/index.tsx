@@ -10,6 +10,7 @@ import { localizeError } from "../../i18n/messages";
 
 interface Rental {
   id: string;
+  propertyId?: string;
   clientFirstName: string;
   clientLastName: string;
   startDate: string;

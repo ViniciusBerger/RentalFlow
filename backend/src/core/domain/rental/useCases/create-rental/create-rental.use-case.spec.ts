@@ -51,7 +51,8 @@ describe('CreateRentalUseCase', () => {
       expect(repository.checkOverlapDate).toHaveBeenCalledWith(
         validData.userId,
         validData.startDate,
-        validData.endDate
+        validData.endDate,
+        undefined
       );
       expect(repository.save).toHaveBeenCalled();
     });

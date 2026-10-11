@@ -39,9 +39,9 @@ test('booking creation form capitalizes names, converts BRL values and closes on
  const ui=mount(AddRentalPopUp,props);
  const form=find(ui.tree,n=>n.type?.name==='AddRentalForm');
  assert.ok(form);
- for(const [name,value] of Object.entries({clientFirstName:'ana',clientLastName:'silva',revenue:'500.50',fee:'50',guests:'2',startDate:'2026-11-01',endDate:'2026-11-03'}))form.props.handleChange({target:{name,value}});
+ for(const [name,value] of Object.entries({clientFirstName:'ana',clientLastName:'silva',revenue:'500.50',fee:'50',guests:'2',startDate:'2026-11-01',endDate:'2026-11-03',propertyId:'11111111-1111-4111-8111-111111111111'}))form.props.handleChange({target:{name,value}});
  ui.render();const form2=find(ui.tree,n=>n.type?.name==='AddRentalForm');
- assert.deepEqual(form2.props.formData,{clientFirstName:'Ana',clientLastName:'Silva',revenue:500.5,fee:50,guests:'2',startDate:'2026-11-01',endDate:'2026-11-03'});
+ assert.deepEqual(form2.props.formData,{clientFirstName:'Ana',clientLastName:'Silva',revenue:500.5,fee:50,guests:'2',startDate:'2026-11-01',endDate:'2026-11-03',propertyId:'11111111-1111-4111-8111-111111111111'});
  let prevented=false;await form2.props.handleSubmit({preventDefault:()=>prevented=true});
  assert.equal(prevented,true);assert.equal(saved.clientFirstName,'Ana');assert.deepEqual(called,[]);
  props.onSubmit=async()=>true;
@@ -52,7 +52,9 @@ test('booking creation form capitalizes names, converts BRL values and closes on
 test('booking creation does not treat a rejected save as success',async()=>{
  let closed=false;
  const ui=mount(AddRentalPopUp,{isOpen:true,onSubmit:async()=>{throw new Error('Failed validation')},onClose:()=>closed=true,isSaving:false,error:null});
- const form=find(ui.tree,n=>n.type?.name==='AddRentalForm');
+ let form=find(ui.tree,n=>n.type?.name==='AddRentalForm');
+ form.props.handleChange({target:{name:'propertyId',value:'11111111-1111-4111-8111-111111111111'}});
+ ui.render();form=find(ui.tree,n=>n.type?.name==='AddRentalForm');
  await assert.rejects(form.props.handleSubmit({preventDefault:noop}),/Failed validation/);
  assert.equal(closed,false);
 });

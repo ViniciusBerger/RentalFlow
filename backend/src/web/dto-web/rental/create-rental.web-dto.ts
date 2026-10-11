@@ -7,9 +7,13 @@ import {
   MinLength,
   IsISO8601,
   Min,
+  IsUUID,
 } from 'class-validator';
 
 export class CreateRentalWebDto {
+  @IsUUID()
+  @IsNotEmpty()
+  propertyId: string;
   @IsNotEmpty()
   @IsString()
   @MaxLength(128)

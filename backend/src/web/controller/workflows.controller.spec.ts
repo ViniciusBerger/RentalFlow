@@ -44,7 +44,7 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
     const input = { userId: 'host-2', clientFirstName: 'A', clientLastName: 'B', startDate: '2026-11-01', endDate: '2026-11-02', guests: 2, revenue: 100, fee: 15 };
     rentals.createRental.mockResolvedValue({ id: 'r-1' });
     await rental.createRental(request as any, input as any);
-    expect(rentals.createRental).toHaveBeenCalledWith('host-1', 'A', 'B', '2026-11-01', '2026-11-02', 2, 100, 15);
+    expect(rentals.createRental).toHaveBeenCalledWith('host-1', 'A', 'B', '2026-11-01', '2026-11-02', 2, 100, 15, undefined);
   });
   it('delegates updates and propagates failures', async () => {
     rentals.updateRental.mockResolvedValue(true);
@@ -65,8 +65,8 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
     balances.getYearlyBalance.mockResolvedValue([{ label: '2026', totalRevenue: 1000 }]);
     expect(await balance.getMonthlyRevenue(request)).toHaveLength(1);
     expect(await balance.getYearlyRevenue(request)).toHaveLength(1);
-    expect(balances.getMonthlyBalance).toHaveBeenCalledWith('host-1');
-    expect(balances.getYearlyBalance).toHaveBeenCalledWith('host-1');
+    expect(balances.getMonthlyBalance).toHaveBeenCalledWith('host-1',undefined);
+    expect(balances.getYearlyBalance).toHaveBeenCalledWith('host-1',undefined);
   });
   it('looks up the current host and refuses to return a nonexistent account', async () => {
     users.findUser.mockResolvedValueOnce({ firebaseUid: 'host-1' }).mockResolvedValueOnce(null);

@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Dashboard } from './features/dashboard';
 import { AppLayout } from './layout/index';
 import { AuthPage } from './features/auth';
+import { PropertiesPage } from './features/properties';
 import { BookingsPage } from './features/booking';
 import CompleteProfilePage from './features/complete-profile';
 
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
   },
 
 
+  { path:'/properties', element:<AppLayout/>, children:[{path:'',element:<PropertiesPage/>}] },
   {
     path:"/bookings",
     element: <AppLayout/>, // This contains your sidebar/nav

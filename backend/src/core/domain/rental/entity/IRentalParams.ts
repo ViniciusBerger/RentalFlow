@@ -1,5 +1,6 @@
 export interface IRentalParams {
     userId: string;
+    propertyId?: string;
     clientFirstName:string;
     clientLastName:string;
     startDate: string;

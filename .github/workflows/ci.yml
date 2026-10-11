@@ -22,6 +22,20 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: rentalflow_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rentalflow_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -47,6 +61,11 @@ jobs:
 
       - name: HTTP integration tests
         run: npm run test:e2e -- --runInBand --ci
+
+      - name: PostgreSQL property migration and tenant isolation
+        run: npm run test:db
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rentalflow_ci
 
       - name: Development auth source checks
         run: node --test dev-auth.test.cjs
@@ -97,6 +116,9 @@ jobs:
 
       - name: Task 2 timeline and revenue trend chart regression tests
         run: node --test tests/task2-insights.test.cjs
+
+      - name: Task 3 properties, calendars and financial filters
+        run: node --test tests/properties.test.cjs
 
       - name: Frontend coverage (95% exercised-modules gate)
         run: npm run test:cov | tee coverage-summary.txt

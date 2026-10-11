@@ -66,9 +66,9 @@ export class RentalController {
     @ApiResponse({ status: 201, description: 'The rental has been successfully created' })
     async createRental(@Req() req:Request ,@Body() dto: CreateRentalWebDto): Promise<ICreateRentalResponse>{
         const userId = (req as any).user?.uid;
-        const { clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee} = dto
+        const { clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee, propertyId} = dto
         
-        const rental = await this.createRentalUseCase.createRental(userId, clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee)
+        const rental = await this.createRentalUseCase.createRental(userId, clientFirstName, clientLastName, startDate, endDate, guests, revenue, fee, propertyId)
         return rental
     }
 

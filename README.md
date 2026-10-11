@@ -1,55 +1,57 @@
-# Rentals API Architectural Blueprint
+# RentalFlow
 
-## 1. System Architecture: Hexagonal (Ports & Adapters)
-The system is designed to isolate business logic (The Core) from external infrastructure. This allows for swapping the database or authentication provider without modifying the rental processing logic.
+A rental-management application with a React/TypeScript frontend, NestJS API, and PostgreSQL database using Drizzle ORM. The interface defaults to Brazilian Portuguese and also supports English.
 
-- Core: Contains the Rental Entity and Use Cases.
-- Ports: Interfaces defining the communication contract.
-- Adapters: Implementation of the Ports (Express, Auth, ORM).
+## Features
 
-## 2. Directory Structure
-<img width="870" height="382" alt="image" src="https://github.com/user-attachments/assets/712f0eda-2ded-4363-ae73-8bc6d944c6d0" />
+- Properties (`Imóveis`), each with a customizable color and icon stored in PostgreSQL
+- All-property or per-property calendars, booking lists, and revenue/profit insights
+- Account-scoped API operations: users can only access their own properties and bookings
+- A shared frontend data store and background refresh after booking changes
+- Automatic **Imóvel principal** assignment for existing accounts and reservations during Task 3 migration
 
+## Development
 
+Use Node.js 22 and PostgreSQL. Install dependencies separately in `backend/` and `frontend/` using `npm ci`. Configure the backend database and authentication environment variables; use `frontend/.env.development` or a local override to set `VITE_API_URL`.
 
-## 3. Data Model & Logic
-Table Name: rentals
+In separate terminals:
 
-- id: UUID (Primary Key)
-- customer_first_name: String
-- customer_last_name: String
-- start_date: Date
-- end_date: Date
-- revenue: Decimal
+```sh
+cd backend && npm run start:dev
+cd frontend && npm run dev
+```
 
-Business Logic (Domain Entity):
-Profit = Gross - (Gross * 0.10) - 250.00 
-- 10% Service fee 
-- 250.00 Flat Cleaning Fee
+**Do not commit local `.env` files or production credentials.** Development-only login must remain disabled in production.
 
-## 4. Execution Flow
-1. Express Adapter receives POST request.
-2. Adapter calls Auth Port to validate the session.
-3. Adapter passes data to CreateRental Use Case.
-4. Use Case instantiates Rental Entity (Profit is calculated automatically).
-5. Use Case calls Database Port to save the Entity.
-6. Database Adapter executes SQL and returns the result.
-7. Express Adapter returns 201 Created to the client.
+## Database migration (Task 3)
 
-## 5. Testing Strategy
-- Unit Testing (Jest): Focus on domain/entities and domain/use-cases.
-- Mocking: Use Jest mocks for IDatabasePort and IAuthPort.
-- Integration Testing: Focus on adapters/db to ensure SQL constraints (like overlapping date prevention) work correctly.
+The migration `backend/drizzle/0003_properties_and_scoped_bookings.sql` must run **before deploying the Task 3 API/frontend**. Back up the production database first.
 
-## 6. Implementation Roadmap
-Phase 1: Define IDatabasePort and IAuthPort interfaces.
-Phase 2: Create Rental Entity with profit calculation logic.
-Phase 3: Create CreateRental Use Case and write Jest unit tests with mocked ports.
-Phase 4: Implement SQL Adapter (DB) and HTTP Adapter (Express).
-Phase 5: Initialize dependencies in main.ts.
+The migration creates a default **Imóvel principal** property for every existing account and associates all of its existing reservations with that property. Existing bookings are preserved. PostgreSQL also enforces account/property consistency and prohibits overlapping active bookings for the same property, while allowing bookings at different properties to overlap.
 
-## Continuous integration
+**Preflight for existing active booking overlaps:** Because legacy bookings all become attached to one default property, any overlapping active bookings for the same account must be resolved with the business owner before migration. This query finds conflicts without modifying data:
 
-GitHub Actions workflow: `.github/workflows/ci.yml`. It runs backend and frontend lint, TypeScript checks, 95%-gated selected-source coverage, tests and builds for pushes and PRs to `main`. Backend test coverage includes domain/adapters; frontend coverage includes modules exercised by its Node tests. These are not whole-repository coverage metrics.
+```sql
+SELECT a.user_id, a.id AS booking_a, b.id AS booking_b,
+       a.start_date AS a_checkin, a.end_date AS a_checkout,
+       b.start_date AS b_checkin, b.end_date AS b_checkout
+FROM rentals a
+JOIN rentals b ON a.user_id = b.user_id AND a.id < b.id
+WHERE a.is_active AND b.is_active
+  AND a.start_date < b.end_date AND b.start_date < a.end_date;
+```
 
-Run the equivalent commands on Windows with `powershell -ExecutionPolicy Bypass -File .\scripts\ci-local.ps1` after installing Node.js 22+. See `CI_VALIDATION_REPORT.md` for the precise results, current build blocker, test scope and production prerequisites.
+After a backup and preflight, apply migrations with the usual Drizzle deployment process:
+
+```sh
+cd backend
+npx drizzle-kit migrate
+```
+
+The CI workflow runs `npm run test:db` against a **disposable PostgreSQL service**, verifying backfill, tenant isolation, different-property overlap, checkout boundaries, and rejection of same-property overlaps. Never point the fixture test at production.
+
+## Verification and release
+
+GitHub Actions: `.github/workflows/ci.yml` (backend/frontend tests, builds, ESLint, TypeScript, selected-module 95% aggregate coverage gates, and PostgreSQL migration tests). Local equivalents are available in `scripts/ci-local.ps1` for Windows.
+
+Tests and coverage gates do not replace staging checks. Before production, verify migration with a real backup/staging database, account isolation, booking creation and editing, property archive rules, and desktop/mobile interactions.

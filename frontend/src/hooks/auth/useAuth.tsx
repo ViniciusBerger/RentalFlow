@@ -1,3 +1,4 @@
+import { resetProperties } from '../../features/properties/property-store';
 import { resetRentalData } from "../load-data/rental-data-store";
 import { useState } from "react";
 import { login, logout, getMe } from "./auth-service";
@@ -19,6 +20,7 @@ export const useAuth = () => {
 
       await login(email, password);
       resetRentalData();
+      resetProperties();
 
       const me = await getMe();
 
@@ -62,6 +64,7 @@ export const useAuth = () => {
 
       await logout();
       resetRentalData();
+      resetProperties();
       navigate("/auth");
     } catch (err: any) {
       setError(err.message ?? "Logout failed");
