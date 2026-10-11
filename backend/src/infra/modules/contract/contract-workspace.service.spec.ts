@@ -15,7 +15,7 @@ function dbStub(results:any[][]){
  builder.innerJoin=jest.fn(()=>builder);
  builder.limit=jest.fn(pulled);
  builder.orderBy=jest.fn(()=>({limit:builder.limit,then:(resolve:any,reject:any)=>pulled().then(resolve,reject)}));
- const values=jest.fn(()=>({onConflictDoUpdate:jest.fn().mockResolvedValue(undefined),
+ const values=jest.fn((_row:any)=>({onConflictDoUpdate:jest.fn().mockResolvedValue(undefined),
   then:(resolve:any)=>Promise.resolve(undefined).then(resolve)}));
  const db:any={
   select:jest.fn(()=>builder),execute:jest.fn().mockResolvedValue(undefined),
@@ -84,7 +84,7 @@ describe('draft contract write isolation',()=>{
    editToken:stableToken(),guest:{cpf:'52998224725',phone:'+5527999999999'}
   } as any);
   expect(saved).toEqual({saved:true});
-  const sent=values.mock.calls.map(x=>x[0]);
+  const sent:any[]=values.mock.calls.map(x=>x[0]);
   const guest=sent.find(x=>x?.identityCiphertext);
   expect(guest).toMatchObject({userId:uid,rentalId});
   expect(Buffer.isBuffer(guest.identityCiphertext)).toBe(true);
