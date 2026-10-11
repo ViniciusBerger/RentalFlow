@@ -220,3 +220,33 @@ test('existing published version and draft are both loaded without overwriting t
  approve.props.onChange({target:{checked:true}});view.render();
  assert.equal(calls.some(x=>x.path.endsWith('/contracts/template')),true);
 });
+
+test('contract API provides safe errors when the backend sends a scalar or no message',async()=>{
+ const {readSettings}=require('../src/features/contracts/contract-api.ts');
+ global.fetch=async()=>makeResponse({message:123},400);
+ await assert.rejects(readSettings(),/123/);
+ global.fetch=async()=>makeResponse({otherField:'not trusted'},502);
+ await assert.rejects(readSettings(),/HTTP 502/);
+ global.fetch=async()=>({ok:false,status:504,json:async()=>null});
+ await assert.rejects(readSettings(),/HTTP 504/);
+});
+test('payment method changes and property read failures do not invalidate a previously loaded draft',async()=>{
+ api({existing:true});const view=await loaded();
+ step(view,1);
+ const checkboxes=all(view.tree,n=>n.type==='input'&&n.props.type==='checkbox');
+ assert.ok(checkboxes.length>=2);
+ checkboxes[0].props.onChange({target:{checked:false}});view.render();
+ checkboxes[1].props.onChange({target:{checked:false}});view.render();
+ await clickButton(view,'Save settings');view.render();
+ step(view,3);await sleep();view.render();
+ const old=global.fetch;
+ global.fetch=async (url,init)=>{
+  if(String(url).includes('/contracts/properties/')&&!init?.method)return makeResponse({message:'Property does not exist'},404);
+  return old(url,init);
+ };
+ const select=all(view.tree,n=>n.type==='select')[0];
+ select.props.onChange({target:{value:property.id}});
+ view.render();await sleep();view.render();
+ step(view,4);
+ assert.equal(all(view.tree,n=>n.type==='details').length,17);
+});
