@@ -104,8 +104,8 @@ export const ContractQuestionnairePage=()=>{
   if(!draftId||!approved||!window.confirm(t.confirm))return;
   const result=await publishTemplate(draftId);setPublished(result.versionNumber);setDraftId(null);setApproved(false);setMessage(t.published);
  });
- const editClause=(id:string,change:Partial<Clause>)=>{setClauses(list=>list.map(c=>c.id===id?{...c,...change}:c));setApproved(false)};
- const addClause=()=>{setClauses(list=>[...list,{id:`extra-${Math.random().toString(36).slice(2,10)}`,title:locale==='pt-BR'?'Cláusula adicional':'Additional clause',body:'',enabled:false}])};
+ const editClause=(id:string,change:Partial<Clause>)=>{setClauses(list=>list.map(c=>c.id===id?{...c,...change}:c));setApproved(false);setDraftId(null)};
+ const addClause=()=>{setDraftId(null);setApproved(false);setClauses(list=>[...list,{id:`extra-${Math.random().toString(36).slice(2,10)}`,title:locale==='pt-BR'?'Cláusula adicional':'Additional clause',body:'',enabled:false}])};
  const field=(label:string,key:keyof Landlord,type='text')=><label className="rf-contract-field" key={key}>{label}
   <input type={type} maxLength={key==='addressStreet'?120:254} value={landlord[key]} onChange={e=>setLandlord(x=>({...x,[key]:e.target.value}))} autoComplete="off"/></label>;
  const number=(label:string,key:keyof Policy)=><label className="rf-contract-field" key={key}>{label}
@@ -180,7 +180,7 @@ export const ContractQuestionnairePage=()=>{
        placeholder={t.empty} onChange={e=>editClause(c.id,{body:e.target.value})}/></label>
       {c.id.startsWith('extra-')&&<div className="rf-contract-actions"><label className="rf-contract-check"><input type="checkbox" checked={c.enabled}
        onChange={e=>editClause(c.id,{enabled:e.target.checked})}/>{t.enabled}</label>
-       <button type="button" className="rf-outline" onClick={()=>setClauses(x=>x.filter(v=>v.id!==c.id))}>{t.remove}</button></div>}
+       <button type="button" className="rf-outline" onClick={()=>{setClauses(x=>x.filter(v=>v.id!==c.id));setApproved(false);setDraftId(null)}}>{t.remove}</button></div>}
      </div>
     </details>)}</div>
     <div className="rf-contract-actions"><button type="button" className="rf-outline" onClick={addClause}><Plus size={17}/>{t.addClause}</button>
