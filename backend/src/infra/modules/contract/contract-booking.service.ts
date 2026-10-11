@@ -4,6 +4,7 @@ import {and,desc,eq,sql} from 'drizzle-orm';
 import {NodePgDatabase} from 'drizzle-orm/node-postgres';
 import {rentalCharge,verifyInstallments,type GuestFeeChoice} from '../../../core/domain/contract/contract-validation';
 import {CreateRentalWebDto} from '../../../web/dto-web/rental/create-rental.web-dto';
+import {BookingQuoteDto} from '../../../web/dto-web/contract/booking-quote.dto';
 import {DRIZZLE} from '../../persistence/database.module';
 import {RentalSchema} from '../../persistence/schemas/rental-schema';
 import {PropertySchema} from '../../persistence/schemas/property-schema';
@@ -52,6 +53,40 @@ function digest(uid:string,dto:CreateRentalWebDto):string {
 @Injectable()
 export class ContractBookingService {
  constructor(@Inject(DRIZZLE) private readonly db:NodePgDatabase){}
+ async quote(uid:string,input:BookingQuoteDto){
+  if(!uid)throw new NotFoundException();
+  const nights=checkedNights(input.startDate,input.endDate);
+  const baseCents=toCents(input.revenue);
+  if(!Number.isSafeInteger(input.guests)||input.guests<1)
+   throw new BadRequestException('Invalid guest count');
+  const override=input.guestFee??{mode:'AUTOMATIC' as const};
+  if((override.mode==='ADJUSTED'&&override.cents===undefined)||
+   (override.mode==='WAIVED'&&override.cents!==undefined)||
+   (override.mode==='AUTOMATIC'&&(override.cents!==undefined||override.reason!==undefined)))
+   throw new BadRequestException('Invalid extra-guest fee selection');
+  const [property]=await this.db.select({id:PropertySchema.id}).from(PropertySchema)
+   .where(and(eq(PropertySchema.id,input.propertyId),eq(PropertySchema.userId,uid),
+    eq(PropertySchema.isActive,true))).limit(1);
+  if(!property)throw new NotFoundException('Property not found');
+  const [policy]=await this.db.select().from(PropertyContractSettingsSchema).where(and(
+   eq(PropertyContractSettingsSchema.propertyId,property.id),
+   eq(PropertyContractSettingsSchema.userId,uid))).limit(1);
+  if(!policy||policy.includedOccupancy===null||policy.maximumOccupancy===null||
+   policy.extraGuestRateCents===null)
+   throw new ConflictException('Property occupancy policy must be configured');
+  const choice:GuestFeeChoice=override.mode==='WAIVED'
+   ?{mode:'WAIVED',reason:override.reason??''}
+   :override.mode==='ADJUSTED'
+   ?{mode:'ADJUSTED',cents:override.cents!,reason:override.reason??''}
+   :{mode:'AUTOMATIC'};
+  try {
+   const amounts=rentalCharge(baseCents,input.guests,nights,{
+    included:policy.includedOccupancy,maximum:policy.maximumOccupancy,
+    extraRateCents:policy.extraGuestRateCents},choice,true);
+   return {baseCents,guests:input.guests,nights,...amounts};
+  }catch{throw new BadRequestException('Invalid occupancy or extra-guest rate');}
+ }
+
  async create(uid:string,dto:CreateRentalWebDto){
   if(!uid)throw new NotFoundException();
   const draft=dto.bookingDraft;
@@ -108,6 +143,9 @@ export class ContractBookingService {
     included:policy.includedOccupancy,maximum:policy.maximumOccupancy,
     extraRateCents:policy.extraGuestRateCents},choice,true);}
    catch{throw new BadRequestException('Invalid occupancy or extra-guest rate');}
+   // Reject stale/unreviewed price quotes. Never accept a client-asserted total.
+   if(quote.totalCents!==draft.confirmedTotalCents)
+    throw new ConflictException('Final price changed; request a new quote');
    try{verifyInstallments(quote.totalCents,draft.installments?.map(x=>x.agreedCents)??[quote.totalCents]);}
    catch{throw new BadRequestException('Installments must total agreed booking amount');}
    if(draft.paymentDueEvent&&draft.paymentDueDate)throw new BadRequestException('Only one default due rule allowed');
