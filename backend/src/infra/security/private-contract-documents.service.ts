@@ -10,7 +10,7 @@ import { requireContractOwner } from './contract-authorization';
 export class PrivateContractDocumentsService {
  constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase) {}
  async readFinalPdf(ownerUid:string,contractId:string,revisionId:string): Promise<Buffer> {
-   if (!ownerUid || !/^[0-9a-f-]{36}$/i.test(contractId) || !/^[0-9a-f-]{36}$/i.test(revisionId)) throw new NotFoundException('Contract not found');
+   if (!ownerUid || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contractId) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(revisionId)) throw new NotFoundException('Contract not found');
    const [row]=await this.db.select().from(ContractRevisionSchema).where(and(
      eq(ContractRevisionSchema.userId,ownerUid), eq(ContractRevisionSchema.contractId,contractId),
      eq(ContractRevisionSchema.id,revisionId), eq(ContractRevisionSchema.status,'FINALIZED')

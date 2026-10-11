@@ -61,7 +61,7 @@ export class EncryptedContractDetailsService {
         profileAuthTag:sealed.authTag,profileKeyVersion:sealed.keyVersion,updatedAt:new Date(),
       }});
       await tx.insert(ContractAuditEventSchema).values({userId:ownerUid,actorId:ownerUid,
-        action:'UPDATE_GUEST',targetType:'TEMPLATE',outcome:'SUCCESS'});
+        action:'UPDATE_LANDLORD',targetType:'TEMPLATE',outcome:'SUCCESS'});
     });
   }
   async readLandlordProfile(ownerUid:string):Promise<Record<string,string>|null> {
