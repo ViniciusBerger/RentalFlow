@@ -127,3 +127,45 @@ test('failed quote never confirms a booking and reports a recoverable error',asy
  await form(ui).props.handleSubmit(event);
  assert.equal(saved,0);
 });
+
+test('enabled booking form renders server-reviewed total and translated approval states',()=>{
+ const React=require('react');
+ const {renderToStaticMarkup}=require('react-dom/server');
+ const {LanguageProvider}=require('../src/i18n/language.tsx');
+ const {AddRentalForm}=require('../src/components/add-rental-popup/add-rental-form.tsx');
+ const props={
+  handleSubmit:()=>{},handleChange:()=>{},handleContractChange:()=>{},
+  onQuote:()=>{},contractForm:{cpf:'',rg:'',address:'',phone:'',email:'',
+   nationality:'BR',maritalStatus:'',feeMode:'AUTOMATIC',feeReason:'',
+   feeAdjustment:'',paymentMethod:'PIX',paymentDueEvent:'KEY_HANDOVER'},
+  formData:{clientFirstName:'Ana',clientLastName:'Silva',
+   startDate:'2026-12-01',endDate:'2026-12-03',propertyId:property[0].id,
+   guests:'3',revenue:200,fee:20},
+  contractBookingEnabled:true,quote:quote,quoteBusy:false,
+  quoteError:'',isSaving:false,error:null
+ };
+ const markup=(locale,updates={})=>renderToStaticMarkup(React.createElement(
+  LanguageProvider,{initialLocale:locale},React.createElement(AddRentalForm,{...props,...updates})
+ ));
+ const english=markup('en');
+ assert.match(english,/Base rental price/);
+ assert.match(english,/Price calculated by server/);
+ assert.match(english,/Booking total/);
+ assert.match(english,/210/);
+ assert.doesNotMatch(english,/Review the server-calculated total before/);
+ const portuguese=markup('pt-BR');
+ assert.match(portuguese,/Preço base da estadia/);
+ assert.match(portuguese,/Cálculo confirmado pelo servidor/);
+ assert.match(portuguese,/Total da reserva/);
+ const pending=markup('en',{quote:null,quoteBusy:true,quoteError:'Occupancy limit exceeded'});
+ assert.match(pending,/Calculating on server/);
+ assert.match(pending,/Occupancy limit exceeded/);
+ assert.doesNotMatch(pending,/Price calculated by server/);
+ assert.match(pending,/disabled/);
+ const unreviewed=markup('pt-BR',{quote:null,quoteBusy:false,quoteError:''});
+ assert.match(unreviewed,/Conferir valor total antes de reservar/);
+ assert.doesNotMatch(unreviewed,/Cálculo confirmado pelo servidor/);
+ assert.match(unreviewed,/disabled/);
+ const old=markup('en',{contractBookingEnabled:false,quote:null});
+ assert.doesNotMatch(old,/Review total before booking/);
+});
