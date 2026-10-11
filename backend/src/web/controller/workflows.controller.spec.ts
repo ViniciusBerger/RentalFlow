@@ -17,6 +17,7 @@ describe('HTTP controller delegation: identity, data, and errors', () => {
     { findAll: rentals.findAll } as any,
     { find: rentals.find } as any,
     { cancelRental: rentals.cancelRental } as any,
+    { create: jest.fn() } as any,
   );
   const balances = { getYearlyBalance: jest.fn(), getMonthlyBalance: jest.fn() };
   const balance = new BalanceController(balances as any);

@@ -7,7 +7,8 @@ for (const ext of ['.ts', '.tsx']) {
   require.extensions[ext] = (module, filename) => {
     const source = fs.readFileSync(filename, 'utf8')
       .replaceAll('import.meta.env.VITE_API_URL', 'process.env.VITE_API_URL')
-      .replaceAll('import.meta.env.VITE_CONTRACT_QUESTIONNAIRE_ENABLED', 'process.env.VITE_CONTRACT_QUESTIONNAIRE_ENABLED');
+      .replaceAll('import.meta.env.VITE_CONTRACT_QUESTIONNAIRE_ENABLED', 'process.env.VITE_CONTRACT_QUESTIONNAIRE_ENABLED')
+      .replaceAll('import.meta.env.VITE_CONTRACT_BOOKING_DRAFTS_ENABLED', 'process.env.VITE_CONTRACT_BOOKING_DRAFTS_ENABLED');
     const output = ts.transpileModule(source, {
       fileName: filename,
       compilerOptions: {

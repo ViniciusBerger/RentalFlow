@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 require('./register-typescript.cjs');
 process.env.VITE_API_URL='http://localhost:3000';
 const { login, getMe, completeProfile, logout }=require('../src/hooks/auth/auth-service.tsx');
-const { addRental, deleteRental, updateRental }=require('../src/hooks/rental-actions/rental-service.ts');
+const { addRental, deleteRental, updateRental, getBookingQuote }=require('../src/hooks/rental-actions/rental-service.ts');
 const { loadNextRentals, loadUserData, loadDashboardBalance }=require('../src/hooks/load-data/load-data.service.ts');
 const { loadBalance }=require('../src/hooks/load-data/balance-service.ts');
 const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
@@ -103,4 +103,27 @@ test('balance errors stop loading and do not show partial financial totals',asyn
 test('balance requests default to missing data safely',async()=>{
  track(respond(200,[]),respond(200,[]));
  assert.deepEqual(await loadBalance(),[undefined,undefined,[]]);
+});
+
+test('booking quote is server-issued and protected by the authenticated session and CSRF',async()=>{
+ const expected={baseCents:20000,calculatedExtraCents:1000,chargedExtraCents:1000,totalCents:21000,nights:2,guests:3};
+ const calls=track(respond(201,expected));
+ const request={propertyId:'11111111-1111-4111-8111-111111111111',
+  startDate:'2026-12-01',endDate:'2026-12-03',guests:3,revenue:200,
+  guestFee:{mode:'AUTOMATIC'}};
+ assert.deepEqual(await getBookingQuote(request),expected);
+ assert.match(String(calls[0][0]),/\/rental\/quote$/);
+ assert.equal(calls[0][1].credentials,'include');
+ assert.equal(calls[0][1].method,'POST');
+ assert.deepEqual(JSON.parse(calls[0][1].body),request);
+ assert.equal(calls[0][1].headers.get('X-CSRF-Token'),'test-session-bound-token');
+});
+test('booking quote fails closed on server error or malformed amount',async()=>{
+ track(respond(409,{message:'Property occupancy not configured'}));
+ await assert.rejects(getBookingQuote({propertyId:'x',startDate:'2026-12-01',endDate:'2026-12-03',
+  guests:2,revenue:100,guestFee:{mode:'AUTOMATIC'}}),/Property occupancy/);
+ const calls=track(respond(200,{totalCents:'4000',baseCents:3000,chargedExtraCents:1000,calculatedExtraCents:1000}));
+ await assert.rejects(getBookingQuote({propertyId:'x',startDate:'2026-12-01',endDate:'2026-12-03',
+  guests:2,revenue:100,guestFee:{mode:'AUTOMATIC'}}),/Invalid price quote response/);
+ assert.equal(calls.length,1);
 });
