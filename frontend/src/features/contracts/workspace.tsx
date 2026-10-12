@@ -257,7 +257,7 @@ export function ContractsWorkspacePage(){
         <Eye size={16}/>{pt?'Ver PDF rascunho':'Preview draft PDF'}</button>
        <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy} onClick={()=>void pdf(true)}>
         <Download size={16}/>{pt?'Baixar prévia':'Download preview'}</button>
-      </div>}}
+      </div>}
       {detail.status==='DRAFT'&&<p className="rf-contract-help">{pt?'Prévia não assinada e sem validade de contrato final.':'Unsigned preview; not a finalized contract.'}</p>}
      </div>
      {contractFinalizationEnabled&&detail.status==='DRAFT'&&<div className="rf-contract-actions">
