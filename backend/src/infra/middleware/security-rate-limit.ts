@@ -6,7 +6,8 @@ export function securityRateLimit() {
  return (req:Request,res:Response,next:NextFunction) => {
   const path=req.path;
   const login=req.method==='POST' && path==='/auth/login';
-  const privatePdf=req.method==='GET' && /^\/contracts\/[^/]+\/revisions\/[^/]+\/pdf$/.test(path);
+  const privatePdf=req.method==='GET' && (/^\/contracts\/[^/]+\/revisions\/[^/]+\/pdf$/.test(path) ||
+   /^\/contracts\/workspace\/[^/]+\/preview\.pdf$/.test(path));
   const mutating=['POST','PUT','PATCH','DELETE'].includes(req.method);
   if (!login && !privatePdf && !mutating) {next();return;}
   const max=login?20:privatePdf?50:300, windowMs=login?15*60_000:60_000;

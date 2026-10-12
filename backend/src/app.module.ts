@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import {ContractQuestionnaireModule} from './infra/modules/contract/contract-questionnaire.module';
+import {ContractWorkspaceModule} from './infra/modules/contract/contract-workspace.module';
 import {PrivateContractDocumentsModule} from './infra/security/private-contract-documents.module';
 import { ConfigModule } from '@nestjs/config';
 import { PropertyModule } from './infra/modules/property/property.module';
@@ -18,7 +19,8 @@ import { UserModule } from './infra/modules/user/user.module';
     UserModule,
     DatabaseModule,
     PrivateContractDocumentsModule,
-    ContractQuestionnaireModule, 
+    ContractQuestionnaireModule,
+    ContractWorkspaceModule, 
     ConfigModule.forRoot({isGlobal: true })],
     
   controllers: [AppController],

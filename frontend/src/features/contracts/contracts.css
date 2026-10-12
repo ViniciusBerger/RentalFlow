@@ -40,3 +40,26 @@
 .rf-contract-navigation{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:12px}
 .rf-contract-navigation span{font-size:12px;font-weight:750;color:#789080}
 @media(max-width:760px){.rf-contract-heading{flex-direction:column}.rf-contract-privacy{max-width:100%}.rf-contract-grid{grid-template-columns:1fr}.rf-contract-card{padding:18px}.rf-contract-steps button{padding:9px}}
+
+.rf-contract-workspace{max-width:1440px;margin:0 auto;padding-bottom:72px}
+.rf-contract-workspace-grid{display:grid;grid-template-columns:minmax(250px,330px) minmax(0,1fr);gap:20px;align-items:start}
+.rf-contract-workspace-list,.rf-contract-workspace-detail{padding:23px;min-width:0;display:grid;gap:18px}
+.rf-contract-workspace-list h3,.rf-contract-workspace-detail h4{font-size:16px;font-weight:800;color:#244b32}
+.rf-contract-workspace-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.rf-contract-workspace-cards{display:grid;gap:9px;max-height:580px;overflow:auto}
+.rf-contract-workspace-item{width:100%;text-align:left;display:grid;gap:5px;padding:13px;border:1px solid #deebe3;border-radius:12px;background:white;color:#607566;font-size:12px}
+.rf-contract-workspace-item-title{color:#244b32;font-size:14px;font-weight:850}
+.rf-contract-workspace-item.active{background:#eaf7ef;border-color:#18834e}
+.rf-contract-workspace-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rf-contract-workspace-title h3{display:flex;align-items:center;gap:8px;font-size:21px;font-weight:850;color:#244b32}
+.rf-contract-workspace-title p,.rf-contract-workspace-title span{color:#637b69;font-size:12px}
+.rf-contract-workspace-title strong{font-size:11px;background:#eff5f0;border-radius:50px;padding:8px 12px;color:#28603e}
+.rf-contract-workspace-installments{display:grid;gap:12px}
+.rf-contract-installment{border:1px solid #deebe3;border-radius:13px;padding:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.rf-contract-installment>span{font-size:12px;font-weight:800;color:#45654c;width:100%}
+.rf-contract-installment .rf-contract-field{flex:1 1 130px;max-width:240px}
+.rf-contract-secondary{background:#e9f4eb!important;color:#12663e!important;box-shadow:none!important}
+.rf-contract-workspace-preview{display:grid;gap:14px;border-top:1px solid #e2ece4;padding-top:23px}
+.rf-contract-workspace-history{display:grid;gap:7px;font-size:12px;color:#657a6b}
+@media(max-width:900px){.rf-contract-workspace-grid{grid-template-columns:minmax(0,1fr)}.rf-contract-workspace-cards{max-height:290px}}
+@media(max-width:600px){.rf-contract-workspace-list,.rf-contract-workspace-detail{padding:15px}.rf-contract-workspace-filters{grid-template-columns:1fr}.rf-contract-installment .rf-contract-field{max-width:none}}

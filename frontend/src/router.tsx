@@ -5,6 +5,7 @@ import { AppLayout } from './layout/index';
 import { AuthPage } from './features/auth';
 import { PropertiesPage } from './features/properties';
 import {ContractQuestionnairePage} from './features/contracts';
+import {ContractsWorkspacePage} from './features/contracts/workspace';
 import { BookingsPage } from './features/booking';
 import CompleteProfilePage from './features/complete-profile';
 
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
 
 
   { path:'/properties', element:<AppLayout/>, children:[{path:'',element:<PropertiesPage/>}] },
+  { path:'/contracts', element:<AppLayout/>, children:[{path:'',element:<ContractsWorkspacePage/>}] },
   { path:'/contracts/setup', element:<AppLayout/>, children:[{path:'',element:<ContractQuestionnairePage/>}] },
   {
     path:"/bookings",
