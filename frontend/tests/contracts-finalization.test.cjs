@@ -217,3 +217,35 @@ test('archive download stays private and does not return the draft PDF',async()=
  assert.ok(events.includes('click'));
  assert.equal(events.some(x=>x.endsWith('/preview.pdf')),false);
 });
+
+test('Portuguese finalization follows verified review and displays unsigned archive copy',async()=>{
+ const {LanguageContext}=require('../src/i18n/context.ts');
+ const {translate}=require('../src/i18n/messages.ts');
+ const originalLocale=LanguageContext._currentValue;
+ LanguageContext._currentValue={locale:'pt-BR',setLocale:()=>{},t:key=>translate('pt-BR',key)};
+ let finalized=false;
+ try{
+  global.window={confirm:()=>true,setTimeout:()=>1};
+  global.fetch=async(url)=>{
+   const path=String(url);
+   if(path.endsWith('/workspace'))return ok(list);
+   if(path.endsWith('/workspace/'+key))return ok(detail(finalized?'FINALIZED':'DRAFT'));
+   if(path.endsWith('/finalization-review'))return ok({ready:true,reviewToken:token,revisionId:rev,version:1});
+   if(path.endsWith('/auth/csrf'))return ok({csrfToken:'verified'});
+   if(path.endsWith('/finalize')){finalized=true;return ok({status:'FINALIZED',revisionId:rev,signatureStatus:'UNSIGNED'});}
+   return ok({});
+  };
+  const view=mount(ContractsWorkspacePage);
+  for(let i=0;i<7;i++){await pause();view.render();}
+  const review=button(view.tree,'Validar para finalização');
+  assert.ok(review);review.props.onClick();
+  for(let i=0;i<6;i++){await pause();view.render();}
+  assert.match(JSON.stringify(view.tree),/Validações concluídas/);
+  const approve=button(view.tree,'Confirmar finalização sem assinatura');
+  assert.ok(approve);approve.props.onClick();
+  for(let i=0;i<9;i++){await pause();view.render();}
+  assert.equal(finalized,true);
+  assert.ok(button(view.tree,'Baixar PDF arquivado'));
+  assert.match(JSON.stringify(view.tree),/não assinado/);
+ }finally{LanguageContext._currentValue=originalLocale;}
+});
