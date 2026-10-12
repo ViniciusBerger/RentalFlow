@@ -1,0 +1,32 @@
+name: PR4.5 dependency lock refresh (temporary)
+on:
+  push:
+    branches: [feature/task4-5-finalization-archive]
+    paths:
+      - .github/workflows/pr45-lock-refresh.yml
+      - backend/package.json
+      - backend/package-lock.json
+permissions:
+  contents: write
+jobs:
+  update-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve deterministic backend lockfile
+        working-directory: backend
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Commit backend dependency lockfile on feature branch
+        run: |
+          if ! git diff --quiet -- backend/package-lock.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add backend/package-lock.json
+            git commit -m "chore(contracts): lock PDF and font packages"
+            git push origin HEAD:feature/task4-5-finalization-archive
+          fi
