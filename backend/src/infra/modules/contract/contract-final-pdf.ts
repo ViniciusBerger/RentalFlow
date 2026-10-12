@@ -3,7 +3,7 @@ import PDFDocument from 'pdfkit';
 import {readFileSync} from 'node:fs';
 
 const fontPath=require.resolve('@fontsource/noto-sans/files/noto-sans-latin-400-normal.woff');
-export type FinalPdfInput={contractId:string;version:number;finalizedAt:Date;clauses:{id:string;title:string;body:string}[]};
+export type FinalPdfInput={contractId:string;version:number;finalizedAt:Date;clauses:{id:string;title:string;body:string}[]; summary?:{landlord:string;landlordCpf:string;guest:string;guestCpf:string;property:string;checkIn:string;checkOut:string;guests:number;totalCents:number}};
 
 /** Generates a private, un-signed finalized archive using an embedded Unicode font. */
 export async function renderFinalContractPdf(input:FinalPdfInput):Promise<Buffer>{
@@ -25,6 +25,15 @@ export async function renderFinalContractPdf(input:FinalPdfInput):Promise<Buffer
  doc.moveDown().fontSize(10).text('VERSÃO FINALIZADA - NÃO ASSINADA',{align:'center'});
  doc.moveDown().fontSize(9).text('ID: '+input.contractId+' - versão '+input.version);
  doc.text('Finalizado em: '+input.finalizedAt.toISOString());
+ if(input.summary){
+  const s=input.summary;
+  doc.moveDown().fontSize(11).text('DADOS DA RESERVA');
+  doc.fontSize(9).text('Locador: '+s.landlord+' | CPF: '+s.landlordCpf);
+  doc.text('Locatário: '+s.guest+' | CPF: '+s.guestCpf);
+  doc.text('Imóvel: '+s.property);
+  doc.text('Período: '+s.checkIn+' a '+s.checkOut+' | Hóspedes: '+s.guests);
+  doc.text('Valor total: '+new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(s.totalCents/100));
+ }
  doc.moveDown();
  for(const clause of input.clauses){
   doc.fontSize(11).text(clause.title);
