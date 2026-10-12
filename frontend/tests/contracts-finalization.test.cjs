@@ -137,3 +137,22 @@ test('declined browser confirmation cannot issue a finalization write',async()=>
  for(let i=0;i<4;i++){await pause();view.render();}
  assert.equal(calls.some(x=>x.endsWith('/finalize')),false);
 });
+
+test('API rejects malformed failures without trusting client-visible approval status',async()=>{
+ const denied=[
+  {status:412,json:async()=>({reason:'precondition'})},
+  {status:418,json:async()=>('unexpected')},
+  {status:429,json:async()=>{throw new Error('invalid JSON');}}
+ ];
+ for(const item of denied){
+  global.fetch=async()=>({ok:false,...item});
+  await assert.rejects(prepareContractFinalization(key),new RegExp('HTTP '+item.status));
+ }
+});
+
+test('the archived document rejects large non-PDF responses and refused file access',async()=>{
+ global.fetch=async()=>({ok:true,blob:async()=>new Blob(['not a PDF'.repeat(100)],{type:'text/plain'})});
+ await assert.rejects(downloadFinalContractPdf(key,rev),/Invalid finalized PDF/);
+ global.fetch=async()=>({ok:false,status:403,json:async()=>({message:'No access'})});
+ await assert.rejects(downloadFinalContractPdf(key,rev),/No access/);
+});
