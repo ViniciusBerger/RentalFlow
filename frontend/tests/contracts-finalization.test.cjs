@@ -1,0 +1,97 @@
+const {test,afterEach}=require('node:test');
+const assert=require('node:assert/strict');
+process.env.VITE_CONTRACT_WORKSPACE_ENABLED='true';
+process.env.VITE_CONTRACT_FINALIZATION_ENABLED='true';
+process.env.VITE_API_URL='http://localhost:3000';
+require('./register-typescript.cjs');
+const {mount}=require('./test-dispatcher.cjs');
+const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
+const {ContractsWorkspacePage}=require('../src/features/contracts/workspace.tsx');
+const {prepareContractFinalization,finalizeContract,downloadFinalContractPdf,contractFinalizationEnabled}=
+ require('../src/features/contracts/contract-workspace-api.ts');
+const key='33333333-3333-4333-8333-333333333333';
+const rev='44444444-4444-4444-8444-444444444444';
+const token='a'.repeat(64);
+const oldFetch=global.fetch,oldWindow=global.window,oldDocument=global.document;
+const pause=()=>new Promise(r=>setImmediate(r));
+const ok=value=>({ok:true,status:200,json:async()=>value,
+ blob:async()=>new Blob(['%PDF-1.7\n'+'.'.repeat(120)],{type:'application/pdf'})});
+const find=(node,fn)=>!node||typeof node!=='object'?[]:Array.isArray(node)?
+ node.flatMap(x=>find(x,fn)):[...(fn(node)?[node]:[]),...find(node.props?.children,fn)];
+const button=(tree,words)=>find(tree,x=>x.type==='button').find(x=>JSON.stringify(x.props.children).includes(words));
+const list={items:[{id:key,propertyId:'11111111-1111-4111-8111-111111111111',
+ propertyName:'Casa Azul',firstName:'Ana',lastName:'Teste',startDate:'2027-01-01',
+ endDate:'2027-01-02',revenue:300,status:'DRAFT',revisionVersion:1}]};
+function detail(status='DRAFT'){
+ return {id:key,revisionId:rev,status,revisionVersion:1,editable:status==='DRAFT',
+  booking:{clientFirstName:'Ana',clientLastName:'Teste',startDate:'2027-01-01',
+   endDate:'2027-01-02',totalCents:30000},property:{name:'Casa Azul'},
+  guest:{},installments:[],history:[],pricing:{},editToken:'b'.repeat(64),
+  preview:{ready:true,missing:[],clauses:[{id:'1',title:'Approved',body:'Approved clause'}]}};
+}
+afterEach(()=>{global.fetch=oldFetch;global.window=oldWindow;global.document=oldDocument;clearCsrfToken();});
+
+test('private finalization API uses session, CSRF, and review token only',async()=>{
+ assert.equal(contractFinalizationEnabled,true);
+ const calls=[];
+ global.fetch=async(url,init={})=>{
+  calls.push({url:String(url),init});
+  if(String(url).endsWith('/auth/csrf'))return ok({csrfToken:'secure-csrf'});
+  if(String(url).endsWith('/finalization-review'))return ok({ready:true,reviewToken:token,revisionId:rev,version:1});
+  if(String(url).endsWith('/finalize'))return ok({status:'FINALIZED',revisionId:rev,signatureStatus:'UNSIGNED'});
+  return ok({});
+ };
+ const review=await prepareContractFinalization(key);
+ assert.equal(review.reviewToken,token);
+ const finalized=await finalizeContract(key,token);
+ assert.equal(finalized.signatureStatus,'UNSIGNED');
+ const write=calls.find(c=>c.url.endsWith('/finalize'));
+ assert.equal(write.init.method,'POST');
+ assert.equal(write.init.headers.get('X-CSRF-Token'),'secure-csrf');
+ assert.deepEqual(JSON.parse(write.init.body),{reviewToken:token,confirm:true});
+ assert.equal(write.init.credentials,'include');
+ assert.equal(calls.some(c=>c.url.endsWith('/finalization-review')&&c.init.cache==='no-store'),true);
+});
+
+test('archived PDF is retrieved privately from its finalized revision only',async()=>{
+ const calls=[];
+ global.fetch=async(url,init={})=>{calls.push({url:String(url),init});return ok({});};
+ const blob=await downloadFinalContractPdf(key,rev);
+ assert.equal(blob.type,'application/pdf');
+ assert.ok(blob.size>100);
+ assert.equal(calls.length,1);
+ assert.match(calls[0].url,/\/contracts\/.*\/revisions\/.*\/pdf$/);
+ assert.equal(calls[0].init.credentials,'include');
+ global.fetch=async()=>({ok:true,blob:async()=>new Blob(['HTML'],{type:'text/html'})});
+ await assert.rejects(downloadFinalContractPdf(key,rev),/Invalid finalized PDF/);
+});
+
+test('workspace prepares, confirms and archives a saved draft without browser authority over booking values',async()=>{
+ const calls=[];let finalized=false;
+ global.window={confirm:()=>true,setTimeout:()=>1};
+ global.fetch=async(url,init={})=>{
+  const path=String(url);calls.push({path,init});
+  if(path.endsWith('/auth/csrf'))return ok({csrfToken:'secure-csrf'});
+  if(path.endsWith('/finalization-review'))return ok({ready:true,reviewToken:token,revisionId:rev,version:1});
+  if(path.endsWith('/finalize')){finalized=true;return ok({status:'FINALIZED',revisionId:rev,signatureStatus:'UNSIGNED'});}
+  if(path.endsWith('/workspace'))return ok(list);
+  if(path.endsWith('/workspace/'+key))return ok(detail(finalized?'FINALIZED':'DRAFT'));
+  return {ok:false,status:404,json:async()=>({message:'Not found'})};
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<7;i++){await pause();view.render();}
+ const review=button(view.tree,'Validate for finalization');
+ assert.ok(review);assert.equal(review.props.disabled,false);
+ review.props.onClick();
+ for(let i=0;i<6;i++){await pause();view.render();}
+ const approve=button(view.tree,'Confirm unsigned finalization');
+ assert.ok(approve);approve.props.onClick();
+ for(let i=0;i<10;i++){await pause();view.render();}
+ assert.equal(finalized,true);
+ assert.ok(calls.some(c=>c.path.endsWith('/finalization-review')));
+ const request=calls.find(c=>c.path.endsWith('/finalize'));
+ assert.equal(request.init.method,'POST');
+ assert.deepEqual(Object.keys(JSON.parse(request.init.body)).sort(),['confirm','reviewToken']);
+ assert.ok(button(view.tree,'Download archived PDF'));
+ assert.equal(button(view.tree,'Save draft'),undefined);
+});
