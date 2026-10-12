@@ -245,7 +245,7 @@ export function ContractsWorkspacePage(){
       <Save size={17}/>{saving?(pt?'Salvando...':'Saving...'):pt?'Salvar rascunho':'Save draft'}</button>}
      <div className="rf-contract-workspace-preview">
       <div className="rf-contract-workspace-title"><h4>{pt?'Prévia do contrato':'Contract preview'}</h4>
-       <span>{pt?'Não finalizado':'Not finalized'}</span></div>
+       <span>{detail.status==='FINALIZED'?(pt?'Finalizado, não assinado':'Finalized, unsigned'):(pt?'Não finalizado':'Not finalized')}</span></div>
       {detail.preview.missing.length>0&&<p className="rf-contract-help" role="status">
        {pt?'Campos pendentes: ':'Missing fields: '}{detail.preview.missing.join(', ')}</p>}
       {detail.preview.clauses.length===0?<p>{pt?'Publique primeiro um modelo aprovado.':'Publish an approved template first.'}</p>:
