@@ -31,7 +31,7 @@ describe('contract workspace session and deployment boundaries',()=>{
  });
  it('never creates official PDFs; preview is private and watermarked',async()=>{
   process.env.CONTRACT_WORKSPACE_ENABLED='true';
-  service.detail.mockResolvedValueOnce({preview:{watermark:'RASCUNHO - NAO FINALIZADO',
+  service.detail.mockResolvedValueOnce({status:'DRAFT',preview:{watermark:'RASCUNHO - NAO FINALIZADO',
    missing:['locatario.cpf'],ready:false,
    clauses:[{id:'1',title:'Documento',body:'Texto sem validade jurídica.'}]}});
   const headers=new Map<string,string>();
