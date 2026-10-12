@@ -156,3 +156,64 @@ test('the archived document rejects large non-PDF responses and refused file acc
  global.fetch=async()=>({ok:false,status:403,json:async()=>({message:'No access'})});
  await assert.rejects(downloadFinalContractPdf(key,rev),/No access/);
 });
+
+test('failed server review displays error and cannot expose finalization confirmation',async()=>{
+ global.fetch=async(url)=>{
+  const path=String(url);
+  if(path.endsWith('/workspace'))return ok(list);
+  if(path.endsWith('/workspace/'+key))return ok(detail('DRAFT'));
+  if(path.endsWith('/finalization-review'))
+   return {ok:false,status:409,json:async()=>({message:'Missing landlord identity'})};
+  return ok({});
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<7;i++){await pause();view.render();}
+ const review=button(view.tree,'Validate for finalization');
+ assert.ok(review);review.props.onClick();
+ for(let i=0;i<7;i++){await pause();view.render();}
+ assert.equal(button(view.tree,'Confirm unsigned finalization'),undefined);
+ assert.match(JSON.stringify(view.tree),/Missing landlord identity/);
+});
+
+test('stale finalization token invalidates confirm action and surfaces server rejection',async()=>{
+ global.window={confirm:()=>true};
+ global.fetch=async(url)=>{
+  const path=String(url);
+  if(path.endsWith('/workspace'))return ok(list);
+  if(path.endsWith('/workspace/'+key))return ok(detail('DRAFT'));
+  if(path.endsWith('/finalization-review'))return ok({ready:true,reviewToken:token,revisionId:rev,version:1});
+  if(path.endsWith('/auth/csrf'))return ok({csrfToken:'session-csrf'});
+  if(path.endsWith('/finalize'))return {ok:false,status:409,json:async()=>({message:'Contract changed'})};
+  return ok({});
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<7;i++){await pause();view.render();}
+ button(view.tree,'Validate for finalization').props.onClick();
+ for(let i=0;i<6;i++){await pause();view.render();}
+ button(view.tree,'Confirm unsigned finalization').props.onClick();
+ for(let i=0;i<8;i++){await pause();view.render();}
+ assert.equal(button(view.tree,'Confirm unsigned finalization'),undefined);
+ assert.match(JSON.stringify(view.tree),/Contract changed/);
+});
+
+test('archive download stays private and does not return the draft PDF',async()=>{
+ const events=[];
+ global.window={setTimeout:()=>1};
+ global.document={createElement:()=>({click:()=>events.push('click'),remove:()=>events.push('remove')}),
+  body:{appendChild:()=>events.push('append')}};
+ global.fetch=async(url,init={})=>{
+  const path=String(url);events.push(path);
+  if(path.endsWith('/workspace'))return ok(list);
+  if(path.endsWith('/workspace/'+key))return ok(detail('FINALIZED'));
+  if(path.endsWith('/revisions/'+rev+'/pdf'))return ok({});
+  return ok({});
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<7;i++){await pause();view.render();}
+ const pdf=button(view.tree,'Download archived PDF');
+ assert.ok(pdf);pdf.props.onClick();
+ for(let i=0;i<7;i++){await pause();view.render();}
+ assert.ok(events.some(x=>x.endsWith('/revisions/'+rev+'/pdf')));
+ assert.ok(events.includes('click'));
+ assert.equal(events.some(x=>x.endsWith('/preview.pdf')),false);
+});
