@@ -249,3 +249,41 @@ test('Portuguese finalization follows verified review and displays unsigned arch
   assert.match(JSON.stringify(view.tree),/não assinado/);
  }finally{LanguageContext._currentValue=originalLocale;}
 });
+
+test('refused archived PDF never shows a draft file or conceals the permission error',async()=>{
+ global.fetch=async(url)=>{
+  const path=String(url);
+  if(path.endsWith('/workspace'))return ok(list);
+  if(path.endsWith('/workspace/'+key))return ok(detail('FINALIZED'));
+  if(path.endsWith('/revisions/'+rev+'/pdf'))
+   return {ok:false,status:403,json:async()=>({message:'Archive access denied'})};
+  return ok({});
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<7;i++){await pause();view.render();}
+ const btn=button(view.tree,'Download archived PDF');
+ assert.ok(btn);btn.props.onClick();
+ for(let i=0;i<7;i++){await pause();view.render();}
+ assert.match(JSON.stringify(view.tree),/Archive access denied/);
+ assert.equal(button(view.tree,'Download preview'),undefined);
+});
+
+test('new unsaved guest identity invalidates any earlier successful finalization review',async()=>{
+ global.fetch=async(url)=>{
+  const path=String(url);
+  if(path.endsWith('/workspace'))return ok(list);
+  if(path.endsWith('/workspace/'+key))return ok(detail('DRAFT'));
+  if(path.endsWith('/finalization-review'))return ok({ready:true,reviewToken:token,revisionId:rev,version:1});
+  return ok({});
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<7;i++){await pause();view.render();}
+ button(view.tree,'Validate for finalization').props.onClick();
+ for(let i=0;i<6;i++){await pause();view.render();}
+ assert.ok(button(view.tree,'Confirm unsigned finalization'));
+ const cpf=find(view.tree,x=>x.type==='input'&&x.props.name==='cpf')[0];
+ assert.ok(cpf);cpf.props.onChange({target:{value:'52998224725'}});
+ view.render();
+ assert.equal(button(view.tree,'Confirm unsigned finalization'),undefined);
+ assert.equal(button(view.tree,'Validate for finalization').props.disabled,true);
+});
