@@ -1,3 +1,15 @@
+-- Existing 0004 revision trigger returned OLD on allowed UPDATE, silently dropping
+-- DRAFT -> FINALIZED. Keep finalized versions immutable but persist allowed transitions.
+CREATE OR REPLACE FUNCTION prevent_contract_revision_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF OLD.status = 'FINALIZED' THEN
+  RAISE EXCEPTION 'Finalized contract revisions are immutable' USING ERRCODE='23514';
+ END IF;
+ IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+ RETURN NEW;
+END;
+$$;
+--> statement-breakpoint
 -- Task 4.5: preserve agreed guest identity and financial terms after finalization.
 -- Received-payment bookkeeping may continue; original installment terms may not change.
 CREATE FUNCTION protect_finalized_contract_terms() RETURNS trigger LANGUAGE plpgsql AS $$
