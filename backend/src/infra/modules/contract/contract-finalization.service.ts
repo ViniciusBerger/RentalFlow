@@ -120,7 +120,7 @@ export class ContractFinalizationService {
   const snapshot={schemaVersion:1,contractId:id,rentalId:rental.id,
    revisionId:revision.id,version:revision.versionNumber,templateId:template.id,
    templateVersion:template.versionNumber,landlord,
-   guest:{...guest,fullName:[rental.clientFirstName,rental.clientLastName].join(' ').trim()},
+   guest:{...guest,cpf:guest.cpf,fullName:[rental.clientFirstName,rental.clientLastName].join(' ').trim()},
    booking:{propertyId:property.id,startDate:rental.startDate,endDate:rental.endDate,
     guests:rental.guests,totalCents:strictCents(rental.revenue)},
    property:{id:property.id,name:property.name,address:property.address},
