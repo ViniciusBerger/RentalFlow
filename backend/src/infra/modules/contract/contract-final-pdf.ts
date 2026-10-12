@@ -1,9 +1,8 @@
 import {BadRequestException} from '@nestjs/common';
 import PDFDocument from 'pdfkit';
 import {readFileSync} from 'node:fs';
-import {createRequire} from 'node:module';
 
-const fontPath=createRequire(import.meta.url).resolve('@fontsource/noto-sans/files/noto-sans-latin-400-normal.woff');
+const fontPath=require.resolve('@fontsource/noto-sans/files/noto-sans-latin-400-normal.woff');
 export type FinalPdfInput={contractId:string;version:number;finalizedAt:Date;clauses:{id:string;title:string;body:string}[]};
 
 /** Generates a private, un-signed finalized archive using an embedded Unicode font. */
