@@ -252,13 +252,13 @@ export function ContractsWorkspacePage(){
        <div className="rf-contract-preview">{detail.preview.clauses.map(c=><article key={c.id}>
         <h4>{c.title}</h4><p>{c.body}</p>
        </article>)}</div>}
-      <div className="rf-contract-actions">
+      {detail.status==='DRAFT'&&<div className="rf-contract-actions">
        <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy} onClick={()=>void pdf(false)}>
         <Eye size={16}/>{pt?'Ver PDF rascunho':'Preview draft PDF'}</button>
        <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy} onClick={()=>void pdf(true)}>
         <Download size={16}/>{pt?'Baixar prévia':'Download preview'}</button>
-      </div>
-      <p className="rf-contract-help">{pt?'Prévia não assinada e sem validade de contrato final.':'Unsigned preview; not a finalized contract.'}</p>
+      </div>}
+      {detail.status==='DRAFT'&&<p className="rf-contract-help">{pt?'Prévia não assinada e sem validade de contrato final.':'Unsigned preview; not a finalized contract.'}</p>}
      </div>
      {contractFinalizationEnabled&&detail.status==='DRAFT'&&<div className="rf-contract-actions">
       <p className="rf-contract-help">{pt?'A finalização arquiva uma versão imutável, sem recolher assinaturas. Salve e revise todos os campos antes de continuar.':
