@@ -95,3 +95,45 @@ test('workspace prepares, confirms and archives a saved draft without browser au
  assert.ok(button(view.tree,'Download archived PDF'));
  assert.equal(button(view.tree,'Save draft'),undefined);
 });
+
+test('finalization fails closed on denied review and stale confirmation',async()=>{
+ const situations=[['review',()=>prepareContractFinalization(key),'Incomplete property'],
+  ['finalize',()=>finalizeContract(key,token),'Contract changed'],
+  ['pdf',()=>downloadFinalContractPdf(key,rev),'Contract not found']];
+ for(const [phase,action,message] of situations){
+  clearCsrfToken();
+  global.fetch=async(url)=>{
+   if(String(url).endsWith('/auth/csrf'))return ok({csrfToken:'secure-csrf'});
+   return {ok:false,status:409,json:async()=>({message})};
+  };
+  await assert.rejects(action(),new RegExp(message));
+ }
+});
+
+test('invalid server responses are rejected without inventing finalization or a valid PDF',async()=>{
+ global.fetch=async()=>({ok:false,status:503,json:async()=>null});
+ await assert.rejects(prepareContractFinalization(key),/HTTP 503/);
+ global.fetch=async()=>({ok:true,blob:async()=>new Blob(['%PDF-1'],{type:'application/pdf'})});
+ await assert.rejects(downloadFinalContractPdf(key,rev),/Invalid finalized PDF/);
+});
+
+test('declined browser confirmation cannot issue a finalization write',async()=>{
+ const calls=[];
+ global.window={confirm:()=>false,setTimeout:()=>1};
+ global.fetch=async(url)=>{
+  const path=String(url);calls.push(path);
+  if(path.endsWith('/workspace'))return ok(list);
+  if(path.endsWith('/finalization-review'))return ok({ready:true,reviewToken:token,revisionId:rev,version:1});
+  if(path.endsWith('/workspace/'+key))return ok(detail('DRAFT'));
+  return ok({});
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<7;i++){await pause();view.render();}
+ const review=button(view.tree,'Validate for finalization');
+ assert.ok(review);review.props.onClick();
+ for(let i=0;i<6;i++){await pause();view.render();}
+ const approve=button(view.tree,'Confirm unsigned finalization');
+ assert.ok(approve);approve.props.onClick();
+ for(let i=0;i<4;i++){await pause();view.render();}
+ assert.equal(calls.some(x=>x.endsWith('/finalize')),false);
+});
