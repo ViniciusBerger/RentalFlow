@@ -153,7 +153,12 @@ export class ContractFinalizationService {
    const finalizedAt=new Date();
    const archive={...p.snapshot,finalizedAt:finalizedAt.toISOString(),signatureStatus:'UNSIGNED'};
    const bytes=await renderFinalContractPdf({contractId:id,version:p.revision.versionNumber,
-    finalizedAt,clauses:p.preview.clauses});
+    finalizedAt,clauses:p.preview.clauses,summary:{
+     landlord:p.snapshot.landlord.fullName!,landlordCpf:p.snapshot.landlord.cpf!,
+     guest:p.snapshot.guest.fullName,guestCpf:p.snapshot.guest.cpf,
+     property:p.snapshot.property.address!,checkIn:p.snapshot.booking.startDate,
+     checkOut:p.snapshot.booking.endDate,guests:p.snapshot.booking.guests,
+     totalCents:p.snapshot.booking.totalCents}});
    const crypto=new ContractDataCrypto();
    const snap=crypto.seal(Buffer.from(JSON.stringify(archive),'utf8'),uid,
     'contract-snapshot',p.revision.id);
