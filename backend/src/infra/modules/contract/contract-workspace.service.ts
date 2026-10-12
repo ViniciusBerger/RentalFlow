@@ -164,7 +164,7 @@ export class ContractWorkspaceService {
   const frozenClauses=current.status==='FINALIZED'
    ?plainMeta!.clauses as typeof preview.clauses:null;
   const displayedPreview=frozenClauses
-   ?{...preview,watermark:'FINALIZADO - NAO ASSINADO',ready:true,missing:[],clauses:frozenClauses}
+   ?{...preview,watermark:'FINALIZADO - NAO ASSINADO' as const,ready:true,missing:[],clauses:frozenClauses}
    :preview;
   const archivedPricing=current.status==='FINALIZED'&&plainMeta?.pricing&&
    typeof plainMeta.pricing==='object'&&!Array.isArray(plainMeta.pricing)
