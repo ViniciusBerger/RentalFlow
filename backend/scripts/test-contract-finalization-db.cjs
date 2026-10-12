@@ -33,8 +33,13 @@ const {Pool}=require('pg');
   await client.query(`INSERT INTO contract_revisions(contract_id,user_id,version_number,status,template_version_id,
    snapshot_ciphertext,snapshot_nonce,snapshot_auth_tag,snapshot_key_version,snapshot_sha256,
    pdf_ciphertext,pdf_nonce,pdf_auth_tag,pdf_key_version,pdf_sha256,finalized_at)
-   VALUES($1,'final-test',1,'FINALIZED',$2,decode('aa','hex'),decode('010203','hex'),decode('0102','hex'),'v1',repeat('a',64),
+   VALUES($1,'final-test',1,'DRAFT',$2,decode('aa','hex'),decode('010203','hex'),decode('0102','hex'),'v1',repeat('a',64),
    decode('bb','hex'),decode('010203','hex'),decode('0102','hex'),'v1',repeat('b',64),now())`,[contract,version]);
+  const finalized=(await client.query("UPDATE contract_revisions SET status='FINALIZED' WHERE contract_id=$1 RETURNING status",[contract])).rows;
+  assert.equal(finalized[0]?.status,'FINALIZED','The update must persist instead of returning OLD');
+  const stored=(await client.query('SELECT status FROM contract_revisions WHERE contract_id=$1',[contract])).rows[0];
+  assert.equal(stored.status,'FINALIZED');
+  await forbidden("UPDATE contract_revisions SET status='DRAFT' WHERE contract_id=$1",[contract]);
   await forbidden("UPDATE rental_guest_details SET updated_at=now()+interval '1 minute' WHERE rental_id=$1",[rental]);
   await forbidden("DELETE FROM rental_guest_details WHERE rental_id=$1",[rental]);
   await forbidden("UPDATE rental_installments SET agreed_cents=54000 WHERE id=$1",[row]);
