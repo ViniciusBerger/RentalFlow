@@ -298,3 +298,28 @@ test('published-only account loads the approved version without an open draft, t
  step(view,5);
  assert.ok(all(view.tree,n=>n.type==='p').some(x=>String(x.props.children).includes('Latest published version')));
 });
+
+
+test('landlord questionnaire switches individual CPF to company CNPJ without leaving mixed identity fields',async()=>{
+ api();
+ const view=await loaded();
+ let dropdown=all(view.tree,n=>n.type==='select'&&n.props.value==='CPF')[0];
+ assert.ok(dropdown,'Expected individual/company selector');
+ const cpfFields=JSON.stringify(view.tree);
+ assert.match(cpfFields,/Full name/);
+ assert.match(cpfFields,/RG/);
+ dropdown.props.onChange({target:{value:'CNPJ'}});
+ view.render();
+ const companyFields=JSON.stringify(view.tree);
+ assert.match(companyFields,/Registered company legal name/);
+ assert.match(companyFields,/Representative CPF/);
+ assert.match(companyFields,/Representative role/);
+ assert.match(companyFields,/CNPJ/);
+ dropdown=all(view.tree,n=>n.type==='select'&&n.props.value==='CNPJ')[0];
+ assert.ok(dropdown);
+ dropdown.props.onChange({target:{value:'CPF'}});
+ view.render();
+ const fieldsBack=JSON.stringify(view.tree);
+ assert.match(fieldsBack,/Full name/);
+ assert.doesNotMatch(fieldsBack,/Authorized representative name/);
+});
