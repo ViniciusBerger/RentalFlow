@@ -8,6 +8,8 @@ const {mount}=require('./test-dispatcher.cjs');
 const {ContractsWorkspacePage}=require('../src/features/contracts/workspace.tsx');
 const {rentalDataStore}=require('../src/hooks/load-data/rental-data-store.ts');
 const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
+const {LanguageContext}=require('../src/i18n/context.ts');
+const initialLanguage=LanguageContext._currentValue;
 const originalFetch=global.fetch,originalWindow=global.window,originalRefresh=rentalDataStore.refreshAfterMutation;
 const next=()=>new Promise(resolve=>setImmediate(resolve));
 const id='33333333-3333-4333-8333-333333333333';
@@ -29,7 +31,7 @@ function text(node){return typeof node==='string'?node:Array.isArray(node)?node.
  node&&typeof node==='object'?text(node.props?.children):''}
 afterEach(()=>{
  global.fetch=originalFetch;global.window=originalWindow;
- rentalDataStore.refreshAfterMutation=originalRefresh;clearCsrfToken();
+ rentalDataStore.refreshAfterMutation=originalRefresh;LanguageContext._currentValue=initialLanguage;clearCsrfToken();
 });
 test('cancellation requires review and explicit consent, never calls money movement',async()=>{
  let cancelled=false,refreshed=0,confirmCount=0;
@@ -80,4 +82,83 @@ test('review request errors do not cancel bookings or claim success',async()=>{
  for(let i=0;i<5;i++){await next();ui.render();}
  assert.match(JSON.stringify(ui.tree),/Changed payment/);
  assert.equal(find(ui.tree,n=>n.type==='button'&&text(n)==='Confirm cancellation'),null);
+});
+
+const review={ready:true,reviewToken:'b'.repeat(64),contractId:id,
+ revisionId:item.revisionId,revisionStatus:'FINALIZED',startDate:'2027-04-01',endDate:'2027-04-03',
+ revenueExcludedCents:40000,profitExcludedCents:30000,recordedReceivedCents:0,refundIssued:false};
+async function showReview(fetcher){
+ global.fetch=fetcher;
+ const ui=mount(ContractsWorkspacePage);
+ for(let i=0;i<5;i++){await next();ui.render();}
+ const b=find(ui.tree,n=>n.type==='button'&&text(n)==='Review cancellation');
+ assert.ok(b);
+ b.props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ return ui;
+}
+test('user declining final browser confirmation makes no cancellation mutation',async()=>{
+ let posts=0;
+ global.window={confirm:()=>false};
+ const ui=await showReview(async(url)=>{
+  if(String(url).endsWith('/cancellation-review'))return {ok:true,json:async()=>review};
+  if(String(url).endsWith('/workspace'))return {ok:true,json:async()=>({items:[item]})};
+  if(String(url).endsWith('/cancel')){posts++;return {ok:true,json:async()=>({})}};
+  return {ok:true,json:async()=>detail};
+ });
+ const confirm=find(ui.tree,n=>n.type==='button'&&text(n)==='Confirm cancellation');
+ assert.ok(confirm);confirm.props.onClick();
+ for(let i=0;i<3;i++){await next();ui.render();}
+ assert.equal(posts,0);
+ assert.ok(find(ui.tree,n=>n.type==='button'&&text(n)==='Confirm cancellation'));
+});
+test('server cancellation conflict never shows success or refreshes financial store',async()=>{
+ let refreshed=0,posts=0;
+ rentalDataStore.refreshAfterMutation=async()=>{refreshed++};
+ global.window={confirm:()=>true};
+ const ui=await showReview(async(url)=>{
+  if(String(url).endsWith('/auth/csrf'))return {ok:true,json:async()=>({csrfToken:'csrf'})};
+  if(String(url).endsWith('/cancellation-review'))return {ok:true,json:async()=>review};
+  if(String(url).endsWith('/cancel')){posts++;return {ok:false,status:409,json:async()=>({message:'Stale review'})}};
+  if(String(url).endsWith('/workspace'))return {ok:true,json:async()=>({items:[item]})};
+  return {ok:true,json:async()=>detail};
+ });
+ const confirm=find(ui.tree,n=>n.type==='button'&&text(n)==='Confirm cancellation');
+ confirm.props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ assert.equal(posts,1);assert.equal(refreshed,0);
+ assert.match(JSON.stringify(ui.tree),/Stale review/);
+ assert.equal(find(ui.tree,n=>n.type==='button'&&text(n)==='Confirm cancellation'),null);
+});
+test('cancelled contracts remain available to inspect and filter, but cannot be cancelled again',async()=>{
+ global.fetch=async(url)=>{
+  if(String(url).endsWith('/workspace'))return {ok:true,json:async()=>({items:[{...item,cancelled:true}]})};
+  return {ok:true,json:async()=>({...detail,cancelled:true})};
+ };
+ const ui=mount(ContractsWorkspacePage);
+ for(let i=0;i<5;i++){await next();ui.render();}
+ assert.match(JSON.stringify(ui.tree),/Booking cancelled/);
+ assert.equal(find(ui.tree,n=>n.type==='button'&&text(n)==='Review cancellation'),null);
+ const select=find(ui.tree,n=>n.type==='select'&&n.props.value==='ALL');
+ assert.ok(select);
+ select.props.onChange({target:{value:'CANCELLED'}});ui.render();
+ assert.match(JSON.stringify(ui.tree),/CANCELLED/);
+});
+test('Portuguese cancellation review states the financial effect without claiming a refund',async()=>{
+ LanguageContext._currentValue={locale:'pt-BR',setLocale:()=>{},t:()=>''};
+ global.window={confirm:()=>false};
+ global.fetch=async(url)=>{
+  if(String(url).endsWith('/cancellation-review'))return {ok:true,json:async()=>({...review,recordedReceivedCents:5000})};
+  if(String(url).endsWith('/workspace'))return {ok:true,json:async()=>({items:[item]})};
+  return {ok:true,json:async()=>detail};
+ };
+ const ui=mount(ContractsWorkspacePage);
+ for(let i=0;i<5;i++){await next();ui.render();}
+ const action=find(ui.tree,n=>n.type==='button'&&text(n)==='Revisar cancelamento');
+ assert.ok(action);action.props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ const value=JSON.stringify(ui.tree);
+ assert.match(value,/Nenhum reembolso/);
+ assert.match(value,/Pagamentos registrados/);
+ assert.ok(find(ui.tree,n=>n.type==='button'&&text(n)==='Confirmar cancelamento'));
 });
