@@ -20,7 +20,7 @@ export type ContractPreview={
 export type ContractDetail={
  id:string;rentalId:string;property:{id:string;name:string;address:string|null};
  booking:{clientFirstName:string;clientLastName:string;startDate:string;endDate:string;guests:number;totalCents:number};
- status:string;revisionId:string;revisionVersion:number;
+ status:string;cancelled:boolean;revisionId:string;revisionVersion:number;
  history:{id:string;status:string;version:number;finalizedAt:string|null;createdAt:string}[];
  guest:Record<string,string>;installments:DraftInstallment[];editToken:string;
  pricing:{baseRevenueCents:number|null;calculatedExtraCents:number|null;chargedExtraCents:number|null;guestFeeMode:string|null;guestFeeReason:string|null};
@@ -93,4 +93,24 @@ export async function downloadFinalContractPdf(id:string,revisionId:string):Prom
  const blob=await response.blob();
  if(blob.type!=='application/pdf'||blob.size<100)throw new Error('Invalid finalized PDF');
  return blob;
+}
+
+export const contractCancellationsEnabled=contractsWorkspaceEnabled&&import.meta.env.VITE_CONTRACT_CANCELLATIONS_ENABLED==='true';
+export type ContractCancellationReview={
+ ready:true;reviewToken:string;contractId:string;revisionId:string;revisionStatus:string;
+ startDate:string;endDate:string;revenueExcludedCents:number;profitExcludedCents:number;
+ recordedReceivedCents:number;refundIssued:false
+};
+export async function prepareContractCancellation(id:string):Promise<ContractCancellationReview>{
+ const response=await fetch(root+'/'+encodeURIComponent(id)+'/cancellation-review',{
+  credentials:'include',cache:'no-store'
+ });
+ return checked<ContractCancellationReview>(response);
+}
+export async function confirmContractCancellation(id:string,reviewToken:string):Promise<{cancelled:true;refundIssued:false}>{
+ const response=await csrfFetch(root+'/'+encodeURIComponent(id)+'/cancel',{
+  method:'POST',credentials:'include',cache:'no-store',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify({reviewToken,confirm:true})
+ });
+ return checked(response);
 }
