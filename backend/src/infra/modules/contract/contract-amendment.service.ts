@@ -87,7 +87,7 @@ export class ContractAmendmentService{
    catch{throw new BadRequestException('Installments must equal amended booking total');}
    if(proposed.filter(x=>x.isDeposit).length>1)throw new BadRequestException('Only one deposit is permitted');
    const [setting]=await tx.select().from(ContractSettingsSchema).where(eq(ContractSettingsSchema.userId,uid)).limit(1);
-   const accepted=setting?.paymentDefaults?.acceptedMethods??[];
+   const accepted=(setting?.paymentDefaults as {acceptedMethods?:string[]}|undefined)?.acceptedMethods??[];
    for(const x of proposed){
     if(x.dueDate&&x.dueEvent)throw new BadRequestException('Conflicting due rules');
     if(x.dueDate&&(!/^\d{4}-\d{2}-\d{2}$/.test(x.dueDate)||Number.isNaN(Date.parse(x.dueDate))||
