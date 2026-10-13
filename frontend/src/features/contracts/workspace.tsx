@@ -132,15 +132,20 @@ export function ContractsWorkspacePage(){
    'Confirm cancellation? The booking will be removed from active revenue, profit and occupancy. No refund will be issued automatically. History stays archived.';
   if(!window.confirm(text))return;
   setCancelBusy(true);setError('');
+  let committed=false;
   try{
    await confirmContractCancellation(detail.id,cancelReview.reviewToken);
+   committed=true;
    setCancelReview(null);
    await rentalDataStore.refreshAfterMutation();
    await refresh();
    setDetail(await getContract(detail.id));
    setNotice(pt?'Reserva cancelada. Indicadores atualizados; nenhum reembolso foi efetuado.':
     'Booking cancelled. Reporting refreshed; no refund was issued.');
-  }catch(e){setCancelReview(null);setError(displayError(e,locale));}
+  }catch(e){setCancelReview(null);
+   if(committed)setNotice(pt?'Reserva cancelada no servidor, mas os indicadores não puderam ser atualizados. Atualize a página.':
+    'Booking cancelled on the server, but reporting could not refresh. Reload the page.');
+   else setError(displayError(e,locale));}
   finally{setCancelBusy(false);}
  };
  const finalPdf=async()=>{
