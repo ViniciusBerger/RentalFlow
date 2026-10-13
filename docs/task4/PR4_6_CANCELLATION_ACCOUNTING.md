@@ -2,6 +2,8 @@
 
 ## Explicitly confirmed behavior
 - Cancellation removes the booking from active dashboard revenue/profit, monthly and yearly financial analytics, property financial analytics and active booking counts in the **original check-in month**.
+- Cancellation is blocked at or after the saved property's check-in time, evaluated in the existing Brazil/São Paulo civil timezone. Missing check-in settings fail closed, and the rule is rechecked inside confirmation transaction.
+- Finalized booking amendments take effect only after the landlord explicitly confirms (no guest signature gate on the booking state). This is not equivalent to a signed amended legal document.
 - No actual money is handled by RentalFlow: recorded receipts remain as historical facts, and cancellation does not issue refunds or transfer funds.
 - The original contract, finalized versions, payment schedule, receipts and identity records are never rewritten or hard-deleted.
 - Prior user decision: any material amendment to a finalized contract requires warning, explicit creation of an amendment and preservation of the original. This PR does not invent an amendment activation, guest approval, fee penalty or refund rule.
@@ -23,4 +25,4 @@
 4. Independently confirm accounting of contractual cancellation penalties, paid deposits, refunds and who must approve a post-finalization amendment before implementing those business transitions. No automatic money movement or unapproved price adjustment.
 
 ## Unconfirmed amendment business rules
-Which fields may be edited together, how the modified booking becomes effective, whether a finalized amendment needs guest acknowledgement/signature, and how contractual penalties/deposit handling should be recorded. Existing mutation guards stay ON until explicitly decided.
+The exact amendment fields and how contractual penalties/deposits and recorded payment schedules should be handled; do not silently manufacture payment settlement or signature. Existing mutation guards stay ON until explicitly decided.
