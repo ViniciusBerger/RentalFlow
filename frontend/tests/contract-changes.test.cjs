@@ -117,3 +117,26 @@ test('preview fetch rejects service errors without fabricating a refund state',a
  global.fetch=async()=>({ok:false,status:503,json:async()=>({message:'Service unavailable'})});
  await assert.rejects(()=>getCancellationPreview(id),/Service unavailable/);
 });
+
+test('previews show progress while the server is calculating and recover after completion',async()=>{
+ let finish;
+ const deferred=new Promise(resolve=>{finish=resolve;});
+ global.fetch=async url=>{
+  if(String(url).endsWith('/cancellation-preview'))return deferred;
+  return ok(String(url).endsWith('/workspace')?{items:[item]}:detail);
+ };
+ const ui=await loaded();
+ const button=find(ui.tree,x=>x.type==='button'&&x.props.children?.toString?.().includes('Calculate cancellation'));
+ assert.ok(button);
+ const request=button.props.onClick();
+ ui.render();
+ assert.match(JSON.stringify(ui.tree),/Calculating/);
+ finish(ok({...quote,refundDueCents:0,paidCents:0}));
+ await request;await sleep();ui.render();
+ assert.match(JSON.stringify(ui.tree),/Automatic transfer unavailable/);
+});
+test('no active contract selection hides cancellation action instead of constructing fake quote',async()=>{
+ global.fetch=async url=>ok(String(url).endsWith('/workspace')?{items:[]}:detail);
+ const ui=await loaded();
+ assert.equal(find(ui.tree,x=>x.type==='button'&&x.props.children?.toString?.().includes('Calculate cancellation')),null);
+});
