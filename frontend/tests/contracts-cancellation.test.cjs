@@ -189,3 +189,40 @@ test('cancellation review fallback HTTP error is safe even with no message field
  global.fetch=async()=>({ok:false,status:503,json:async()=>({something:'else'})});
  await assert.rejects(prepareContractCancellation(id),/HTTP 503/);
 });
+
+test('unsaved guest changes on a contract draft disable cancellation review',async()=>{
+ let reviews=0;
+ const editable={...detail,status:'DRAFT',editable:true,installments:[],
+  preview:{ready:false,missing:['guest.cpf'],clauses:[{id:'1',title:'Text',body:'Pending'}]}};
+ const draftItem={...item,status:'DRAFT',cancelled:false};
+ global.fetch=async(url)=>{
+  if(String(url).endsWith('/workspace'))return {ok:true,json:async()=>({items:[draftItem]})};
+  if(String(url).endsWith('/cancellation-review')){reviews++;return {ok:true,json:async()=>review}};
+  return {ok:true,json:async()=>editable};
+ };
+ const ui=mount(ContractsWorkspacePage);
+ for(let i=0;i<6;i++){await next();ui.render();}
+ const guest=find(ui.tree,n=>n.type==='input'&&n.props.name==='cpf');
+ assert.ok(guest);guest.props.onChange({target:{value:'52998224725'}});ui.render();
+ const action=find(ui.tree,n=>n.type==='button'&&text(n)==='Review cancellation');
+ assert.ok(action);assert.equal(action.props.disabled,true);
+ assert.equal(reviews,0);
+});
+test('cancel review works on unfinished drafts without ever marking them finalized or signed',async()=>{
+ let reviewed=0;
+ global.fetch=async(url)=>{
+  if(String(url).endsWith('/workspace'))return {ok:true,json:async()=>({items:[{...item,status:'DRAFT'}]})};
+  if(String(url).endsWith('/cancellation-review')){
+   reviewed++;return {ok:true,json:async()=>({...review,revisionStatus:'DRAFT'})};
+  }
+  return {ok:true,json:async()=>({...detail,status:'DRAFT',editable:true})};
+ };
+ const ui=mount(ContractsWorkspacePage);
+ for(let i=0;i<6;i++){await next();ui.render();}
+ const button=find(ui.tree,n=>n.type==='button'&&text(n)==='Review cancellation');
+ assert.ok(button);button.props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ assert.equal(reviewed,1);
+ assert.ok(find(ui.tree,n=>n.type==='button'&&text(n)==='Confirm cancellation'));
+ assert.match(JSON.stringify(ui.tree),/No refund or penalty/);
+});
