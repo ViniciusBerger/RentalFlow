@@ -9,6 +9,8 @@ import {ContractCancellationSchema} from '../../persistence/schemas/contract-can
 import {ContractAuditEventSchema} from '../../persistence/schemas/contract-security-schema';
 import {RentalSchema} from '../../persistence/schemas/rental-schema';
 import {RentalInstallmentSchema} from '../../persistence/schemas/rental-installment-schema';
+import {PropertyContractSettingsSchema} from '../../persistence/schemas/property-contract-settings-schema';
+import {canCancelBeforeCheckIn} from '../../../core/domain/contract/cancellation-cutoff';
 
 type Db=NodePgDatabase;
 type Tx=Parameters<Parameters<Db['transaction']>[0]>[0];
@@ -38,6 +40,12 @@ export class ContractCancellationService{
    eq(RentalSchema.id,contract.rentalId),eq(RentalSchema.userId,uid))).limit(1);
   if(!rental)throw new NotFoundException('Contract not found');
   if(!rental.isActive)throw new ConflictException('Booking was already cancelled');
+  const [propertyRules]=await tx.select({checkInTime:PropertyContractSettingsSchema.checkInTime})
+   .from(PropertyContractSettingsSchema).where(and(
+    eq(PropertyContractSettingsSchema.propertyId,rental.propertyId),
+    eq(PropertyContractSettingsSchema.userId,uid))).limit(1);
+  if(!canCancelBeforeCheckIn(rental.startDate,propertyRules?.checkInTime))
+   throw new ConflictException('Cancellation is unavailable after check-in or when check-in time is missing');
   const [revision]=await tx.select({id:ContractRevisionSchema.id,status:ContractRevisionSchema.status,
    version:ContractRevisionSchema.versionNumber}).from(ContractRevisionSchema).where(and(
    eq(ContractRevisionSchema.contractId,id),eq(ContractRevisionSchema.userId,uid)))
