@@ -41,10 +41,10 @@ BEGIN
    RAISE EXCEPTION 'CONTRACT_REVISION_REQUIRED' USING ERRCODE='23514';
   END IF;
   IF (OLD.property_id,OLD.first_name,OLD.last_name,OLD.start_date,OLD.end_date,
-      OLD.number_of_guests,OLD.total_revenue,OLD.fee,OLD.is_active)
+      OLD.number_of_guests,OLD.total_revenue,OLD.fee,OLD.profit,OLD.is_active)
      IS DISTINCT FROM
      (NEW.property_id,NEW.first_name,NEW.last_name,NEW.start_date,NEW.end_date,
-      NEW.number_of_guests,NEW.total_revenue,NEW.fee,NEW.is_active) THEN
+      NEW.number_of_guests,NEW.total_revenue,NEW.fee,NEW.profit,NEW.is_active) THEN
    -- Do not permit anyone to change a contract booking's factual/financial terms.
    -- The only exception is the explicit, single-use cancellation authorization.
    IF NOT (OLD.is_active IS TRUE AND NEW.is_active IS FALSE
