@@ -38,4 +38,40 @@ describe('contract readiness is evaluated on authoritative saved state',()=>{
   expect(issues.some(i=>i.code==='NO_ACTIVE_PROPERTIES')).toBe(true);
   expect(issues.some(i=>i.code==='TEMPLATE_INVALID')).toBe(true);
  });
+
+ it('flags malformed optional contact details and invalid payment options',()=>{
+  const issues=readinessIssues({...configured,
+   landlord:{...configured.landlord,email:'bad@@example',phone:'!',pixKey:'',bankName:''},
+   payment:{...defaultPayment,acceptedMethods:['PIX','BANK_TRANSFER','PIX']}
+  });
+  expect(issues.find(i=>i.code==='LANDLORD_DETAILS')?.fields).toEqual(expect.arrayContaining(['email','phone']));
+  expect(issues.find(i=>i.code==='PAYMENT_METHODS')).toBeDefined();
+  expect(issues.find(i=>i.code==='PAYMENT_DETAILS')?.fields).toEqual(expect.arrayContaining(['pixKey','bankName']));
+ });
+ it('reports missing per-property occupancy fields separately from property address',()=>{
+  const issues=readinessIssues({...configured,properties:[
+   {id:'p2',name:'Second',address:'Somewhere',settings:{
+    includedOccupancy:null,maximumOccupancy:1,extraGuestRateCents:null,checkInTime:null,checkOutTime:''}},
+   {id:'p3',name:'Third',address:'Rua 7',settings:{
+    includedOccupancy:5,maximumOccupancy:2,extraGuestRateCents:-1,checkInTime:'invalid',checkOutTime:'11:00'}}
+  ]});
+  const missing=issues.filter(i=>i.code==='PROPERTY_SETTINGS');
+  expect(missing).toHaveLength(2);
+  expect(missing[0].fields).toEqual(expect.arrayContaining(['includedOccupancy','extraGuestRateCents','checkInTime','checkOutTime']));
+  expect(missing[1].fields).toEqual(expect.arrayContaining(['maximumOccupancy','extraGuestRateCents','checkInTime']));
+ });
+ it('flags missing account and landlord field formats without exposing supplied identity',()=>{
+  const issues=readinessIssues({...configured,configured:false,landlord:{
+   ...configured.landlord,cpf:'invalid',addressState:'xxx',addressPostalCode:'bad',rg:'a',fullName:'Ab'
+  }});
+  expect(issues[0].code).toBe('ACCOUNT_SETTINGS');
+  expect(issues.find(i=>i.code==='LANDLORD_DETAILS')?.fields).toEqual(expect.arrayContaining([
+   'fullName','cpf','rg','addressState','addressPostalCode'
+  ]));
+ });
+ it('accepts custom-only accepted payments without requesting PIX/bank details',()=>{
+  const issues=readinessIssues({...configured,payment:{...defaultPayment,acceptedMethods:['CUSTOM']},
+   landlord:{...configured.landlord,pixKey:'',bankName:'',bankAgency:'',bankAccount:''}});
+  expect(issues).toEqual([]);
+ });
 });
