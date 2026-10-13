@@ -17,9 +17,10 @@ export const createProperty = (data:Pick<Property,'name'|'address'|'color'|'icon
 export const editProperty = (id:string,data:Pick<Property,'name'|'address'|'color'|'icon'>)=>request<Property>(`/${id}`,{method:'PATCH',body:JSON.stringify(data)});
 export const archiveProperty = (id:string)=>request<{archived:boolean}>(`/${id}`,{method:'DELETE'});
 export const bookingMatches = (booking:{propertyId?:string},filter:string)=>filter==='all'||booking.propertyId===filter;
-export function calculatePropertyBalances(bookings:readonly {propertyId?:string;startDate:string;revenue:number;profit:number}[],filter:string,year:number,month:number) {
+export function calculatePropertyBalances(bookings:readonly {propertyId?:string;startDate:string;revenue:number;profit:number;isActive?:boolean}[],filter:string,year:number,month:number) {
   const rows=Array.from({length:12},(_,i)=>({label:`${year}-${String(i+1).padStart(2,'0')}`,totalRevenue:0,totalProfit:0,bookingCount:0}));
   for(const booking of bookings) {
+    if(booking.isActive===false)continue;
     if(!bookingMatches(booking,filter)) continue;
     const key=booking.startDate.slice(0,7),row=rows.find(r=>r.label===key);
     if(row){row.bookingCount++;row.totalRevenue+=Number(booking.revenue);row.totalProfit+=Number(booking.profit);}
