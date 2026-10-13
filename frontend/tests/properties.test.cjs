@@ -274,3 +274,18 @@ test('property create provides fallback error even when network returns no messa
  await find(view.tree,n=>n.type==='form').props.onSubmit({preventDefault(){}});view.render();
  assert.ok(find(view.tree,n=>n.type==='form'));
 });
+
+test('cancelled booking is excluded once from property financial reporting in original month',()=>{
+ const bookings=[
+  {propertyId:'p1',startDate:'2026-04-01',revenue:2000,profit:1500,isActive:false},
+  {propertyId:'p1',startDate:'2026-04-10',revenue:1000,profit:700,isActive:true},
+  {propertyId:'p1',startDate:'2026-05-01',revenue:600,profit:400,isActive:true}
+ ];
+ const values=calculatePropertyBalances(bookings,'p1',2026,4);
+ assert.equal(values.yearly.totalRevenue,1600);
+ assert.equal(values.yearly.totalProfit,1100);
+ assert.equal(values.monthly.totalRevenue,1000);
+ assert.equal(values.monthly.totalProfit,700);
+ assert.equal(values.monthly.bookingCount,1);
+ assert.equal(values.months[4].totalRevenue,600);
+});
