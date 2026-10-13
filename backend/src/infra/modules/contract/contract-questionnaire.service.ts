@@ -10,6 +10,7 @@ import {PropertySchema} from '../../persistence/schemas/property-schema';
 import {ContractAuditEventSchema} from '../../persistence/schemas/contract-security-schema';
 import {ContractDataCrypto} from '../../security/encrypted-data';
 import {safeClauseText} from '../../security/secure-clause-text';
+import {canonicalLandlordProfile} from '../../../core/domain/contract/landlord-identity';
 import {defaultPayment,defaultPolicy,emptyContractClauses,validateClauses,validateLandlordForPublish,
  rejectEmbeddedIdentifiers,type ContractClause,type ContractPolicy,type ContractPayment,type LandlordProfile} from '../../../core/domain/contract/contract-questionnaire';
 
@@ -36,7 +37,7 @@ export class ContractQuestionnaireService {
  }
  async saveSettings(uid:string,landlord:LandlordProfile,policy:ContractPolicy,payment:ContractPayment){
   if(payment.acceptedMethods.length!==new Set(payment.acceptedMethods).size)throw new BadRequestException('Duplicate payment methods');
-  const profile=JSON.stringify(landlord);
+  const profile=JSON.stringify(canonicalLandlordProfile(landlord));
   // Prevent storing arbitrary payloads or policy JSON blobs via a frontend workaround.
   if(profile.length>4000)throw new BadRequestException('Invalid landlord profile');
   const cipher=new ContractDataCrypto().seal(Buffer.from(profile,'utf8'),uid,'landlord-profile',uid);
