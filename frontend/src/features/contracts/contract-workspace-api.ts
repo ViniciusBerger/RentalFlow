@@ -20,7 +20,7 @@ export type ContractPreview={
 export type ContractDetail={
  id:string;rentalId:string;property:{id:string;name:string;address:string|null};
  booking:{clientFirstName:string;clientLastName:string;startDate:string;endDate:string;guests:number;totalCents:number};
- status:string;cancelled:boolean;revisionId:string;revisionVersion:number;
+ status:string;cancelled:boolean;cancellationEligible?:boolean;revisionId:string;revisionVersion:number;
  history:{id:string;status:string;version:number;finalizedAt:string|null;createdAt:string}[];
  guest:Record<string,string>;installments:DraftInstallment[];editToken:string;
  pricing:{baseRevenueCents:number|null;calculatedExtraCents:number|null;chargedExtraCents:number|null;guestFeeMode:string|null;guestFeeReason:string|null};
