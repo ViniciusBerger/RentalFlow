@@ -197,7 +197,8 @@ test('installment editor supports explicit due rules, deposit, add and removal w
  method.props.onChange({target:{value:'BANK_TRANSFER'}});ui.render();
  button(ui,'Add installment').props.onClick();ui.render();
  assert.equal(nodes(ui.tree,n=>n.type==='input'&&n.props.type==='number').length>=4,true);
- button(ui,'Remove installment').props.onClick();ui.render();
+ const removeButtons=nodes(ui.tree,n=>n.type==='button'&&text(n).includes('Remove installment'));
+ removeButtons[removeButtons.length-1].props.onClick();ui.render();
  button(ui,'Review amendment').props.onClick();
  for(let i=0;i<5;i++){await next();ui.render();}
  // No changed booking fields: server refuses the candidate, but browser request never asserts receipts.
