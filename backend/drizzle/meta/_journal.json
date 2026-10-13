@@ -57,6 +57,13 @@
       "when": 1791729000000,
       "tag": "0007_contract_draft_mutation_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791730000000,
+      "tag": "0008_finalized_contract_terms_guard",
+      "breakpoints": true
     }
   ]
 }

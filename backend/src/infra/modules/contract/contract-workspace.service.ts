@@ -158,6 +158,17 @@ export class ContractWorkspaceService {
     authTag:current.snapshotAuthTag,keyVersion:current.snapshotKeyVersion,
     sha256:current.snapshotSha256??undefined
    },uid,'contract-snapshot',current.id).toString('utf8')) as Record<string,unknown>:null;
+  if(current.status==='FINALIZED'&&
+   (!plainMeta||plainMeta.schemaVersion!==1||!Array.isArray(plainMeta.clauses)))
+   throw new ConflictException('Archived contract content is unavailable');
+  const frozenClauses=current.status==='FINALIZED'
+   ?plainMeta!.clauses as typeof preview.clauses:null;
+  const displayedPreview=frozenClauses
+   ?{...preview,watermark:'FINALIZADO - NAO ASSINADO' as const,ready:true,missing:[],clauses:frozenClauses}
+   :preview;
+  const archivedPricing=current.status==='FINALIZED'&&plainMeta?.pricing&&
+   typeof plainMeta.pricing==='object'&&!Array.isArray(plainMeta.pricing)
+   ?plainMeta.pricing as Record<string,unknown>:plainMeta;
   await this.db.insert(ContractAuditEventSchema).values({
    userId:uid,actorId:uid,action:'VIEW_CONTRACT_DRAFT',targetType:'CONTRACT',
    targetId:contractId,outcome:'SUCCESS'
@@ -172,13 +183,13 @@ export class ContractWorkspaceService {
     finalizedAt:x.finalizedAt,createdAt:x.createdAt})),
    guest,installments:paymentRows,
    editToken:editToken(current.id,identity,installments),
-   pricing:{baseRevenueCents:plainMeta?.baseRevenueCents??null,
-    calculatedExtraCents:plainMeta?.calculatedExtraCents??null,
-    chargedExtraCents:plainMeta?.chargedExtraCents??null,
-    guestFeeMode:plainMeta?.guestFeeMode??null,
-    guestFeeReason:plainMeta?.guestFeeReason??null},
+   pricing:{baseRevenueCents:archivedPricing?.baseRevenueCents??null,
+    calculatedExtraCents:archivedPricing?.calculatedExtraCents??null,
+    chargedExtraCents:archivedPricing?.chargedExtraCents??null,
+    guestFeeMode:archivedPricing?.guestFeeMode??null,
+    guestFeeReason:archivedPricing?.guestFeeReason??null},
    templateVersion:template?.versionNumber??null,
-   preview,editable:current.status==='DRAFT'
+   preview:displayedPreview,editable:current.status==='DRAFT'
   };
  }
  async auditPdfPreview(uid:string,contractId:string){

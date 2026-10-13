@@ -19,7 +19,7 @@
     "test:cov": "jest --runInBand --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:db": "node scripts/test-properties-db.cjs && node scripts/test-contract-foundations-db.cjs && node scripts/test-contract-security-db.cjs && node scripts/test-contract-questionnaire-db.cjs && node scripts/test-contract-booking-db.cjs",
+    "test:db": "node scripts/test-properties-db.cjs && node scripts/test-contract-foundations-db.cjs && node scripts/test-contract-security-db.cjs && node scripts/test-contract-questionnaire-db.cjs && node scripts/test-contract-booking-db.cjs && node scripts/test-contract-finalization-db.cjs",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
@@ -37,7 +37,9 @@
     "firebase-admin": "^13.7.0",
     "pg": "^8.18.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "pdfkit": "0.17.2",
+    "@fontsource/noto-sans": "5.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -62,7 +64,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "@types/pdfkit": "0.17.6"
   },
   "jest": {
     "moduleFileExtensions": [

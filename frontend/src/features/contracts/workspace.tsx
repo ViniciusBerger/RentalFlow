@@ -3,6 +3,7 @@ import {FileText,Download,Eye,LockKeyhole,Save,RefreshCw,Plus,Trash2} from 'luci
 import {useLanguage} from '../../i18n/context';
 import {localizeError} from '../../i18n/messages';
 import {contractsWorkspaceEnabled,listContracts,getContract,saveContractDraft,downloadDraftPdf,
+ contractFinalizationEnabled,prepareContractFinalization,finalizeContract,downloadFinalContractPdf,
  type ContractListItem,type ContractDetail,type DraftInstallment} from './contract-workspace-api';
 
 const money=(value:number,locale:string)=>new Intl.NumberFormat(locale,{style:'currency',currency:'BRL'}).format(value/100);
@@ -25,6 +26,8 @@ export function ContractsWorkspacePage(){
  const [guestDirty,setGuestDirty]=useState(false),[paymentsDirty,setPaymentsDirty]=useState(false);
  const [loading,setLoading]=useState(true),[detailBusy,setDetailBusy]=useState(false),[saving,setSaving]=useState(false);
  const [pdfBusy,setPdfBusy]=useState(false);
+ const [finalBusy,setFinalBusy]=useState(false);
+ const [reviewToken,setReviewToken]=useState<string|null>(null);
  const [error,setError]=useState(''),[notice,setNotice]=useState('');
  const [query,setQuery]=useState(''),[status,setStatus]=useState('ALL'),[property,setProperty]=useState('ALL');
  const refresh=async()=>{
@@ -46,7 +49,7 @@ export function ContractsWorkspacePage(){
   let alive=true;setDetailBusy(true);setError('');
   getContract(selected).then(data=>{if(!alive)return;
    setDetail(data);setGuest({...data.guest});setPayments(data.installments.map(x=>({...x})));
-   setGuestDirty(false);setPaymentsDirty(false);setNotice('');
+   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);setNotice('');
   }).catch(e=>{if(alive){setDetail(null);setError(displayError(e,locale));}})
    .finally(()=>{if(alive)setDetailBusy(false);});
   return()=>{alive=false;};
@@ -61,7 +64,7 @@ export function ContractsWorkspacePage(){
  const paid=payments.some(x=>(x.receivedCents??0)>0||Boolean(x.paidAt));
  const modifyPayment=(index:number,delta:Partial<DraftInstallment>)=>{
   setPayments(rows=>rows.map((r,i)=>i===index?{...r,...delta}:r));
-  setPaymentsDirty(true);setNotice('');
+  setPaymentsDirty(true);setReviewToken(null);setNotice('');
  };
  const save=async()=>{
   if(!detail||!editable||(!guestDirty&&!paymentsDirty))return;
@@ -80,10 +83,48 @@ export function ContractsWorkspacePage(){
    };
    const next=await saveContractDraft(detail.id,dto);
    setDetail(next);setGuest({...next.guest});setPayments(next.installments.map(x=>({...x})));
-   setGuestDirty(false);setPaymentsDirty(false);
+   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);
    setNotice(pt?'Rascunho salvo e prévia atualizada.':'Draft saved and preview refreshed.');
   }catch(e){setError(displayError(e,locale));}
   finally{setSaving(false);}
+ };
+ const requestFinalReview=async()=>{
+  if(!detail||guestDirty||paymentsDirty)return;
+  setFinalBusy(true);setError('');setNotice('');setReviewToken(null);
+  try {
+   const result=await prepareContractFinalization(detail.id);
+   setReviewToken(result.reviewToken);
+   setNotice(pt?'Validações concluídas. Revise o documento e confirme a finalização não assinada.':
+    'Checks passed. Review the document and confirm unsigned finalization.');
+  }catch(e){setError(displayError(e,locale));}
+  finally{setFinalBusy(false);}
+ };
+ const completeFinalization=async()=>{
+  if(!detail||!reviewToken||guestDirty||paymentsDirty)return;
+  if(!window.confirm(pt?'Finalizar e arquivar permanentemente esta versão SEM assinatura?':
+   'Permanently finalize and archive this version WITHOUT a signature?'))return;
+  setFinalBusy(true);setError('');
+  try {
+   await finalizeContract(detail.id,reviewToken);
+   const next=await getContract(detail.id);
+   setDetail(next);setReviewToken(null);
+   await refresh();
+   setNotice(pt?'Contrato finalizado, arquivado e não assinado.':
+    'Contract finalized and archived. It remains unsigned.');
+  }catch(e){setReviewToken(null);setError(displayError(e,locale));}
+  finally{setFinalBusy(false);}
+ };
+ const finalPdf=async()=>{
+  if(!detail||detail.status!=='FINALIZED')return;
+  setPdfBusy(true);setError('');
+  try {
+   const blob=await downloadFinalContractPdf(detail.id,detail.revisionId);
+   const url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.href=url;a.download='contrato-finalizado-nao-assinado.pdf';
+   document.body.appendChild(a);a.click();a.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){setError(displayError(e,locale));}
+  finally{setPdfBusy(false);}
  };
  const pdf=async(download:boolean)=>{
   if(!detail)return;
@@ -162,7 +203,7 @@ export function ContractsWorkspacePage(){
       {guestFields.map(([key,label])=><label key={key} className="rf-contract-field">{label}
        <input name={key} autoComplete="off" maxLength={key==='address'?500:key==='email'?254:key==='phone'?32:key==='nationality'||key==='maritalStatus'?40:20}
         disabled={!editable||saving} value={guest[key]??''} onChange={e=>{
-         setGuest(g=>({...g,[key]:e.target.value}));setGuestDirty(true);setNotice('');
+         setGuest(g=>({...g,[key]:e.target.value}));setGuestDirty(true);setReviewToken(null);setNotice('');
         }}/></label>)}
      </div>
      <h4>{pt?'Parcelas previstas':'Planned installments'}</h4>
@@ -204,21 +245,35 @@ export function ContractsWorkspacePage(){
       <Save size={17}/>{saving?(pt?'Salvando...':'Saving...'):pt?'Salvar rascunho':'Save draft'}</button>}
      <div className="rf-contract-workspace-preview">
       <div className="rf-contract-workspace-title"><h4>{pt?'Prévia do contrato':'Contract preview'}</h4>
-       <span>{pt?'Não finalizado':'Not finalized'}</span></div>
+       <span>{detail.status==='FINALIZED'?(pt?'Finalizado, não assinado':'Finalized, unsigned'):(pt?'Não finalizado':'Not finalized')}</span></div>
       {detail.preview.missing.length>0&&<p className="rf-contract-help" role="status">
        {pt?'Campos pendentes: ':'Missing fields: '}{detail.preview.missing.join(', ')}</p>}
       {detail.preview.clauses.length===0?<p>{pt?'Publique primeiro um modelo aprovado.':'Publish an approved template first.'}</p>:
        <div className="rf-contract-preview">{detail.preview.clauses.map(c=><article key={c.id}>
         <h4>{c.title}</h4><p>{c.body}</p>
        </article>)}</div>}
-      <div className="rf-contract-actions">
+      {detail.status==='DRAFT'&&<div className="rf-contract-actions">
        <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy} onClick={()=>void pdf(false)}>
         <Eye size={16}/>{pt?'Ver PDF rascunho':'Preview draft PDF'}</button>
        <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy} onClick={()=>void pdf(true)}>
         <Download size={16}/>{pt?'Baixar prévia':'Download preview'}</button>
-      </div>
-      <p className="rf-contract-help">{pt?'Prévia não assinada e sem validade de contrato final.':'Unsigned preview; not a finalized contract.'}</p>
+      </div>}
+      {detail.status==='DRAFT'&&<p className="rf-contract-help">{pt?'Prévia não assinada e sem validade de contrato final.':'Unsigned preview; not a finalized contract.'}</p>}
      </div>
+     {contractFinalizationEnabled&&detail.status==='DRAFT'&&<div className="rf-contract-actions">
+      <p className="rf-contract-help">{pt?'A finalização arquiva uma versão imutável, sem recolher assinaturas. Salve e revise todos os campos antes de continuar.':
+       'Finalization creates an immutable archive without collecting signatures. Save and check all fields first.'}</p>
+      <button type="button" className="rf-button rf-contract-secondary"
+       disabled={finalBusy||guestDirty||paymentsDirty||!detail.preview.ready}
+       onClick={()=>void requestFinalReview()}>{pt?'Validar para finalização':'Validate for finalization'}</button>
+      {reviewToken&&<button type="button" className="rf-button" disabled={finalBusy}
+       onClick={()=>void completeFinalization()}>{pt?'Confirmar finalização sem assinatura':'Confirm unsigned finalization'}</button>}
+     </div>}
+     {contractFinalizationEnabled&&detail.status==='FINALIZED'&&<div className="rf-contract-actions">
+      <p className="rf-contract-help">{pt?'Arquivo finalizado, porém não assinado.':'Finalized archive, not signed.'}</p>
+      <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy}
+       onClick={()=>void finalPdf()}><Download size={16}/>{pt?'Baixar PDF arquivado':'Download archived PDF'}</button>
+     </div>}
      <h4>{pt?'Histórico de revisões':'Revision history'}</h4>
      <div className="rf-contract-workspace-history">
       {detail.history.map(x=><p key={x.id}>v{x.version} · {x.status} · {String(x.createdAt).slice(0,10)}</p>)}

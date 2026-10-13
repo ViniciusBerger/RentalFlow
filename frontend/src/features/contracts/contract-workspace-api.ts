@@ -68,3 +68,29 @@ export async function downloadDraftPdf(id:string):Promise<Blob>{
   throw new Error('Invalid PDF preview response');
  return blob;
 }
+
+export const contractFinalizationEnabled=contractsWorkspaceEnabled&&import.meta.env.VITE_CONTRACT_FINALIZATION_ENABLED==='true';
+export type FinalizationReview={ready:true;reviewToken:string;revisionId:string;version:number};
+export async function prepareContractFinalization(id:string):Promise<FinalizationReview>{
+ const response=await fetch(root+'/'+encodeURIComponent(id)+'/finalization-review',{
+  credentials:'include',cache:'no-store'
+ });
+ return checked<FinalizationReview>(response);
+}
+export async function finalizeContract(id:string,reviewToken:string):Promise<{revisionId:string;status:'FINALIZED';signatureStatus:'UNSIGNED'}>{
+ const response=await csrfFetch(root+'/'+encodeURIComponent(id)+'/finalize',{
+  method:'POST',credentials:'include',cache:'no-store',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({reviewToken,confirm:true})
+ });
+ return checked(response);
+}
+export async function downloadFinalContractPdf(id:string,revisionId:string):Promise<Blob>{
+ const api=import.meta.env.VITE_API_URL||'http://localhost:3000';
+ const response=await fetch(api+'/contracts/'+encodeURIComponent(id)+'/revisions/'+
+  encodeURIComponent(revisionId)+'/pdf',{credentials:'include',cache:'no-store'});
+ if(!response.ok){await checked(response);throw new Error('Unable to download finalized PDF');}
+ const blob=await response.blob();
+ if(blob.type!=='application/pdf'||blob.size<100)throw new Error('Invalid finalized PDF');
+ return blob;
+}

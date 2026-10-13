@@ -1,4 +1,4 @@
-import {Body,Controller,Get,NotFoundException,Param,ParseUUIDPipe,Patch,Query,Req,Res,UseGuards} from '@nestjs/common';
+import {Body,ConflictException,Controller,Get,NotFoundException,Param,ParseUUIDPipe,Patch,Query,Req,Res,UseGuards} from '@nestjs/common';
 import type {Response} from 'express';
 import {AuthGuard} from '../../adapters/guards/auth.guard';
 import {OnboardingGuard} from '../../adapters/guards/onboarding.guard';
@@ -36,6 +36,7 @@ export class ContractWorkspaceController {
   @Query('download') download:string|undefined,@Res() res:Response){
   this.enabled();
   const detail=await this.workspace.detail(req.user.uid,id);
+  if(detail.status!=='DRAFT')throw new ConflictException('Draft preview is unavailable for finalized contracts');
   const pdf=renderDraftPdf(detail.preview);
   await this.workspace.auditPdfPreview(req.user.uid,id);
   res.setHeader('Content-Type','application/pdf');

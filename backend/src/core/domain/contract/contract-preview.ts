@@ -15,7 +15,7 @@ export type PreviewInput={
  policy:{cancellationDays?:number;damagePenaltyPercent?:number;breachPenaltyPercent?:number;jurisdiction?:string};
  installments:PreviewInstallment[];
 };
-export type RenderedPreview={watermark:'RASCUNHO - NAO FINALIZADO';ready:boolean;missing:string[];
+export type RenderedPreview={watermark:'RASCUNHO - NAO FINALIZADO'|'FINALIZADO - NAO ASSINADO';ready:boolean;missing:string[];
  clauses:{id:string;title:string;body:string}[]};
 const brl=(cents:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100);
 export function renderContractPreview(input:PreviewInput):RenderedPreview{
