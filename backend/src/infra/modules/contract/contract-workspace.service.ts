@@ -44,7 +44,7 @@ export class ContractWorkspaceService {
   if(filter.status!==undefined&&typeof filter.status!=='string')throw new BadRequestException('Invalid status filter');
   if(filter.propertyId!==undefined&&typeof filter.propertyId!=='string')throw new BadRequestException('Invalid property filter');
   if(filter.query!==undefined&&typeof filter.query!=='string')throw new BadRequestException('Invalid search filter');
-  if(filter.status&&!['ALL','DRAFT','READY','FINALIZED'].includes(filter.status))
+  if(filter.status&&!['ALL','DRAFT','READY','FINALIZED','CANCELLED'].includes(filter.status))
    throw new BadRequestException('Invalid status filter');
   if(filter.propertyId&&!/^[0-9a-f-]{36}$/i.test(filter.propertyId))
    throw new BadRequestException('Invalid property filter');
@@ -53,7 +53,8 @@ export class ContractWorkspaceService {
    propertyId:RentalSchema.propertyId,propertyName:PropertySchema.name,
    firstName:RentalSchema.clientFirstName,lastName:RentalSchema.clientLastName,
    startDate:RentalSchema.startDate,endDate:RentalSchema.endDate,
-   guests:RentalSchema.guests,revenue:RentalSchema.revenue,createdAt:ContractSchema.createdAt
+   guests:RentalSchema.guests,revenue:RentalSchema.revenue,isActive:RentalSchema.isActive,
+   createdAt:ContractSchema.createdAt
   }).from(ContractSchema)
    .innerJoin(RentalSchema,and(eq(ContractSchema.rentalId,RentalSchema.id),
     eq(RentalSchema.userId,uid)))
@@ -66,12 +67,12 @@ export class ContractWorkspaceService {
    }).from(ContractRevisionSchema).where(and(eq(ContractRevisionSchema.contractId,row.id),
     eq(ContractRevisionSchema.userId,uid)))
     .orderBy(desc(ContractRevisionSchema.versionNumber)).limit(1);
-   return {...row,revisionId:revision?.id??null,
+   return {...row,cancelled:!row.isActive,revisionId:revision?.id??null,
     revisionVersion:revision?.version??null,status:revision?.status??'DRAFT'};
   }));
   const query=(filter.query??'').trim().toLocaleLowerCase('pt-BR');
   return {items:results.filter(row=>
-   (!filter.status||filter.status==='ALL'||row.status===filter.status)&&
+   (!filter.status||filter.status==='ALL'||(filter.status==='CANCELLED'?row.cancelled:!row.cancelled&&row.status===filter.status))&&
    (!filter.propertyId||row.propertyId===filter.propertyId)&&
    (!query||[row.firstName,row.lastName,row.propertyName,row.startDate,row.endDate]
     .join(' ').toLocaleLowerCase('pt-BR').includes(query))),
@@ -178,7 +179,7 @@ export class ContractWorkspaceService {
    booking:{clientFirstName:rental.clientFirstName,clientLastName:rental.clientLastName,
     startDate:rental.startDate,endDate:rental.endDate,guests:rental.guests,
     totalCents:Math.round(rental.revenue*100)},
-   status:current.status,revisionId:current.id,revisionVersion:current.versionNumber,
+   status:current.status,cancelled:!rental.isActive,revisionId:current.id,revisionVersion:current.versionNumber,
    history:revisions.map(x=>({id:x.id,status:x.status,version:x.versionNumber,
     finalizedAt:x.finalizedAt,createdAt:x.createdAt})),
    guest,installments:paymentRows,
@@ -189,7 +190,7 @@ export class ContractWorkspaceService {
     guestFeeMode:archivedPricing?.guestFeeMode??null,
     guestFeeReason:archivedPricing?.guestFeeReason??null},
    templateVersion:template?.versionNumber??null,
-   preview:displayedPreview,editable:current.status==='DRAFT'
+   preview:displayedPreview,editable:current.status==='DRAFT'&&rental.isActive
   };
  }
  async auditPdfPreview(uid:string,contractId:string){
@@ -211,6 +212,7 @@ export class ContractWorkspaceService {
    const [rental]=await tx.select().from(RentalSchema).where(and(
     eq(RentalSchema.id,contract.rentalId),eq(RentalSchema.userId,uid))).limit(1);
    if(!rental)throw new NotFoundException('Contract not found');
+   if(!rental.isActive)throw new ConflictException('Cancelled booking cannot be edited');
    const [revision]=await tx.select().from(ContractRevisionSchema).where(and(
     eq(ContractRevisionSchema.contractId,contractId),
     eq(ContractRevisionSchema.userId,uid)))
