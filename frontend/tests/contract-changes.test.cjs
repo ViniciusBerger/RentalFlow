@@ -85,3 +85,35 @@ test('preview endpoint failure displays error, not fictitious refund approval',a
  await button.props.onClick();await sleep();ui.render();
  assert.match(JSON.stringify(ui.tree),/Payment ledger is inconsistent/);
 });
+
+test('no payments produces a zero-refund cancellation preview',async()=>{
+ global.fetch=async url=>{
+  if(String(url).endsWith('/cancellation-preview'))return ok({...quote,paidCents:0,refundDueCents:0,retainedCents:0,refundState:'NO_PAYMENT'});
+  return ok(String(url).endsWith('/workspace')?{items:[item]}:detail);
+ };
+ const ui=await loaded();
+ const button=find(ui.tree,x=>x.type==='button'&&x.props.children?.toString?.().includes('Calculate cancellation'));
+ assert.ok(button);
+ await button.props.onClick();await sleep();ui.render();
+ assert.match(JSON.stringify(ui.tree),/0.00/);
+});
+test('Portuguese cancellation section is available and does not falsely promise successful refund',async()=>{
+ const {LanguageContext}=require('../src/i18n/context.ts');
+ const originalContext=LanguageContext._currentValue;
+ LanguageContext._currentValue={locale:'pt-BR',t:()=>'',setLocale:()=>{}};
+ try{
+  global.fetch=async url=>{
+   if(String(url).endsWith('/cancellation-preview'))return ok({...quote,paidCents:0,refundDueCents:0});
+   return ok(String(url).endsWith('/workspace')?{items:[item]}:detail);
+  };
+  const ui=await loaded();
+  const button=find(ui.tree,x=>x.type==='button'&&x.props.children?.toString?.().includes('Calcular cancelamento'));
+  assert.ok(button);
+  await button.props.onClick();await sleep();ui.render();
+  assert.match(JSON.stringify(ui.tree),/Transferência automática indisponível/);
+ }finally{LanguageContext._currentValue=originalContext;}
+});
+test('preview fetch rejects service errors without fabricating a refund state',async()=>{
+ global.fetch=async()=>({ok:false,status:503,json:async()=>({message:'Service unavailable'})});
+ await assert.rejects(()=>getCancellationPreview(id),/Service unavailable/);
+});
