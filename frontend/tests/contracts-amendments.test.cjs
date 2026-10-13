@@ -261,3 +261,70 @@ test('Portuguese landlord confirmation never represents amendment as electronica
  assert.equal(applied,1);
  assert.match(JSON.stringify(ui.tree),/não assinado/);
 });
+
+test('property change and edited check-in/checkout/base price invalidate stale reviews',async()=>{
+ const calls=network();
+ const ui=await show();
+ const prop=nodes(ui.tree,n=>n.type==='select'&&n.props.value===p1)[0];
+ prop.props.onChange({target:{value:p2}});ui.render();
+ const dates=nodes(ui.tree,n=>n.type==='input'&&n.props.type==='date');
+ dates[0].props.onChange({target:{value:'2027-05-01'}});ui.render();
+ dates[1].props.onChange({target:{value:'2027-05-04'}});ui.render();
+ const base=nodes(ui.tree,n=>n.type==='input'&&n.props.step==='0.01').find(n=>n.props.value==='400');
+ assert.ok(base);base.props.onChange({target:{value:'600'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ const dto=JSON.parse(calls.find(x=>x.url.endsWith('/amendment-review')).init.body);
+ assert.equal(dto.propertyId,p2);
+ assert.equal(dto.startDate,'2027-05-01');
+ assert.equal(dto.endDate,'2027-05-04');
+ assert.equal(dto.baseRevenueCents,60000);
+ assert.ok(button(ui,'Approve as landlord'));
+ dates[0].props.onChange({target:{value:'2027-05-02'}});ui.render();
+ assert.equal(button(ui,'Approve as landlord'),undefined);
+});
+test('maximum 12 explicitly reviewed installments cannot grow past supported capacity',async()=>{
+ network();
+ const payments=Array.from({length:12},(_,i)=>({
+  sequence:i+1,agreedCents:i===0?40000:0,receivedCents:0,
+  isDeposit:false,dueDate:null,dueEvent:'CHECKIN',paymentMethod:'PIX'
+ }));
+ const ui=await show({detail:{installments:payments}});
+ const box=nodes(ui.tree,n=>n.type==='input'&&n.props.type==='checkbox')[0];
+ box.props.onChange({target:{checked:true}});ui.render();
+ assert.equal(nodes(ui.tree,n=>n.type==='input'&&n.props.step==='0.01').length>=13,true);
+ assert.equal(button(ui,'Add installment'),undefined);
+ const remove=button(ui,'Remove installment');
+ assert.ok(remove);remove.props.onClick();ui.render();
+ assert.ok(button(ui,'Add installment'));
+});
+test('server accepts an amendment but failed dashboard refresh must never show an unqualified successful state',async()=>{
+ let applied=0;
+ global.window={confirm:()=>true};
+ rentalDataStore.refreshAfterMutation=async()=>{throw new Error('Dashboard unavailable')};
+ network(url=>url.endsWith('/amendment-review')?respond(review):
+  url.endsWith('/amend')?respond({applied:true,status:'DRAFT',signatureStatus:'UNSIGNED'}):respond({}));
+ const ui=await show({onApplied:async()=>{applied++}});
+ const guests=nodes(ui.tree,n=>n.type==='input'&&n.props.max==='999')[0];
+ guests.props.onChange({target:{value:'3'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ button(ui,'Approve as landlord').props.onClick();
+ for(let i=0;i<6;i++){await next();ui.render();}
+ assert.equal(applied,0);
+ assert.match(JSON.stringify(ui.tree),/Dashboard unavailable/);
+});
+test('empty or invalid extra-guest override amounts remain server-reviewed rather than silently converted into a charge',async()=>{
+ const calls=network();
+ const ui=await show();
+ const menu=nodes(ui.tree,n=>n.type==='select'&&n.props.value==='AUTOMATIC')[0];
+ menu.props.onChange({target:{value:'ADJUSTED'}});ui.render();
+ const extra=nodes(ui.tree,n=>n.type==='input'&&n.props.step==='0.01').find(x=>x.props.value==='0');
+ extra.props.onChange({target:{value:'-1'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ const req=calls.find(x=>x.url.endsWith('/amendment-review'));
+ assert.ok(req);
+ assert.equal(JSON.parse(req.init.body).guestFee.cents,-100);
+ // Backend validation rejects this negative amount; client response cannot override it.
+});
