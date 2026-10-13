@@ -140,3 +140,14 @@ test('no active contract selection hides cancellation action instead of construc
  const ui=await loaded();
  assert.equal(find(ui.tree,x=>x.type==='button'&&x.props.children?.toString?.().includes('Calculate cancellation')),null);
 });
+
+test('preview client handles invalid JSON and malformed error bodies without falsely treating them as refunds',async()=>{
+ global.fetch=async()=>({ok:false,status:418,json:async()=>{throw new Error('not JSON')}});
+ await assert.rejects(()=>getCancellationPreview(id),/HTTP 418/);
+ global.fetch=async()=>({ok:false,status:409,json:async()=>({error:'missing payment'})});
+ await assert.rejects(()=>getCancellationPreview(id),/HTTP 409/);
+ global.fetch=async()=>({ok:false,status:400,json:async()=>null});
+ await assert.rejects(()=>getCancellationPreview(id),/HTTP 400/);
+ global.fetch=async()=>({ok:false,status:422,json:async()=>({message:['bad amount','bad payment']})});
+ await assert.rejects(()=>getCancellationPreview(id),/bad amount,bad payment/);
+});
