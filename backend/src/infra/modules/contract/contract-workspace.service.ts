@@ -16,6 +16,7 @@ import {ContractAuditEventSchema} from '../../persistence/schemas/contract-secur
 import {ContractDataCrypto} from '../../security/encrypted-data';
 import {renderContractPreview,type PreviewInput} from '../../../core/domain/contract/contract-preview';
 import {verifyInstallments} from '../../../core/domain/contract/contract-validation';
+import {canCancelBeforeCheckIn} from '../../../core/domain/contract/cancellation-cutoff';
 import {ContractDraftEditDto} from '../../../web/dto-web/contract/contract-draft-edit.dto';
 
 type GuestRow=typeof RentalGuestDetailsSchema.$inferSelect;
@@ -179,7 +180,9 @@ export class ContractWorkspaceService {
    booking:{clientFirstName:rental.clientFirstName,clientLastName:rental.clientLastName,
     startDate:rental.startDate,endDate:rental.endDate,guests:rental.guests,
     totalCents:Math.round(rental.revenue*100)},
-   status:current.status,cancelled:!rental.isActive,revisionId:current.id,revisionVersion:current.versionNumber,
+   status:current.status,cancelled:!rental.isActive,
+   cancellationEligible:rental.isActive&&canCancelBeforeCheckIn(rental.startDate,propertyRules?.checkInTime),
+   revisionId:current.id,revisionVersion:current.versionNumber,
    history:revisions.map(x=>({id:x.id,status:x.status,version:x.versionNumber,
     finalizedAt:x.finalizedAt,createdAt:x.createdAt})),
    guest,installments:paymentRows,
