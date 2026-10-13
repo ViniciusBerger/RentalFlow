@@ -20,7 +20,7 @@ import {rentalCharge,verifyInstallments,type GuestFeeChoice} from '../../../core
 
 type Tx=Parameters<Parameters<NodePgDatabase['transaction']>[0]>[0];
 const cents=(v:number)=>{const n=v*100;
- if(!Number.isFinite(n)||n<0||Math.abs(n-Math.round(n))>0.000001)
+ if(!Number.isFinite(n)||Math.abs(n-Math.round(n))>0.000001)
   throw new ConflictException('Invalid existing booking amounts');
  return Math.round(n);
 };
