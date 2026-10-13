@@ -56,14 +56,19 @@ export function AmendmentPanel({detail,onApplied}:{detail:ContractDetail;onAppli
    'Confirm and apply this booking amendment? The original contract remains archived and a new UNSIGNED draft will be created.';
   if(!window.confirm(text))return;
   setBusy(true);setError('');
+  let committed=false;
   try{
    await approveContractAmendment(detail.id,proposal(),review.reviewToken);
+   committed=true;
    setReview(null);
    await rentalDataStore.refreshAfterMutation();
    await onApplied();
    setNotice(pt?'Alteração aplicada pela confirmação do locador. Novo contrato ainda não assinado.':
     'Landlord confirmed the amendment. New contract draft remains unsigned.');
-  }catch(e){setReview(null);setError(e instanceof Error?e.message:String(e))}
+  }catch(e){setReview(null);
+   if(committed)setNotice(pt?'Alteração salva no servidor, mas a tela não pôde ser atualizada. Recarregue a página.':
+    'Amendment saved on the server, but the screen could not refresh. Reload the page.');
+   else setError(e instanceof Error?e.message:String(e));}
   finally{setBusy(false)};
  };
  if(detail.cancelled||detail.status!=='FINALIZED')return null;
