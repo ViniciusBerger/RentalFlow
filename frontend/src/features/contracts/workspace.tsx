@@ -307,7 +307,11 @@ export function ContractsWorkspacePage(){
       <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy}
        onClick={()=>void finalPdf()}><Download size={16}/>{pt?'Baixar PDF arquivado':'Download archived PDF'}</button>
      </div>}
-     {contractCancellationsEnabled&&!detail.cancelled&&<div className="rf-contract-actions">
+     {contractCancellationsEnabled&&!detail.cancelled&&detail.cancellationEligible===false&&
+      <p role="status" className="rf-contract-help">{pt
+       ?'Cancelamento indisponível: o horário de entrada já passou ou está ausente na configuração do imóvel.'
+       :'Cancellation unavailable: check-in has started or the property check-in time is missing.'}</p>}
+     {contractCancellationsEnabled&&!detail.cancelled&&detail.cancellationEligible!==false&&<div className="rf-contract-actions">
       <button type="button" className="rf-button rf-contract-secondary"
        disabled={cancelBusy||guestDirty||paymentsDirty||saving||finalBusy}
        onClick={()=>void requestCancellationReview()}>
