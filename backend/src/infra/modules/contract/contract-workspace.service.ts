@@ -212,7 +212,7 @@ export class ContractWorkspaceService {
    const [rental]=await tx.select().from(RentalSchema).where(and(
     eq(RentalSchema.id,contract.rentalId),eq(RentalSchema.userId,uid))).limit(1);
    if(!rental)throw new NotFoundException('Contract not found');
-   if(!rental.isActive)throw new ConflictException('Cancelled booking cannot be edited');
+   if(rental.isActive===false)throw new ConflictException('Cancelled booking cannot be edited');
    const [revision]=await tx.select().from(ContractRevisionSchema).where(and(
     eq(ContractRevisionSchema.contractId,contractId),
     eq(ContractRevisionSchema.userId,uid)))
