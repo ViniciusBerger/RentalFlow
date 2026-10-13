@@ -82,6 +82,7 @@ export class ContractCancellationService{
    if(!timingSafeEqual(Buffer.from(expected,'hex'),Buffer.from(token,'hex')))
     throw new ConflictException('Booking or receipts changed; review cancellation again');
    await tx.execute(sql`SELECT id FROM rentals WHERE id=${p.rental.id} AND user_id=${uid} FOR UPDATE`);
+   await tx.execute(sql`SELECT id FROM rental_installments WHERE rental_id=${p.rental.id} AND user_id=${uid} ORDER BY sequence FOR UPDATE`);
    const verified=await this.load(tx,uid,id);
    if(cancellationToken(uid,verified.snapshot)!==expected)
     throw new ConflictException('Booking changed during cancellation');
