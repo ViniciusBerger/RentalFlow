@@ -1,4 +1,5 @@
 import { Main } from "./main";
+import {ContractReadinessBanner} from "../contracts/readiness-banner";
 import { useState } from "react";
 import AddRentalPopUp from "../../components/add-rental-popup";
 import { DashboardErrorState } from "../../components/error-state";
@@ -70,6 +71,7 @@ export const Dashboard = () => {
 
   return (
     <>
+      <ContractReadinessBanner/>
       <div className="rf-dashboard-property-filter"><PropertySelector/></div>
       <Main
         onOpenCreateRentalPopUp={() => setIsCreateRentalPopUpOpen(true)}

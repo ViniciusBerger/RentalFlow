@@ -1,0 +1,12 @@
+# Task 4.6a: server-side contract readiness and prominent dashboard warnings
+
+The dashboard uses a new authenticated, tenant-scoped GET /contracts/readiness endpoint. The response contains only reason codes, missing field names, property identifiers/names, and the aggregate count of draft contracts; it contains no landlord identity, encryption material, payment credentials, guest identities, or document text. The backend checks the **saved** account questionnaire, published contract clauses, active properties, check-in/out times, occupancy limits and charges, and unfinished draft revisions, with no browser-controlled ready flag. Multiple incomplete properties and missing fields are reported rather than masked by a single success flag.
+
+The red top-of-dashboard message is in Portuguese and English and links each action to the right page. It is not dismissible and is automatically re-checked when the user revisits the dashboard. Service failures surface a clear alert rather than claiming setup is complete.
+
+Production uses the existing CONTRACT_QUESTIONNAIRE_ENABLED and VITE_CONTRACT_QUESTIONNAIRE_ENABLED flags; no new mandatory secrets or migrations. CI and staging checks are required before merge. Test cross-tenant isolation, missing/invalid fields, non-UTF8/PDF errors elsewhere, and update-after-navigation visibility. Do not change already finalized contracts.
+
+## Remaining Task 4
+- Task 4.6b: implement secure, contract-aware reservation amendments and cancellation handling in a dedicated PR. Finalized revisions must remain immutable, and changes require a new agreement/amendment/revision and explicit owner approval. Do not bypass existing 0007/0008 database triggers.
+- Task 4.7: landlord electronic signature. Do **not** print a graphic signature or claim landlord signed just because a PDF was generated. Use a verified signer and cryptographic provider/certificate with signer attribution, express and revocable authorization for each act or narrowly scoped reusable authorization, document digest, timestamp, audit and verification evidence. Provider/webhook secrets stay server-side, and missing/failed signatures leave the existing archive UNSIGNED. Guest/tenant signing, if required, is a separate action.
+- Before launch confirm the applicable Brazilian law and required signature assurance (simple, advanced, or ICP-Brasil qualified) with counsel; rental contracts between private parties are not universally subject to the same public-administration rules.

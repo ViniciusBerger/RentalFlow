@@ -36,3 +36,11 @@ export const publishTemplate=(draftId:string)=>send<{id:string;versionNumber:num
 export const readPropertySetup=(propertyId:string)=>send<{property:{id:string;name:string;address:string|null};settings:PropertySetup|null}>(`/properties/${propertyId}/settings`);
 export const savePropertySetup=(propertyId:string,settings:PropertySetup)=>send<{saved:boolean}>(`/properties/${propertyId}/settings`,{
  method:'PUT',body:JSON.stringify(settings)});
+
+export type ContractReadinessIssue={
+ code:'ACCOUNT_SETTINGS'|'LANDLORD_DETAILS'|'PAYMENT_METHODS'|'PAYMENT_DETAILS'|'JURISDICTION'|
+  'TEMPLATE_NOT_PUBLISHED'|'TEMPLATE_INVALID'|'NO_ACTIVE_PROPERTIES'|
+  'PROPERTY_ADDRESS'|'PROPERTY_SETTINGS'|'DRAFT_CONTRACTS';
+ fields?:string[];propertyId?:string;propertyName?:string;count?:number
+};
+export const readContractReadiness=()=>send<{ready:boolean;issues:ContractReadinessIssue[]}>('/readiness');

@@ -3,14 +3,17 @@ import {AuthGuard} from '../../adapters/guards/auth.guard';
 import {OnboardingGuard} from '../../adapters/guards/onboarding.guard';
 import {SaveQuestionnaireDto,SaveTemplateDraftDto,PublishTemplateDto,PropertyContractSettingsDto} from '../../../web/dto-web/contract/contract-questionnaire.dto';
 import {ContractQuestionnaireService} from './contract-questionnaire.service';
+import {ContractReadinessService} from './contract-readiness.service';
 
 @Controller('contracts')
 @UseGuards(AuthGuard,OnboardingGuard)
 export class ContractQuestionnaireController {
- constructor(private readonly service:ContractQuestionnaireService){}
+ constructor(private readonly service:ContractQuestionnaireService,private readonly readiness?:ContractReadinessService){}
  private enabled(){
   if(process.env.CONTRACT_QUESTIONNAIRE_ENABLED!=='true')throw new NotFoundException('Contract setup is not enabled');
  }
+ @Get('readiness')
+ getReadiness(@Req() req:{user:{uid:string}}){this.enabled();return this.readiness!.status(req.user.uid);}
  @Get('settings')
  getSettings(@Req() req:{user:{uid:string}}){this.enabled();return this.service.settings(req.user.uid);}
  @Put('settings')
