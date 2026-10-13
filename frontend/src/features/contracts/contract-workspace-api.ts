@@ -5,7 +5,7 @@ export const contractsWorkspaceEnabled=import.meta.env.VITE_CONTRACT_WORKSPACE_E
 export type ContractListItem={
  id:string;rentalId:string;propertyId:string;propertyName:string;
  firstName:string;lastName:string;startDate:string;endDate:string;
- guests:number;revenue:number;status:string;revisionId:string|null;
+ guests:number;revenue:number;status:string;cancelled:boolean;revisionId:string|null;
  revisionVersion:number|null;createdAt:string;
 };
 export type DraftInstallment={
