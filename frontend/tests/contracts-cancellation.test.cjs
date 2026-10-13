@@ -226,3 +226,14 @@ test('cancel review works on unfinished drafts without ever marking them finaliz
  assert.ok(find(ui.tree,n=>n.type==='button'&&text(n)==='Confirm cancellation'));
  assert.match(JSON.stringify(ui.tree),/No refund or penalty/);
 });
+
+test('backend cutoff eligibility hides cancellation action and explains check-in restriction',async()=>{
+ global.fetch=async(url)=>{
+  if(String(url).endsWith('/workspace'))return {ok:true,json:async()=>({items:[item]})};
+  return {ok:true,json:async()=>({...detail,cancellationEligible:false})};
+ };
+ const ui=mount(ContractsWorkspacePage);
+ for(let i=0;i<6;i++){await next();ui.render();}
+ assert.match(JSON.stringify(ui.tree),/Cancellation unavailable/);
+ assert.equal(find(ui.tree,n=>n.type==='button'&&text(n)==='Review cancellation'),null);
+});
