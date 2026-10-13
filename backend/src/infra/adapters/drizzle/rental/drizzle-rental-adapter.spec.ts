@@ -84,6 +84,14 @@ describe('DrizzleOrmAdapter', () => {
     });
   });
 
+  it('returns an actionable conflict when legacy update tries to change a linked contract', async()=>{
+    dbMock.where.mockRejectedValue({code:'23514'});
+    await expect(adapter.update('host-1','id',{revenue:100})).rejects.toThrow(/approved cancellation or amendment/);
+  });
+  it('blocks legacy hard deletion with the same protected conflict',async()=>{
+    dbMock.where.mockRejectedValue({code:'23514'});
+    await expect(adapter.delete('host-1','id')).rejects.toThrow(/approved cancellation or amendment/);
+  });
   describe('save', () => {
     const mockRental = new Rental({
       userId: 'testid123456',
