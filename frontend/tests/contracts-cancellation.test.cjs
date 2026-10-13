@@ -6,6 +6,7 @@ process.env.VITE_API_URL='http://localhost:3000';
 require('./register-typescript.cjs');
 const {mount}=require('./test-dispatcher.cjs');
 const {ContractsWorkspacePage}=require('../src/features/contracts/workspace.tsx');
+const {prepareContractCancellation,confirmContractCancellation}=require('../src/features/contracts/contract-workspace-api.ts');
 const {rentalDataStore}=require('../src/hooks/load-data/rental-data-store.ts');
 const {clearCsrfToken}=require('../src/lib/csrf-fetch.ts');
 const {LanguageContext}=require('../src/i18n/context.ts');
@@ -161,4 +162,30 @@ test('Portuguese cancellation review states the financial effect without claimin
  assert.match(value,/Nenhum reembolso/);
  assert.match(value,/Pagamentos registrados/);
  assert.ok(find(ui.tree,n=>n.type==='button'&&text(n)==='Confirmar cancelamento'));
+});
+
+test('read-only cancellation review responds to server errors without exposing private details',async()=>{
+ const seen=[];
+ global.fetch=async(url,opts)=>{
+  seen.push([String(url),opts]);
+  return {ok:false,status:403,json:async()=>({message:'Not your contract'})};
+ };
+ await assert.rejects(prepareContractCancellation(id),/Not your contract/);
+ assert.equal(seen[0][1].credentials,'include');
+ assert.equal(seen[0][1].cache,'no-store');
+ assert.equal(seen.length,1);
+});
+test('cancellation API rejects missing/non-JSON error messages and never implies a refund',async()=>{
+ let called=0;
+ global.fetch=async(url)=>{
+  called++;
+  if(String(url).endsWith('/auth/csrf'))return {ok:true,json:async()=>({csrfToken:'session-bound-csrf'})};
+  return {ok:false,status:409,json:async()=>{throw Error('Broken JSON')}};
+ };
+ await assert.rejects(confirmContractCancellation(id,'c'.repeat(64)),/HTTP 409/);
+ assert.equal(called,2);
+});
+test('cancellation review fallback HTTP error is safe even with no message field',async()=>{
+ global.fetch=async()=>({ok:false,status:503,json:async()=>({something:'else'})});
+ await assert.rejects(prepareContractCancellation(id),/HTTP 503/);
 });
