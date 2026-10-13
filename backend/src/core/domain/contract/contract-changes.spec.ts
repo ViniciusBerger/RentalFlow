@@ -25,10 +25,13 @@ describe('cancellation quote is financially conservative',()=>{
  const policy={startDate:'2027-03-20',cancelledOn:'2027-02-01',cancelDays:30,
   paidCents:30000,agreedTotalCents:50000};
  it('calculates full refundable money within permitted window but does not assert transfer',()=>{
-  expect(cancellationQuote(policy)).toMatchObject({
+  expect(cancellationQuote({...policy,freeCancellationConfirmed:true})).toMatchObject({
    refundDueCents:30000,paidCents:30000,deadlineMet:true,
    automaticTransferAvailable:false,refundState:'FULL_REFUND_DUE'
   });
+ });
+ it('requires explicit approved free-cancellation term before suggesting full refund',()=>{
+  expect(cancellationQuote(policy)).toMatchObject({refundDueCents:null,refundState:'POLICY_REVIEW_REQUIRED'});
  });
  it('does not invent penalty percentage when cancellation window has passed',()=>{
   expect(cancellationQuote({...policy,cancelledOn:'2027-03-12'})).toMatchObject({
