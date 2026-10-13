@@ -40,7 +40,7 @@ describe('secure contract cancellation review and commit',()=>{
   if(originalVersion===undefined)delete process.env.CONTRACT_ACTIVE_KEY_VERSION;
   else process.env.CONTRACT_ACTIVE_KEY_VERSION=originalVersion;
  });
- const rows=()=>[[contract],[rental],[revision],payments];
+ const rows=()=>[[contract],[rental],[{checkInTime:'15:00:00'}],[revision],payments];
  it('prepares signed state-bound review without exposing customer identity',async()=>{
   const {tx}=fixture(rows());
   const result=await new ContractCancellationService(tx).review(uid,id);
