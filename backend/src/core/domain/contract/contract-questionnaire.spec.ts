@@ -156,3 +156,30 @@ describe('remaining publication branch boundaries',()=>{
    expect(()=>validateLandlordForPublish({...profile,rg:''}, {...defaultPolicy,jurisdiction:'Vitória/ES'},defaultPayment)).toThrow();
  });
 });
+
+
+describe('company landlord publication and template safety',()=>{
+ const company={
+  fullName:'Praia Rentals Ltda',documentType:'CNPJ' as const,cnpj:'00.000.000/E08G-12',
+  representativeName:'Ana Silva',representativeCpf:'52998224725',
+  representativeRole:'Sócia-administradora',addressStreet:'Rua do Porto',
+  addressNumber:'10',addressDistrict:'Centro',addressCity:'Vitória',addressState:'ES',
+  addressPostalCode:'29000-000',pixKey:'company-pix',bankName:'Bank',bankAgency:'001',bankAccount:'100-0'
+ };
+ const policy={...defaultPolicy,jurisdiction:'Vitória/ES'};
+ it('publishes with a legitimate alphanumeric CNPJ and authorized representative',()=>{
+  expect(()=>validateLandlordForPublish(company,policy,defaultPayment)).not.toThrow();
+ });
+ it('blocks missing representative and malformed CNPJ even when old CPF was supplied',()=>{
+  expect(()=>validateLandlordForPublish({...company,representativeCpf:''},policy,defaultPayment)).toThrow();
+  expect(()=>validateLandlordForPublish({...company,cnpj:'00.000.000/E08G-13',
+   cpf:'52998224725',rg:'123456'},policy,defaultPayment)).toThrow();
+ });
+ it('supports company identification placeholders while preventing hardcoded company IDs',()=>{
+  const clauses=complete();
+  clauses[0].body='Locador {{locador.razao_social}} CNPJ {{locador.cnpj}} representado por {{locador.representante}} CPF {{locador.representante_cpf}}.';
+  expect(()=>validateClauses(clauses,true)).not.toThrow();
+  clauses[0].body='CNPJ 00.000.000/E08G-12 empresa já indicada em texto fixo';
+  expect(()=>validateClauses(clauses,true)).toThrow('Use placeholders');
+ });
+});
