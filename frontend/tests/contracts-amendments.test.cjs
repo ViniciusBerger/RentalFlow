@@ -312,7 +312,7 @@ test('server accepts an amendment but failed dashboard refresh must never show a
  button(ui,'Approve as landlord').props.onClick();
  for(let i=0;i<6;i++){await next();ui.render();}
  assert.equal(applied,0);
- assert.match(JSON.stringify(ui.tree),/Dashboard unavailable/);
+ assert.match(JSON.stringify(ui.tree),/Amendment saved on the server, but the screen could not refresh/);
 });
 test('empty or invalid extra-guest override amounts remain server-reviewed rather than silently converted into a charge',async()=>{
  const calls=network();
