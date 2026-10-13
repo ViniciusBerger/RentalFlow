@@ -142,3 +142,33 @@ describe('draft placeholder branch and payment variations',()=>{
   expect(out.ready).toBe(false);
  });
 });
+
+
+describe('corporate landlord placeholder correctness',()=>{
+ it('renders CNPJ and representative only for a company, not an individual',()=>{
+  const input=fixture();
+  input.landlord={documentType:'CNPJ',fullName:'Praia Rentals Ltda',cnpj:'00.000.000/E08G-12',
+   representativeName:'Ana Silva',representativeCpf:'52998224725',representativeRole:'Diretora'};
+  input.template=clauses.map((c,i)=>({...c,body:i===0?
+   'Razão {{locador.razao_social}}, CNPJ {{locador.cnpj}}, documento {{locador.documento}}, representante {{locador.representante}} CPF {{locador.representante_cpf}} cargo {{locador.representante_cargo}}.':
+   'Texto aprovado para empresa com mais de dez caracteres.'}));
+  const preview=renderContractPreview(input);
+  expect(preview.ready).toBe(true);
+  expect(preview.clauses[0].body).toContain('00000000E08G12');
+  expect(preview.clauses[0].body).toContain('Ana Silva');
+  expect(preview.clauses[0].body).not.toContain('[PENDENTE:');
+  input.template[0].body='CPF do locador: {{locador.cpf}}';
+  const incompatible=renderContractPreview(input);
+  expect(incompatible.ready).toBe(false);
+  expect(incompatible.missing).toContain('locador.cpf');
+ });
+ it('allows new neutral document placeholder for existing individual landlords',()=>{
+  const input=fixture();
+  input.landlord={fullName:'Ana de Souza',cpf:'52998224725',rg:'1234567'};
+  input.template=clauses.map((c,i)=>({...c,body:i===0?
+   'Documento {{locador.documento}} e CPF {{locador.cpf}}.':'Texto aprovado da locação por temporada.'}));
+  const preview=renderContractPreview(input);
+  expect(preview.ready).toBe(true);
+  expect(preview.clauses[0].body).toContain('52998224725');
+ });
+});
