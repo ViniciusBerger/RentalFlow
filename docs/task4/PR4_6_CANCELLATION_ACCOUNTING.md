@@ -25,4 +25,4 @@
 4. Independently confirm accounting of contractual cancellation penalties, paid deposits, refunds and who must approve a post-finalization amendment before implementing those business transitions. No automatic money movement or unapproved price adjustment.
 
 ## Unconfirmed amendment business rules
-The exact amendment fields and how contractual penalties/deposits and recorded payment schedules should be handled; do not silently manufacture payment settlement or signature. Existing mutation guards stay ON until explicitly decided.
+Supported fields: dates, guest count, property, base price/extra guest surcharge and an explicitly entered installment plan. No legal party-identity changes, no booked-receipt reconciliation, no automatic penalties/refunds and no post-check-in retrospective amendment. Those require separate approved business rules. Existing mutation guards stay ON until explicitly decided.
