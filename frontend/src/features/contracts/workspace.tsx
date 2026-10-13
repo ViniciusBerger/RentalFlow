@@ -276,7 +276,7 @@ export function ContractsWorkspacePage(){
      <div className="rf-contract-workspace-preview">
       <div className="rf-contract-workspace-title"><h4>{pt?'Prévia do contrato':'Contract preview'}</h4>
        <span>{detail.status==='FINALIZED'?(pt?'Finalizado, não assinado':'Finalized, unsigned'):(pt?'Não finalizado':'Not finalized')}</span></div>
-      {detail.preview.missing.length>0&&<p className="rf-contract-help" role="status">
+      {!detail.cancelled&&detail.preview.missing.length>0&&<p className="rf-contract-help" role="status">
        {pt?'Campos pendentes: ':'Missing fields: '}{detail.preview.missing.join(', ')}</p>}
       {detail.preview.clauses.length===0?<p>{pt?'Publique primeiro um modelo aprovado.':'Publish an approved template first.'}</p>:
        <div className="rf-contract-preview">{detail.preview.clauses.map(c=><article key={c.id}>
