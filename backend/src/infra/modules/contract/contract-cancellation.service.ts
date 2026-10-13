@@ -62,6 +62,7 @@ export class ContractCancellationService{
   const recordedReceivedCents=payments.reduce((a,p)=>a+p.receivedCents,0);
   const snapshot={contractId:contract.id,rentalId:rental.id,revision,
    propertyId:rental.propertyId,startDate:rental.startDate,endDate:rental.endDate,
+   checkInTime:propertyRules.checkInTime,
    guests:rental.guests,firstName:rental.clientFirstName,lastName:rental.clientLastName,
    revenueCents,profitCents,feeCents:cents(rental.fee),active:rental.isActive,
    payments:payments.map(p=>[p.id,p.sequence,p.agreedCents,p.receivedCents,p.paidAt?.toISOString()??null])};
