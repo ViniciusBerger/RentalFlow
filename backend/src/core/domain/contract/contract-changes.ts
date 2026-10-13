@@ -31,7 +31,7 @@ export function validateAmendmentProposal(input:ContractAmendmentInput):void{
 }
 export function cancellationQuote(input:{
  startDate:string;cancelledOn:string;cancelDays:number;paidCents:number;
- agreedTotalCents:number;
+ agreedTotalCents:number;freeCancellationConfirmed?:boolean;
 }):CancellationQuote{
  const {startDate,cancelledOn,cancelDays,paidCents,agreedTotalCents}=input;
  if(!iso(startDate)||!iso(cancelledOn)||!Number.isInteger(cancelDays)||cancelDays<0||cancelDays>365||
@@ -41,12 +41,13 @@ export function cancellationQuote(input:{
  if(cancelledOn>startDate)throw new ConflictException('Cannot use pre-stay cancellation workflow after check-in');
  const days=Math.round((Date.parse(startDate)-Date.parse(cancelledOn))/86400000);
  const deadlineMet=days>=cancelDays;
- // The current questionnaire specifies a cancellation *window*, but no percentage
- // or monetary penalty. Never reinterpret the general breach/damage penalties here.
+ // The existing questionnaire specifies a cancellation *window*, not an explicit
+ // refund guarantee or penalty. Full refunds require a separately approved policy flag.
+ // Never reinterpret general breach/damage penalties as cancellation charges.
  // Refund destination/provider still needs verification and separate payout integration.
  if(!paidCents)return {refundDueCents:0,retainedCents:0,paidCents,deadlineMet,
   automaticTransferAvailable:false,refundState:'NO_PAYMENT'};
- if(deadlineMet)return {refundDueCents:paidCents,retainedCents:0,paidCents,deadlineMet,
+ if(deadlineMet&&input.freeCancellationConfirmed===true)return {refundDueCents:paidCents,retainedCents:0,paidCents,deadlineMet,
   automaticTransferAvailable:false,refundState:'FULL_REFUND_DUE'};
  return {refundDueCents:null,retainedCents:null,paidCents,deadlineMet,
   automaticTransferAvailable:false,refundState:'POLICY_REVIEW_REQUIRED'};
