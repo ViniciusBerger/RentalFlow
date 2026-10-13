@@ -71,6 +71,13 @@
       "when": 1791731000000,
       "tag": "0009_contract_cancellation_accounting",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791732000000,
+      "tag": "0010_contract_amendment_authorization",
+      "breakpoints": true
     }
   ]
 }
