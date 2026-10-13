@@ -75,3 +75,17 @@ describe('contract readiness is evaluated on authoritative saved state',()=>{
   expect(issues).toEqual([]);
  });
 });
+
+
+describe('corporate landlord readiness',()=>{
+ it('requires valid company CNPJ and signatory fields but not individual landlord RG',()=>{
+  const base={...configured,landlord:{...configured.landlord,documentType:'CNPJ' as const,
+   cpf:'',rg:'',cnpj:'00.000.000/E08G-12',representativeName:'Ana Silva',
+   representativeCpf:'52998224725',representativeRole:'Sócia'}};
+  expect(readinessIssues(base)).toEqual([]);
+  const issues=readinessIssues({...base,landlord:{...base.landlord,cnpj:'bad',representativeRole:''}});
+  const fields=issues.find(x=>x.code==='LANDLORD_DETAILS')?.fields;
+  expect(fields).toEqual(expect.arrayContaining(['cnpj','representativeRole']));
+  expect(fields).not.toContain('rg');
+ });
+});

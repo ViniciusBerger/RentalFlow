@@ -3,6 +3,11 @@ import {ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty,
  IsString, Length, Matches, Max, Min, ValidateNested} from 'class-validator';
 
 export class LandlordDto {
+ @IsOptional() @IsIn(['CPF','CNPJ']) documentType?:'CPF'|'CNPJ';
+ @IsOptional() @IsString() @Length(0,20) cnpj?:string;
+ @IsOptional() @IsString() @Length(0,120) representativeName?:string;
+ @IsOptional() @IsString() @Length(0,20) representativeCpf?:string;
+ @IsOptional() @IsString() @Length(0,90) representativeRole?:string;
  @IsOptional() @IsString() @Length(0,120) fullName?:string;
  @IsOptional() @IsString() @Length(0,20) cpf?:string;
  @IsOptional() @IsString() @Length(0,30) rg?:string;

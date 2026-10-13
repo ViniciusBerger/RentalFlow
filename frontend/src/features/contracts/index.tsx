@@ -22,7 +22,11 @@ const texts={
   confirm:'Deseja publicar esta versão? O documento será imutável e novas alterações exigirão uma nova versão.',
   propertyAddress:'Endereço atual do imóvel',propertyAddressHelp:'Cadastre o endereço completo na página Imóveis antes de finalizar contratos.',
   selectProperty:'Selecione um imóvel',noProperties:'Cadastre um imóvel antes de definir suas regras.',
-  general:'Dados para contratos sazonais brasileiros. CPF, RG, endereço residencial e dados bancários são enviados apenas ao backend autenticado.',
+  general:'Dados para contratos sazonais brasileiros. CPF ou CNPJ, endereço e dados bancários são protegidos no backend autenticado.',
+  documentType:'Tipo de locador',individual:'Pessoa física (CPF)',company:'Pessoa jurídica (CNPJ)',
+  companyName:'Razão social da empresa',representativeName:'Nome do representante legal',
+  representativeCpf:'CPF do representante legal',representativeRole:'Cargo / função do representante',
+  companyHelp:'Informe um representante autorizado. CPF/CNPJ e dados do representante não constituem uma assinatura eletrônica. Para cláusulas empresariais use {{locador.documento}}, {{locador.cnpj}} ou {{locador.representante}} no texto original aprovado.',
   fullName:'Nome completo',cpf:'CPF',rg:'RG',address:'Endereço residencial',street:'Rua / logradouro',number:'Número (ou s/n)',district:'Bairro',city:'Cidade',state:'UF',zip:'CEP',complement:'Complemento (opcional)',phone:'Telefone (opcional)',
   email:'E-mail (opcional)',pix:'Chave PIX',bank:'Banco',agency:'Agência',account:'Conta',
   count:'Número padrão de parcelas',methods:'Formas de pagamento',due:'Vencimento padrão',deposit:'Tratamento do sinal',
@@ -49,7 +53,11 @@ const texts={
   confirm:'Publish this version? It will be immutable and subsequent changes will require a new version.',
   propertyAddress:'Current property address',propertyAddressHelp:'Provide the full address on the Properties page before finalizing contracts.',
   selectProperty:'Choose a property',noProperties:'Add a property before defining contract rules.',
-  general:'For Brazilian seasonal rental agreements. CPF, RG, residential address and bank details are sent only to the authenticated backend.',
+  general:'Brazilian rental details. CPF or CNPJ, address and bank information are protected by the authenticated backend.',
+  documentType:'Landlord type',individual:'Individual (CPF)',company:'Company (CNPJ)',
+  companyName:'Registered company legal name',representativeName:'Authorized representative name',
+  representativeCpf:'Representative CPF',representativeRole:'Representative role',
+  companyHelp:'Provide an authorized representative. Company and representative details are not an electronic signature. Use {{locador.documento}}, {{locador.cnpj}} or {{locador.representante}} in your approved company template wording.',
   fullName:'Full name',cpf:'CPF',rg:'RG',address:'Residential address',street:'Street',number:'Number (or s/n)',district:'District',city:'City',state:'State (UF)',zip:'Postal code (CEP)',complement:'Complement (optional)',phone:'Phone (optional)',
   email:'Email (optional)',pix:'PIX key',bank:'Bank name',agency:'Bank branch',account:'Bank account',
   count:'Default installment count',methods:'Accepted payment methods',due:'Default payment due',deposit:'Deposit classification',
@@ -122,7 +130,19 @@ export const ContractQuestionnairePage=()=>{
     <span>{i+1}</span>{t[name]}</button>)}</nav>
    <div className="rf-panel rf-contract-card">
    {step===0&&<><h3>{t.landlord}</h3><p>{t.general}</p>
-    <div className="rf-contract-grid">{field(t.fullName,'fullName')}{field(t.cpf,'cpf')}{field(t.rg,'rg')}
+    <label className="rf-contract-field">{t.documentType}
+     <select value={landlord.documentType} onChange={e=>setLandlord(x=>({
+      ...x,documentType:e.target.value as Landlord['documentType'],fullName:'',cpf:'',rg:'',cnpj:'',
+      representativeName:'',representativeCpf:'',representativeRole:''
+     }))}>
+      <option value="CPF">{t.individual}</option><option value="CNPJ">{t.company}</option>
+     </select></label>
+    {landlord.documentType==='CNPJ'&&<p className="rf-contract-help">{t.companyHelp}</p>}
+    <div className="rf-contract-grid">{field(landlord.documentType==='CNPJ'?t.companyName:t.fullName,'fullName')}
+     {landlord.documentType==='CNPJ'?<>
+      {field('CNPJ','cnpj')}{field(t.representativeName,'representativeName')}
+      {field(t.representativeCpf,'representativeCpf')}{field(t.representativeRole,'representativeRole')}
+     </>:<>{field(t.cpf,'cpf')}{field(t.rg,'rg')}</>}
      {field(t.street,'addressStreet')}{field(t.number,'addressNumber')}{field(t.district,'addressDistrict')}{field(t.city,'addressCity')}{field(t.state,'addressState')}{field(t.zip,'addressPostalCode')}{field(t.complement,'addressComplement')}{field(t.phone,'phone','tel')}{field(t.email,'email','email')}
      {field(t.pix,'pixKey')}{field(t.bank,'bankName')}{field(t.agency,'bankAgency')}{field(t.account,'bankAccount')}</div>
     <button disabled={saving} className="rf-button" type="button" onClick={()=>void saveAccount()}><Save size={17}/>{saving?t.busy:t.save}</button>

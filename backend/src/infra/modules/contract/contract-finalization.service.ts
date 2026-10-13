@@ -18,6 +18,7 @@ import {renderContractPreview} from '../../../core/domain/contract/contract-prev
 import {validateClauses,validateLandlordForPublish,type ContractClause,type ContractPolicy,type ContractPayment,type LandlordProfile} from '../../../core/domain/contract/contract-questionnaire';
 import {verifyGuestFinalization,verifyInstallments} from '../../../core/domain/contract/contract-validation';
 import {renderFinalContractPdf} from './contract-final-pdf';
+import {landlordDocument} from '../../../core/domain/contract/landlord-identity';
 
 type Db=NodePgDatabase;
 type Tx=Parameters<Parameters<Db['transaction']>[0]>[0];
@@ -154,7 +155,12 @@ export class ContractFinalizationService {
    const archive={...p.snapshot,finalizedAt:finalizedAt.toISOString(),signatureStatus:'UNSIGNED'};
    const bytes=await renderFinalContractPdf({contractId:id,version:p.revision.versionNumber,
     finalizedAt,clauses:p.preview.clauses,summary:{
-     landlord:p.snapshot.landlord.fullName!,landlordCpf:p.snapshot.landlord.cpf!,
+     landlord:p.snapshot.landlord.fullName!,
+     landlordDocumentLabel:landlordDocument(p.snapshot.landlord).type,
+     landlordDocument:landlordDocument(p.snapshot.landlord).value,
+     representativeName:p.snapshot.landlord.documentType==='CNPJ'?p.snapshot.landlord.representativeName:undefined,
+     representativeCpf:p.snapshot.landlord.documentType==='CNPJ'?p.snapshot.landlord.representativeCpf:undefined,
+     representativeRole:p.snapshot.landlord.documentType==='CNPJ'?p.snapshot.landlord.representativeRole:undefined,
      guest:p.snapshot.guest.fullName,guestCpf:p.snapshot.guest.cpf,
      property:p.snapshot.property.address!,checkIn:p.snapshot.booking.startDate,
      checkOut:p.snapshot.booking.endDate,guests:p.snapshot.booking.guests,

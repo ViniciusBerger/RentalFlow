@@ -17,7 +17,8 @@ test('contract questionnaire is opt-in and does not collect identity data before
  }
 });
 test('contract questionnaire starts without copying anyone’s identity or banking secrets',()=>{
- for(const value of Object.values(initialLandlord))assert.equal(value,'');
+ assert.equal(initialLandlord.documentType,'CPF'); // Non-sensitive legacy default
+ for(const [key,value] of Object.entries(initialLandlord))if(key!=='documentType')assert.equal(value,'');
  assert.equal(initialPolicy.jurisdiction,'');
  assert.equal(initialPayment.installmentCount,2);
  assert.ok(initialPayment.acceptedMethods.includes('PIX'));

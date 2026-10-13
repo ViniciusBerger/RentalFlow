@@ -1,11 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { safeClauseText } from '../../../infra/security/secure-clause-text';
-import { validateBrazilianCpf } from './contract-validation';
+import {landlordIdentityMissingFields,validateBrazilianCnpj} from './landlord-identity';
+import {validateBrazilianCpf} from './contract-validation';
 
 export type ContractClause = { id:string; title:string; body:string; enabled:boolean };
 export type ContractPolicy = { jurisdiction:string; cancellationDays:number; damagePenaltyPercent:number; breachPenaltyPercent:number; utilitiesIncluded:boolean };
 export type ContractPayment = { installmentCount:number; acceptedMethods:string[]; defaultDueRule:string; depositMode:string };
-export type LandlordProfile = { fullName?:string; cpf?:string; rg?:string; addressStreet?:string;addressNumber?:string;addressDistrict?:string;addressCity?:string;addressState?:string;addressPostalCode?:string;addressComplement?:string;phone?:string;email?:string;
+export type LandlordProfile = { documentType?:'CPF'|'CNPJ'; fullName?:string; cpf?:string; rg?:string; cnpj?:string; representativeName?:string; representativeCpf?:string; representativeRole?:string; addressStreet?:string;addressNumber?:string;addressDistrict?:string;addressCity?:string;addressState?:string;addressPostalCode?:string;addressComplement?:string;phone?:string;email?:string;
   pixKey?:string; bankName?:string; bankAgency?:string; bankAccount?:string };
 export const defaultPolicy:ContractPolicy = {jurisdiction:'',cancellationDays:30,damagePenaltyPercent:50,breachPenaltyPercent:10,utilitiesIncluded:true};
 export const defaultPayment:ContractPayment = {installmentCount:2,acceptedMethods:['PIX','BANK_TRANSFER'],defaultDueRule:'KEY_HANDOVER',depositMode:'MANUAL'};
@@ -22,7 +23,8 @@ export const emptyContractClauses=():ContractClause[]=>[
  {id:'annex',title:'Anexo I — Regras da casa',body:'',enabled:true}
 ];
 const placeholders=new Set([
- 'locador.nome','locador.cpf','locador.rg','locador.endereco',
+ 'locador.nome','locador.cpf','locador.rg','locador.cnpj','locador.documento','locador.razao_social',
+ 'locador.representante','locador.representante_cpf','locador.representante_cargo','locador.endereco',
  'locatario.nome','locatario.cpf','locatario.rg','locatario.endereco','locatario.telefone','locatario.email',
  'imovel.endereco','imovel.entrada','imovel.saida','imovel.incluidos','imovel.maximo','imovel.taxa_extra',
  'reserva.entrada','reserva.saida','reserva.hospedes','reserva.valor_total','reserva.parcelas','reserva.sinal',
@@ -34,6 +36,8 @@ export function rejectEmbeddedIdentifiers(text:string):void {
  if(emails.test(text))throw new BadRequestException('Use placeholders instead of embedding email addresses');
  const cpfCandidates=text.match(/(?<![0-9])(?:[0-9]{3}[.\s-]?){3}[0-9]{2}(?![0-9])/g)??[];
  if(cpfCandidates.some(candidate=>validateBrazilianCpf(candidate)))throw new BadRequestException('Use placeholders instead of embedding CPF numbers');
+ const cnpjCandidates=text.match(/(?<![A-Z0-9])(?:[A-Z0-9]{2}\.[A-Z0-9]{3}\.[A-Z0-9]{3}\/[A-Z0-9]{4}-[0-9]{2}|[A-Z0-9]{12}[0-9]{2})(?![A-Z0-9])/gi)??[];
+ if(cnpjCandidates.some(candidate=>validateBrazilianCnpj(candidate)))throw new BadRequestException('Use placeholders instead of embedding CNPJ numbers');
 }
 export function validateClauses(input:ContractClause[],publish=false):ContractClause[] {
  if(!Array.isArray(input)||input.length>40||input.length<17)throw new BadRequestException('Invalid clause list');
@@ -65,12 +69,8 @@ export function validateClauses(input:ContractClause[],publish=false):ContractCl
  return normalized;
 }
 export function validateLandlordForPublish(profile:LandlordProfile|null|undefined,policy:ContractPolicy,payment:ContractPayment):void {
- if(!profile||!profile.fullName?.trim()||profile.fullName.trim().length<3||!validateBrazilianCpf(profile.cpf??'')||
-   !profile.rg?.trim()||profile.rg.length<4||
-   !profile.addressStreet?.trim()||!profile.addressNumber?.trim()||!profile.addressDistrict?.trim()||
-   !profile.addressCity?.trim()||!profile.addressState||!/^[A-Z]{2}$/.test(profile.addressState)||
-   !profile.addressPostalCode||!/^\d{5}-?\d{3}$/.test(profile.addressPostalCode)) {
-   throw new BadRequestException('Complete landlord identification before publishing');
+ if(!profile||landlordIdentityMissingFields(profile).length){
+   throw new BadRequestException('Complete or correct landlord identification before publishing');
  }
  if(profile.email?.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email))throw new BadRequestException('Invalid landlord email');
  if(profile.phone?.trim()&&!/^\+?\d[\d\s()-]{8,20}$/.test(profile.phone))throw new BadRequestException('Invalid landlord phone');

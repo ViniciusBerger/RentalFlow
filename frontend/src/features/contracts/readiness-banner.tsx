@@ -5,7 +5,9 @@ import {useLanguage} from '../../i18n/context';
 import {contractFeatureEnabled,readContractReadiness,type ContractReadinessIssue} from './contract-api';
 
 const fieldLabels:Record<string,{pt:string;en:string}>={
- fullName:{pt:'Nome completo',en:'Full name'},cpf:{pt:'CPF',en:'CPF'},
+ documentType:{pt:'Tipo de locador',en:'Landlord type'},fullName:{pt:'Nome completo / Razão social',en:'Full name / Legal company name'},cpf:{pt:'CPF',en:'CPF'},
+ cnpj:{pt:'CNPJ',en:'CNPJ'},representativeName:{pt:'Nome do representante',en:'Representative name'},
+ representativeCpf:{pt:'CPF do representante',en:'Representative CPF'},representativeRole:{pt:'Cargo do representante',en:'Representative role'},
  rg:{pt:'RG',en:'RG'},addressStreet:{pt:'Rua',en:'Street'},addressNumber:{pt:'Número',en:'Street number'},
  addressDistrict:{pt:'Bairro',en:'District'},addressCity:{pt:'Cidade',en:'City'},
  addressState:{pt:'UF',en:'State'},addressPostalCode:{pt:'CEP',en:'Postal code'},

@@ -1,4 +1,5 @@
 import {validateClauses,type ContractClause,type LandlordProfile} from './contract-questionnaire';
+import {landlordDocument,landlordDocumentType} from './landlord-identity';
 
 export type PreviewInstallment={
  sequence:number;agreedCents:number;dueDate?:string|null;dueEvent?:string|null;
@@ -26,14 +27,23 @@ export function renderContractPreview(input:PreviewInput):RenderedPreview{
   return value||'[PENDENTE: '+key+']';
  };
  const owner=input.landlord??{},guest=input.guest,r=input.rental,p=input.propertyRules;
+ const type=landlordDocumentType(owner),document=landlordDocument(owner).value;
  const fullName=[r.clientFirstName,r.clientLastName].filter(Boolean).join(' ');
  const address=[owner.addressStreet,owner.addressNumber,owner.addressComplement,owner.addressDistrict,
    owner.addressCity,owner.addressState,owner.addressPostalCode].filter(Boolean).join(', ');
  const payments=input.installments.map(x=>x.sequence+'. '+brl(x.agreedCents)+
    (x.dueDate?' - '+x.dueDate:x.dueEvent?' - '+x.dueEvent:' - vencimento pendente')).join('; ');
  const values:Record<string,string>={
-  'locador.nome':required('locador.nome',owner.fullName),'locador.cpf':required('locador.cpf',owner.cpf),
-  'locador.rg':required('locador.rg',owner.rg),'locador.endereco':required('locador.endereco',address),
+  'locador.nome':required('locador.nome',owner.fullName),
+  'locador.cpf':required('locador.cpf',type==='CPF'?owner.cpf:null),
+  'locador.rg':required('locador.rg',type==='CPF'?owner.rg:null),
+  'locador.cnpj':required('locador.cnpj',type==='CNPJ'?document:null),
+  'locador.documento':required('locador.documento',document),
+  'locador.razao_social':required('locador.razao_social',type==='CNPJ'?owner.fullName:null),
+  'locador.representante':required('locador.representante',type==='CNPJ'?owner.representativeName:null),
+  'locador.representante_cpf':required('locador.representante_cpf',type==='CNPJ'?owner.representativeCpf:null),
+  'locador.representante_cargo':required('locador.representante_cargo',type==='CNPJ'?owner.representativeRole:null),
+  'locador.endereco':required('locador.endereco',address),
   'locatario.nome':required('locatario.nome',fullName),
   'locatario.cpf':required('locatario.cpf',guest.cpf),'locatario.rg':required('locatario.rg',guest.rg),
   'locatario.endereco':required('locatario.endereco',guest.address),
