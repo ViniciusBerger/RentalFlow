@@ -50,6 +50,14 @@ describe('draft contract write isolation',()=>{
   expect(sql.params).toContain(uid);
   expect(sql.params).toContain(contractId);
  });
+ it('cancelled booking drafts cannot be modified or silently reactivated',async()=>{
+  const {db}=dbStub([[contract],[{...rental,isActive:false}]]);
+  await expect(new ContractWorkspaceService(db).save(uid,contractId,{
+   editToken:stableToken(),guest:{cpf:'52998224725'}
+  } as any)).rejects.toThrow('Cancelled booking cannot be edited');
+  expect(db.delete).not.toHaveBeenCalled();
+  expect(db.insert).not.toHaveBeenCalled();
+ });
  it('rejects editing any READY/FINALIZED revision',async()=>{
   const {db}=dbStub([[contract],[rental],[{...revision,status:'FINALIZED'}]]);
   await expect(new ContractWorkspaceService(db).save(uid,contractId,{
