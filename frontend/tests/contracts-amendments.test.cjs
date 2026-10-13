@@ -182,3 +182,81 @@ test('Portuguese amendment labels and property loading failure are shown explici
  assert.match(JSON.stringify(ui.tree),/Não foi possível carregar os imóveis/);
  assert.ok(button(ui,'Revisar alteração'));
 });
+
+test('installment editor supports explicit due rules, deposit, add and removal without sending receipts',async()=>{
+ const calls=network(),ui=await show();
+ const schedule=nodes(ui.tree,n=>n.type==='input'&&n.props.type==='checkbox')[0];
+ schedule.props.onChange({target:{checked:true}});ui.render();
+ let deposit=nodes(ui.tree,n=>n.type==='input'&&n.props.type==='checkbox').find(n=>!n.props.disabled&&n.props.checked===false&&n!==schedule);
+ assert.ok(deposit);deposit.props.onChange({target:{checked:true}});ui.render();
+ const event=nodes(ui.tree,n=>n.type==='select'&&n.props.value==='CHECKIN')[0];
+ event.props.onChange({target:{value:'AGREED_EVENT'}});ui.render();
+ const due=nodes(ui.tree,n=>n.type==='input'&&n.props.type==='date')[2];
+ assert.ok(due);due.props.onChange({target:{value:'2027-04-01'}});ui.render();
+ const method=nodes(ui.tree,n=>n.type==='select'&&n.props.value==='PIX')[0];
+ method.props.onChange({target:{value:'BANK_TRANSFER'}});ui.render();
+ button(ui,'Add installment').props.onClick();ui.render();
+ assert.equal(nodes(ui.tree,n=>n.type==='input'&&n.props.type==='number').length>=4,true);
+ button(ui,'Remove installment').props.onClick();ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ // No changed booking fields: server refuses the candidate, but browser request never asserts receipts.
+ const req=calls.find(x=>x.url.endsWith('/amendment-review'));
+ const dto=JSON.parse(req.init.body);
+ assert.equal(dto.installments[0].isDeposit,true);
+ assert.equal(dto.installments[0].dueDate,'2027-04-01');
+ assert.equal(dto.installments[0].dueEvent,undefined);
+ assert.equal(dto.installments[0].paymentMethod,'BANK_TRANSFER');
+ assert.equal('receivedCents' in dto.installments[0],false);
+});
+test('validation fails closed for negative base, incomplete guest count and unsafe input',async()=>{
+ let posts=0;network(url=>{if(url.endsWith('/amendment-review'))posts++;return respond({})});
+ const ui=await show();
+ const base=nodes(ui.tree,n=>n.type==='input'&&n.props.step==='0.01')[0];
+ base.props.onChange({target:{value:'-1'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<3;i++){await next();ui.render();}
+ assert.equal(posts,0);
+ base.props.onChange({target:{value:'400'}});ui.render();
+ const guests=nodes(ui.tree,n=>n.type==='input'&&n.props.max==='999')[0];
+ guests.props.onChange({target:{value:'1.5'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<3;i++){await next();ui.render();}
+ assert.equal(posts,0);
+});
+test('failed landlord approval never refreshes dashboard nor claims an amendment applied',async()=>{
+ let refreshed=0,applied=0;
+ rentalDataStore.refreshAfterMutation=async()=>{refreshed++};
+ global.window={confirm:()=>true};
+ network(url=>{
+  if(url.endsWith('/amendment-review'))return respond(review);
+  if(url.endsWith('/amend'))return {ok:false,status:409,json:async()=>({message:'New dates already booked'})};
+  return respond({});
+ });
+ const ui=await show({onApplied:async()=>{applied++}});
+ const guests=nodes(ui.tree,n=>n.type==='input'&&n.props.max==='999')[0];
+ guests.props.onChange({target:{value:'3'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ button(ui,'Approve as landlord').props.onClick();
+ for(let i=0;i<6;i++){await next();ui.render();}
+ assert.equal(applied,0);assert.equal(refreshed,0);
+ assert.match(JSON.stringify(ui.tree),/New dates already booked/);
+ assert.equal(button(ui,'Approve as landlord'),undefined);
+});
+test('Portuguese landlord confirmation never represents amendment as electronically signed',async()=>{
+ LanguageContext._currentValue={locale:'pt-BR',setLocale:()=>{},t:()=>''};
+ global.window={confirm:()=>true};
+ network();
+ let applied=0;rentalDataStore.refreshAfterMutation=async()=>{};
+ const ui=await show({onApplied:async()=>{applied++}});
+ const guests=nodes(ui.tree,n=>n.type==='input'&&n.props.max==='999')[0];
+ guests.props.onChange({target:{value:'3'}});ui.render();
+ button(ui,'Revisar alteração').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ assert.match(JSON.stringify(ui.tree),/NÃO assina/);
+ button(ui,'Confirmar como locador').props.onClick();
+ for(let i=0;i<6;i++){await next();ui.render();}
+ assert.equal(applied,1);
+ assert.match(JSON.stringify(ui.tree),/não assinado/);
+});
