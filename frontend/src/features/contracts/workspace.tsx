@@ -304,6 +304,24 @@ export function ContractsWorkspacePage(){
       <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy}
        onClick={()=>void finalPdf()}><Download size={16}/>{pt?'Baixar PDF arquivado':'Download archived PDF'}</button>
      </div>}
+     {contractCancellationsEnabled&&!detail.cancelled&&<div className="rf-contract-actions">
+      <button type="button" className="rf-button rf-contract-secondary"
+       disabled={cancelBusy||guestDirty||paymentsDirty||saving||finalBusy}
+       onClick={()=>void requestCancellationReview()}>
+       {pt?'Revisar cancelamento':'Review cancellation'}</button>
+      {cancelReview&&<div role="status" className="rf-contract-error">
+       <p>{pt?'O cancelamento excluirá dos indicadores ativos:':'Cancellation will exclude from active reporting:'}</p>
+       <p>{pt?'Receita':'Revenue'}: {money(cancelReview.revenueExcludedCents,locale)}
+        {' · '}{pt?'Lucro':'Profit'}: {money(cancelReview.profitExcludedCents,locale)}</p>
+       <p>{pt?'Pagamentos registrados (mantidos no histórico)':'Recorded receipts (preserved in history)'}:
+        {' '}{money(cancelReview.recordedReceivedCents,locale)}</p>
+       <p>{pt?'Nenhum reembolso ou multa será processado automaticamente. O contrato arquivado será preservado.':
+        'No refund or penalty will be processed automatically. Archived contracts will be preserved.'}</p>
+       <button type="button" className="rf-button" disabled={cancelBusy}
+        onClick={()=>void completeCancellation()}>
+        {pt?'Confirmar cancelamento':'Confirm cancellation'}</button>
+      </div>}
+     </div>}
      <h4>{pt?'Histórico de revisões':'Revision history'}</h4>
      <div className="rf-contract-workspace-history">
       {detail.history.map(x=><p key={x.id}>v{x.version} · {x.status} · {String(x.createdAt).slice(0,10)}</p>)}
