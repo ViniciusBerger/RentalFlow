@@ -226,7 +226,10 @@ export function ContractsWorkspacePage(){
      {detail.pricing?.guestFeeReason&&<p className="rf-contract-help">
       {pt?'Justificativa para taxa de hóspedes':'Guest surcharge justification'}: {String(detail.pricing.guestFeeReason)}
      </p>}
-     {!editable&&<p className="rf-contract-help">{pt?'Revisões prontas ou finalizadas não permitem alterações aqui.':'Ready or finalized revisions cannot be edited here.'}</p>}
+     {detail.cancelled&&<p role="status" className="rf-contract-error">{pt?
+      'Reserva cancelada. Receita e lucro excluídos dos indicadores ativos; o contrato e os pagamentos registrados foram preservados.':
+      'Booking cancelled. Revenue and profit are excluded from active reporting; the agreement and recorded payments are preserved.'}</p>}
+     {!editable&&!detail.cancelled&&<p className="rf-contract-help">{pt?'Revisões prontas ou finalizadas não permitem alterações aqui.':'Ready or finalized revisions cannot be edited here.'}</p>}
      <h4>{pt?'Identificação do contratante':'Contracting guest identification'}</h4>
      <p className="rf-contract-help">{pt?'O nome do contratante vem da reserva. O restante é um rascunho criptografado.':'Guest name comes from the booking; these draft identity fields are encrypted at rest.'}</p>
      <div className="rf-contract-grid">
