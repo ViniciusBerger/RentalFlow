@@ -1,10 +1,12 @@
 import {useEffect,useMemo,useState} from 'react';
 import {FileText,Download,Eye,LockKeyhole,Save,RefreshCw,Plus,Trash2} from 'lucide-react';
+import {rentalDataStore} from '../../hooks/load-data/rental-data-store';
 import {useLanguage} from '../../i18n/context';
 import {localizeError} from '../../i18n/messages';
 import {contractsWorkspaceEnabled,listContracts,getContract,saveContractDraft,downloadDraftPdf,
  contractFinalizationEnabled,prepareContractFinalization,finalizeContract,downloadFinalContractPdf,
- type ContractListItem,type ContractDetail,type DraftInstallment} from './contract-workspace-api';
+ contractCancellationsEnabled,prepareContractCancellation,confirmContractCancellation,
+ type ContractCancellationReview,type ContractListItem,type ContractDetail,type DraftInstallment} from './contract-workspace-api';
 
 const money=(value:number,locale:string)=>new Intl.NumberFormat(locale,{style:'currency',currency:'BRL'}).format(value/100);
 const guestFields=[
@@ -28,6 +30,8 @@ export function ContractsWorkspacePage(){
  const [pdfBusy,setPdfBusy]=useState(false);
  const [finalBusy,setFinalBusy]=useState(false);
  const [reviewToken,setReviewToken]=useState<string|null>(null);
+ const [cancelReview,setCancelReview]=useState<ContractCancellationReview|null>(null);
+ const [cancelBusy,setCancelBusy]=useState(false);
  const [error,setError]=useState(''),[notice,setNotice]=useState('');
  const [query,setQuery]=useState(''),[status,setStatus]=useState('ALL'),[property,setProperty]=useState('ALL');
  const refresh=async()=>{
@@ -49,14 +53,14 @@ export function ContractsWorkspacePage(){
   let alive=true;setDetailBusy(true);setError('');
   getContract(selected).then(data=>{if(!alive)return;
    setDetail(data);setGuest({...data.guest});setPayments(data.installments.map(x=>({...x})));
-   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);setNotice('');
+   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);setCancelReview(null);setNotice('');
   }).catch(e=>{if(alive){setDetail(null);setError(displayError(e,locale));}})
    .finally(()=>{if(alive)setDetailBusy(false);});
   return()=>{alive=false;};
  },[selected,locale]);
  const properties=useMemo(()=>[...new Map(items.map(x=>[x.propertyId,x.propertyName])).entries()], [items]);
  const filtered=useMemo(()=>items.filter(x=>
-  (status==='ALL'||status===x.status)&&(property==='ALL'||property===x.propertyId)&&
+  (status==='ALL'||(status==='CANCELLED'?x.cancelled:!x.cancelled&&status===x.status))&&(property==='ALL'||property===x.propertyId)&&
   [x.firstName,x.lastName,x.propertyName,x.startDate,x.endDate].join(' ')
    .toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR').trim())
  ),[items,status,property,query]);
@@ -64,7 +68,7 @@ export function ContractsWorkspacePage(){
  const paid=payments.some(x=>(x.receivedCents??0)>0||Boolean(x.paidAt));
  const modifyPayment=(index:number,delta:Partial<DraftInstallment>)=>{
   setPayments(rows=>rows.map((r,i)=>i===index?{...r,...delta}:r));
-  setPaymentsDirty(true);setReviewToken(null);setNotice('');
+  setPaymentsDirty(true);setReviewToken(null);setCancelReview(null);setNotice('');
  };
  const save=async()=>{
   if(!detail||!editable||(!guestDirty&&!paymentsDirty))return;
@@ -113,6 +117,31 @@ export function ContractsWorkspacePage(){
     'Contract finalized and archived. It remains unsigned.');
   }catch(e){setReviewToken(null);setError(displayError(e,locale));}
   finally{setFinalBusy(false);}
+ };
+
+ const requestCancellationReview=async()=>{
+  if(!detail||detail.cancelled||guestDirty||paymentsDirty)return;
+  setCancelBusy(true);setError('');setCancelReview(null);
+  try{setCancelReview(await prepareContractCancellation(detail.id));}
+  catch(e){setError(displayError(e,locale));}
+  finally{setCancelBusy(false);}
+ };
+ const completeCancellation=async()=>{
+  if(!detail||!cancelReview||detail.cancelled)return;
+  const text=pt?'Confirmar cancelamento desta reserva? Ela deixará de contar na receita, lucro e ocupação. Nenhum reembolso será efetuado automaticamente. O histórico será preservado.':
+   'Confirm cancellation? The booking will be removed from active revenue, profit and occupancy. No refund will be issued automatically. History stays archived.';
+  if(!window.confirm(text))return;
+  setCancelBusy(true);setError('');
+  try{
+   await confirmContractCancellation(detail.id,cancelReview.reviewToken);
+   setCancelReview(null);
+   await rentalDataStore.refreshAfterMutation();
+   await refresh();
+   setDetail(await getContract(detail.id));
+   setNotice(pt?'Reserva cancelada. Indicadores atualizados; nenhum reembolso foi efetuado.':
+    'Booking cancelled. Reporting refreshed; no refund was issued.');
+  }catch(e){setCancelReview(null);setError(displayError(e,locale));}
+  finally{setCancelBusy(false);}
  };
  const finalPdf=async()=>{
   if(!detail||detail.status!=='FINALIZED')return;
@@ -165,6 +194,7 @@ export function ContractsWorkspacePage(){
       <select value={status} onChange={e=>setStatus(e.target.value)}>
        <option value="ALL">{pt?'Todos':'All'}</option><option value="DRAFT">{pt?'Rascunho':'Draft'}</option>
        <option value="READY">{pt?'Pronto':'Ready'}</option><option value="FINALIZED">{pt?'Finalizado':'Finalized'}</option>
+       <option value="CANCELLED">{pt?'Cancelado':'Cancelled'}</option>
       </select></label>
      <label className="rf-contract-field">{pt?'Imóvel':'Property'}
       <select value={property} onChange={e=>setProperty(e.target.value)}>
@@ -179,7 +209,7 @@ export function ContractsWorkspacePage(){
       className={'rf-contract-workspace-item '+(selected===x.id?'active':'')}>
       <span className="rf-contract-workspace-item-title">{x.firstName} {x.lastName}</span>
       <span>{x.propertyName} · {x.startDate} → {x.endDate}</span>
-      <span>{money(Math.round(x.revenue*100),locale)} · {x.status}</span>
+      <span>{money(Math.round(x.revenue*100),locale)} · {x.cancelled?(pt?'CANCELADO':'CANCELLED'):x.status}</span>
      </button>)}</div>}
     <p className="rf-contract-help">{pt?'Exibindo até 100 contratos recentes.':'Showing up to 100 recent contracts.'}</p>
    </aside>
@@ -189,7 +219,7 @@ export function ContractsWorkspacePage(){
      <div className="rf-contract-workspace-title">
       <div><h3><FileText size={20}/>{detail.booking.clientFirstName} {detail.booking.clientLastName}</h3>
        <p>{detail.property.name} · {detail.booking.startDate} → {detail.booking.endDate}</p></div>
-      <strong>{detail.status} · v{detail.revisionVersion}</strong>
+      <strong>{detail.cancelled?(pt?'CANCELADO':'CANCELLED'):detail.status} · v{detail.revisionVersion}</strong>
      </div>
      <p className="rf-contract-help">{pt?'Total definido pelo servidor':'Server-authoritative total'}: <strong>{money(detail.booking.totalCents,locale)}</strong>.
       {' '}{pt?'O valor da reserva não pode ser alterado pelo editor do contrato.':'The contract editor cannot change the booking total.'}</p>
@@ -203,7 +233,7 @@ export function ContractsWorkspacePage(){
       {guestFields.map(([key,label])=><label key={key} className="rf-contract-field">{label}
        <input name={key} autoComplete="off" maxLength={key==='address'?500:key==='email'?254:key==='phone'?32:key==='nationality'||key==='maritalStatus'?40:20}
         disabled={!editable||saving} value={guest[key]??''} onChange={e=>{
-         setGuest(g=>({...g,[key]:e.target.value}));setGuestDirty(true);setReviewToken(null);setNotice('');
+         setGuest(g=>({...g,[key]:e.target.value}));setGuestDirty(true);setReviewToken(null);setCancelReview(null);setNotice('');
         }}/></label>)}
      </div>
      <h4>{pt?'Parcelas previstas':'Planned installments'}</h4>
@@ -260,7 +290,7 @@ export function ContractsWorkspacePage(){
       </div>}
       {detail.status==='DRAFT'&&<p className="rf-contract-help">{pt?'Prévia não assinada e sem validade de contrato final.':'Unsigned preview; not a finalized contract.'}</p>}
      </div>
-     {contractFinalizationEnabled&&detail.status==='DRAFT'&&<div className="rf-contract-actions">
+     {contractFinalizationEnabled&&!detail.cancelled&&detail.status==='DRAFT'&&<div className="rf-contract-actions">
       <p className="rf-contract-help">{pt?'A finalização arquiva uma versão imutável, sem recolher assinaturas. Salve e revise todos os campos antes de continuar.':
        'Finalization creates an immutable archive without collecting signatures. Save and check all fields first.'}</p>
       <button type="button" className="rf-button rf-contract-secondary"
