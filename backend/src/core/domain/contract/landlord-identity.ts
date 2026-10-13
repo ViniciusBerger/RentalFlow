@@ -7,7 +7,7 @@ export function landlordDocumentType(profile:LandlordProfile):LandlordDocumentTy
  return profile.documentType==='CNPJ'?'CNPJ':'CPF';
 }
 export function normalizeCnpj(value:string):string{
- return value.trim().toUpperCase().replace(/[.\/\s-]/g,'');
+ return value.trim().toUpperCase().replaceAll('/','').replace(/[.\s-]/g,'');
 }
 /** Receita Federal 2026 specification: positions 1–12 may contain A–Z and 0–9,
  * positions 13–14 remain numeric; each letter contributes its ASCII code minus 48. */
