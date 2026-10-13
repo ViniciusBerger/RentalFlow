@@ -1,4 +1,4 @@
-import {validateBrazilianCpf} from './contract-validation';
+import {landlordIdentityMissingFields} from './landlord-identity';
 import {validateClauses,type ContractClause,type ContractPayment,type ContractPolicy,type LandlordProfile} from './contract-questionnaire';
 
 export type ReadinessIssueCode =
@@ -17,20 +17,7 @@ export function readinessIssues(input:{
  const issues:ReadinessIssue[]=[];
  if(!input.configured)issues.push({code:'ACCOUNT_SETTINGS'});
  const p=input.landlord;
- const missing:string[]=[];
- const required:{key:keyof LandlordProfile;valid?:(v:string)=>boolean}[]=[
-  {key:'fullName',valid:v=>v.trim().length>=3},
-  {key:'cpf',valid:validateBrazilianCpf},{key:'rg',valid:v=>v.trim().length>=4},
-  {key:'addressStreet'},{key:'addressNumber'},{key:'addressDistrict'},{key:'addressCity'},
-  {key:'addressState',valid:v=>/^[A-Z]{2}$/.test(v)},
-  {key:'addressPostalCode',valid:v=>/^\d{5}-?\d{3}$/.test(v)}
- ];
- for(const r of required){
-  const value=p[r.key]??'';
-  if(!value.trim()||(r.valid&&!r.valid(value)))missing.push(r.key);
- }
- if(p.email?.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email))missing.push('email');
- if(p.phone?.trim()&&!/^\+?\d[\d\s()-]{8,20}$/.test(p.phone))missing.push('phone');
+ const missing=landlordIdentityMissingFields(p);
  if(missing.length)issues.push({code:'LANDLORD_DETAILS',fields:missing});
  if(!/^.{2,90}\/[A-Z]{2}$/.test(input.policy.jurisdiction?.trim()??''))issues.push({code:'JURISDICTION',fields:['jurisdiction']});
  const methods=input.payment.acceptedMethods;
