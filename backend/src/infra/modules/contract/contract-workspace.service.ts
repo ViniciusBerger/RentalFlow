@@ -193,7 +193,8 @@ export class ContractWorkspaceService {
     guestFeeMode:archivedPricing?.guestFeeMode??null,
     guestFeeReason:archivedPricing?.guestFeeReason??null},
    templateVersion:template?.versionNumber??null,
-   preview:displayedPreview,editable:current.status==='DRAFT'&&rental.isActive
+   preview:displayedPreview,editable:current.status==='DRAFT'&&rental.isActive&&
+    !revisions.some(x=>x.status==='FINALIZED')
   };
  }
  async auditPdfPreview(uid:string,contractId:string){
@@ -221,6 +222,10 @@ export class ContractWorkspaceService {
     eq(ContractRevisionSchema.userId,uid)))
     .orderBy(desc(ContractRevisionSchema.versionNumber)).limit(1);
    if(!revision||revision.status!=='DRAFT')throw new ConflictException('Only drafts can be edited');
+   const [alreadyApproved]=await tx.select({id:ContractRevisionSchema.id}).from(ContractRevisionSchema)
+    .where(and(eq(ContractRevisionSchema.contractId,contractId),
+     eq(ContractRevisionSchema.userId,uid),eq(ContractRevisionSchema.status,'FINALIZED'))).limit(1);
+   if(alreadyApproved)throw new ConflictException('Landlord-approved amendment drafts cannot be edited after an earlier finalized contract');
    const [existingGuest]=await tx.select().from(RentalGuestDetailsSchema).where(and(
     eq(RentalGuestDetailsSchema.rentalId,rental.id),
     eq(RentalGuestDetailsSchema.userId,uid))).limit(1);

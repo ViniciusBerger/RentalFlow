@@ -65,8 +65,16 @@ describe('draft contract write isolation',()=>{
   } as any)).rejects.toBeInstanceOf(ConflictException);
   expect(db.insert).not.toHaveBeenCalled();
  });
+ it('rejects edits to approved amendment drafts while preserving earlier finalized revisions',async()=>{
+  const {db}=dbStub([[contract],[rental],[revision],[{id:'prior-finalized'}]]);
+  await expect(new ContractWorkspaceService(db).save(uid,contractId,{
+   editToken:stableToken(),guest:{address:'Change without new amendment'}
+  } as any)).rejects.toThrow('Landlord-approved amendment drafts cannot be edited');
+  expect(db.delete).not.toHaveBeenCalled();
+  expect(db.insert).not.toHaveBeenCalled();
+ });
  it('stale edit tokens prevent lost writes or replay',async()=>{
-  const {db}=dbStub([[contract],[rental],[revision],[],[]]);
+  const {db}=dbStub([[contract],[rental],[revision],[],[],[]]);
   await expect(new ContractWorkspaceService(db).save(uid,contractId,{
    editToken:'0'.repeat(64),guest:{phone:'1234567890'}
   } as any)).rejects.toBeInstanceOf(ConflictException);
@@ -74,7 +82,7 @@ describe('draft contract write isolation',()=>{
   expect(db.insert).not.toHaveBeenCalled();
  });
  it('cannot rewrite the booking total through installments',async()=>{
-  const {db}=dbStub([[contract],[rental],[revision],[],[]]);
+  const {db}=dbStub([[contract],[rental],[revision],[],[],[]]);
   await expect(new ContractWorkspaceService(db).save(uid,contractId,{
    editToken:stableToken(),installments:[{agreedCents:9999}]
   } as any)).rejects.toBeInstanceOf(BadRequestException);
@@ -88,7 +96,7 @@ describe('draft contract write isolation',()=>{
   expect(db.transaction).not.toHaveBeenCalled();
  });
  it('seals identity and logs a PII-free audit on a scoped draft save',async()=>{
-  const {db,values}=dbStub([[contract],[rental],[revision],[],[]]);
+  const {db,values}=dbStub([[contract],[rental],[revision],[],[],[]]);
   const service=new ContractWorkspaceService(db);
   jest.spyOn(service,'detail').mockResolvedValue({saved:true} as any);
   const saved=await service.save(uid,contractId,{

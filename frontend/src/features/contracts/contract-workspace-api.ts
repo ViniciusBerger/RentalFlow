@@ -126,3 +126,31 @@ export async function getCancellationPreview(id:string):Promise<CancellationPrev
  });
  return checked<CancellationPreview>(response);
 }
+
+export const contractAmendmentsEnabled=contractsWorkspaceEnabled&&import.meta.env.VITE_CONTRACT_AMENDMENTS_ENABLED==='true';
+export type AmendmentInstallment={agreedCents:number;dueDate?:string;dueEvent?:string;paymentMethod?:string;isDeposit?:boolean};
+export type AmendmentProposal={
+ propertyId:string;startDate:string;endDate:string;guests:number;baseRevenueCents:number;
+ guestFee:{mode:'AUTOMATIC'}|{mode:'WAIVED';reason:string}|{mode:'ADJUSTED';cents:number;reason:string};
+ installments?:AmendmentInstallment[]
+};
+export type AmendmentFacts={propertyId:string;startDate:string;endDate:string;
+ guests:number;revenueCents:number;feeCents:number;profitCents:number};
+export type AmendmentReview={ready:true;reviewToken:string;before:AmendmentFacts;after:AmendmentFacts;
+ pricing:{baseRevenueCents:number;totalCents:number;calculatedExtraCents:number;chargedExtraCents:number};
+ paymentChanged:boolean;recordedPayments:number;unsignedAmendmentRequired:true};
+export async function reviewContractAmendment(id:string,proposal:AmendmentProposal):Promise<AmendmentReview>{
+ const response=await csrfFetch(root+'/'+encodeURIComponent(id)+'/amendment-review',{
+  method:'POST',credentials:'include',cache:'no-store',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify(proposal)
+ });
+ return checked(response);
+}
+export async function approveContractAmendment(id:string,proposal:AmendmentProposal,reviewToken:string):
+ Promise<{applied:true;revisionId:string;status:'DRAFT';signatureStatus:'UNSIGNED'}>{
+ const response=await csrfFetch(root+'/'+encodeURIComponent(id)+'/amend',{
+  method:'POST',credentials:'include',cache:'no-store',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify({proposal,reviewToken,confirm:true})
+ });
+ return checked(response);
+}

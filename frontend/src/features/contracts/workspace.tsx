@@ -1,12 +1,13 @@
 import {useEffect,useMemo,useState} from 'react';
 import {FileText,Download,Eye,LockKeyhole,Save,RefreshCw,Plus,Trash2} from 'lucide-react';
 import {rentalDataStore} from '../../hooks/load-data/rental-data-store';
+import {AmendmentPanel} from './amendment-panel';
 import {useLanguage} from '../../i18n/context';
 import {localizeError} from '../../i18n/messages';
 import {contractsWorkspaceEnabled,listContracts,getContract,saveContractDraft,downloadDraftPdf,
  contractFinalizationEnabled,prepareContractFinalization,finalizeContract,downloadFinalContractPdf,
  contractChangesEnabled,getCancellationPreview,type CancellationPreview,
- contractCancellationsEnabled,prepareContractCancellation,confirmContractCancellation,
+ contractCancellationsEnabled,prepareContractCancellation,confirmContractCancellation,contractAmendmentsEnabled,
  type ContractCancellationReview,type ContractListItem,type ContractDetail,type DraftInstallment} from './contract-workspace-api';
 
 const money=(value:number,locale:string)=>new Intl.NumberFormat(locale,{style:'currency',currency:'BRL'}).format(value/100);
@@ -360,6 +361,14 @@ export function ContractsWorkspacePage(){
         'Automatic transfer unavailable until a payment provider is integrated.'}</p>
       </div>}
      </section>}
+     {contractAmendmentsEnabled&&!detail.cancelled&&detail.status==='FINALIZED'&&
+      <AmendmentPanel key={detail.revisionId} detail={detail} onApplied={async()=>{
+       await refresh();
+       setDetail(await getContract(detail.id));
+       setReviewToken(null);setCancelReview(null);
+       setNotice(pt?'Alteração aplicada e novo contrato em rascunho, sem assinatura.':
+        'Amendment applied; new contract draft is unsigned.');
+      }}/>}
      <h4>{pt?'Histórico de revisões':'Revision history'}</h4>
      <div className="rf-contract-workspace-history">
       {detail.history.map(x=><p key={x.id}>v{x.version} · {x.status} · {String(x.createdAt).slice(0,10)}</p>)}
