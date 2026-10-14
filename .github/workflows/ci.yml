@@ -133,6 +133,9 @@ jobs:
       - name: Frontend UI smoke checks
         run: node --test ui-redesign.test.mjs
 
+      - name: Contract Docker build flag regression
+        run: node --test tests/contracts-docker-build.test.cjs
+
       - name: Production build
         run: npm run build
 
