@@ -412,6 +412,7 @@ test('unusual server exceptions remain visible in amendment preview without crea
 });
 
 test('missing property from active list keeps historical property option without inventing a replacement',async()=>{
+ network();
  const ui=await show({detail:{property:{id:'99999999-9999-4999-8999-999999999999',name:'Inactive historical property'}}});
  const menu=nodes(ui.tree,n=>n.type==='select'&&n.props.value==='99999999-9999-4999-8999-999999999999')[0];
  assert.ok(menu);
