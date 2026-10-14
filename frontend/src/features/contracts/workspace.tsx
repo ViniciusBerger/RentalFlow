@@ -6,6 +6,7 @@ import {useLanguage} from '../../i18n/context';
 import {localizeError} from '../../i18n/messages';
 import {contractsWorkspaceEnabled,listContracts,getContract,saveContractDraft,downloadDraftPdf,
  contractFinalizationEnabled,prepareContractFinalization,finalizeContract,downloadFinalContractPdf,
+ contractChangesEnabled,getCancellationPreview,type CancellationPreview,
  contractCancellationsEnabled,prepareContractCancellation,confirmContractCancellation,contractAmendmentsEnabled,
  type ContractCancellationReview,type ContractListItem,type ContractDetail,type DraftInstallment} from './contract-workspace-api';
 
@@ -33,6 +34,8 @@ export function ContractsWorkspacePage(){
  const [reviewToken,setReviewToken]=useState<string|null>(null);
  const [cancelReview,setCancelReview]=useState<ContractCancellationReview|null>(null);
  const [cancelBusy,setCancelBusy]=useState(false);
+ const [cancellation,setCancellation]=useState<CancellationPreview|null>(null);
+ const [cancellationBusy,setCancellationBusy]=useState(false);
  const [error,setError]=useState(''),[notice,setNotice]=useState('');
  const [query,setQuery]=useState(''),[status,setStatus]=useState('ALL'),[property,setProperty]=useState('ALL');
  const refresh=async()=>{
@@ -54,7 +57,7 @@ export function ContractsWorkspacePage(){
   let alive=true;setDetailBusy(true);setError('');
   getContract(selected).then(data=>{if(!alive)return;
    setDetail(data);setGuest({...data.guest});setPayments(data.installments.map(x=>({...x})));
-   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);setCancelReview(null);setNotice('');
+   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);setCancelReview(null);setCancellation(null);setNotice('');
   }).catch(e=>{if(alive){setDetail(null);setError(displayError(e,locale));}})
    .finally(()=>{if(alive)setDetailBusy(false);});
   return()=>{alive=false;};
@@ -120,6 +123,13 @@ export function ContractsWorkspacePage(){
   finally{setFinalBusy(false);}
  };
 
+ const previewCancellation=async()=>{
+  if(!detail)return;
+  setCancellationBusy(true);setError('');setCancellation(null);
+  try{setCancellation(await getCancellationPreview(detail.id));}
+  catch(e){setError(displayError(e,locale));}
+  finally{setCancellationBusy(false);}
+ };
  const requestCancellationReview=async()=>{
   if(!detail||detail.cancelled||guestDirty||paymentsDirty)return;
   setCancelBusy(true);setError('');setCancelReview(null);
@@ -133,15 +143,20 @@ export function ContractsWorkspacePage(){
    'Confirm cancellation? The booking will be removed from active revenue, profit and occupancy. No refund will be issued automatically. History stays archived.';
   if(!window.confirm(text))return;
   setCancelBusy(true);setError('');
+  let committed=false;
   try{
    await confirmContractCancellation(detail.id,cancelReview.reviewToken);
+   committed=true;
    setCancelReview(null);
    await rentalDataStore.refreshAfterMutation();
    await refresh();
    setDetail(await getContract(detail.id));
    setNotice(pt?'Reserva cancelada. Indicadores atualizados; nenhum reembolso foi efetuado.':
     'Booking cancelled. Reporting refreshed; no refund was issued.');
-  }catch(e){setCancelReview(null);setError(displayError(e,locale));}
+  }catch(e){setCancelReview(null);
+   if(committed)setNotice(pt?'Reserva cancelada no servidor, mas os indicadores não puderam ser atualizados. Atualize a página.':
+    'Booking cancelled on the server, but reporting could not refresh. Reload the page.');
+   else setError(displayError(e,locale));}
   finally{setCancelBusy(false);}
  };
  const finalPdf=async()=>{
@@ -308,7 +323,11 @@ export function ContractsWorkspacePage(){
       <button type="button" className="rf-button rf-contract-secondary" disabled={pdfBusy}
        onClick={()=>void finalPdf()}><Download size={16}/>{pt?'Baixar PDF arquivado':'Download archived PDF'}</button>
      </div>}
-     {contractCancellationsEnabled&&!detail.cancelled&&<div className="rf-contract-actions">
+     {contractCancellationsEnabled&&!detail.cancelled&&detail.cancellationEligible===false&&
+      <p role="status" className="rf-contract-help">{pt
+       ?'Cancelamento indisponível: o horário de entrada já passou ou está ausente na configuração do imóvel.'
+       :'Cancellation unavailable: check-in has started or the property check-in time is missing.'}</p>}
+     {contractCancellationsEnabled&&!detail.cancelled&&detail.cancellationEligible!==false&&<div className="rf-contract-actions">
       <button type="button" className="rf-button rf-contract-secondary"
        disabled={cancelBusy||guestDirty||paymentsDirty||saving||finalBusy}
        onClick={()=>void requestCancellationReview()}>
@@ -326,6 +345,22 @@ export function ContractsWorkspacePage(){
         {pt?'Confirmar cancelamento':'Confirm cancellation'}</button>
       </div>}
      </div>}
+     {contractChangesEnabled&&<section className="rf-contract-workspace-preview" aria-label={pt?'Cancelamento':'Cancellation'}>
+      <h4>{pt?'Prévia do cancelamento':'Cancellation preview'}</h4>
+      <p className="rf-contract-help">{pt?
+       'A consulta não cancela a reserva nem transfere dinheiro. A confirmação e os reembolsos automáticos dependem da integração financeira segura.':
+       'This preview neither cancels the booking nor transfers funds. Confirmation and automated refunds require secure payment integration.'}</p>
+      <button type="button" className="rf-button rf-contract-secondary" disabled={cancellationBusy}
+       onClick={()=>void previewCancellation()}>{cancellationBusy?(pt?'Calculando...':'Calculating...'):
+        (pt?'Calcular cancelamento':'Calculate cancellation')}</button>
+      {cancellation&&<div role="status" className="rf-contract-help">
+       <p>{pt?'Pagamentos registrados':'Recorded payments'}: {money(cancellation.paidCents,locale)}</p>
+       <p>{pt?'Valor a devolver':'Refund due'}: {cancellation.refundDueCents===null?
+        (pt?'Revisão da política necessária':'Policy review required'):money(cancellation.refundDueCents,locale)}</p>
+       <p>{pt?'Transferência automática indisponível até a integração com provedor de pagamentos.':
+        'Automatic transfer unavailable until a payment provider is integrated.'}</p>
+      </div>}
+     </section>}
      {contractAmendmentsEnabled&&!detail.cancelled&&detail.status==='FINALIZED'&&
       <AmendmentPanel key={detail.revisionId} detail={detail} onApplied={async()=>{
        await refresh();
