@@ -5,6 +5,7 @@ import {useLanguage} from '../../i18n/context';
 import {localizeError} from '../../i18n/messages';
 import {contractsWorkspaceEnabled,listContracts,getContract,saveContractDraft,downloadDraftPdf,
  contractFinalizationEnabled,prepareContractFinalization,finalizeContract,downloadFinalContractPdf,
+ contractChangesEnabled,getCancellationPreview,type CancellationPreview,
  contractCancellationsEnabled,prepareContractCancellation,confirmContractCancellation,
  type ContractCancellationReview,type ContractListItem,type ContractDetail,type DraftInstallment} from './contract-workspace-api';
 
@@ -32,6 +33,8 @@ export function ContractsWorkspacePage(){
  const [reviewToken,setReviewToken]=useState<string|null>(null);
  const [cancelReview,setCancelReview]=useState<ContractCancellationReview|null>(null);
  const [cancelBusy,setCancelBusy]=useState(false);
+ const [cancellation,setCancellation]=useState<CancellationPreview|null>(null);
+ const [cancellationBusy,setCancellationBusy]=useState(false);
  const [error,setError]=useState(''),[notice,setNotice]=useState('');
  const [query,setQuery]=useState(''),[status,setStatus]=useState('ALL'),[property,setProperty]=useState('ALL');
  const refresh=async()=>{
@@ -53,7 +56,7 @@ export function ContractsWorkspacePage(){
   let alive=true;setDetailBusy(true);setError('');
   getContract(selected).then(data=>{if(!alive)return;
    setDetail(data);setGuest({...data.guest});setPayments(data.installments.map(x=>({...x})));
-   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);setCancelReview(null);setNotice('');
+   setGuestDirty(false);setPaymentsDirty(false);setReviewToken(null);setCancelReview(null);setCancellation(null);setNotice('');
   }).catch(e=>{if(alive){setDetail(null);setError(displayError(e,locale));}})
    .finally(()=>{if(alive)setDetailBusy(false);});
   return()=>{alive=false;};
@@ -119,6 +122,13 @@ export function ContractsWorkspacePage(){
   finally{setFinalBusy(false);}
  };
 
+ const previewCancellation=async()=>{
+  if(!detail)return;
+  setCancellationBusy(true);setError('');setCancellation(null);
+  try{setCancellation(await getCancellationPreview(detail.id));}
+  catch(e){setError(displayError(e,locale));}
+  finally{setCancellationBusy(false);}
+ };
  const requestCancellationReview=async()=>{
   if(!detail||detail.cancelled||guestDirty||paymentsDirty)return;
   setCancelBusy(true);setError('');setCancelReview(null);
@@ -334,6 +344,22 @@ export function ContractsWorkspacePage(){
         {pt?'Confirmar cancelamento':'Confirm cancellation'}</button>
       </div>}
      </div>}
+     {contractChangesEnabled&&<section className="rf-contract-workspace-preview" aria-label={pt?'Cancelamento':'Cancellation'}>
+      <h4>{pt?'Prévia do cancelamento':'Cancellation preview'}</h4>
+      <p className="rf-contract-help">{pt?
+       'A consulta não cancela a reserva nem transfere dinheiro. A confirmação e os reembolsos automáticos dependem da integração financeira segura.':
+       'This preview neither cancels the booking nor transfers funds. Confirmation and automated refunds require secure payment integration.'}</p>
+      <button type="button" className="rf-button rf-contract-secondary" disabled={cancellationBusy}
+       onClick={()=>void previewCancellation()}>{cancellationBusy?(pt?'Calculando...':'Calculating...'):
+        (pt?'Calcular cancelamento':'Calculate cancellation')}</button>
+      {cancellation&&<div role="status" className="rf-contract-help">
+       <p>{pt?'Pagamentos registrados':'Recorded payments'}: {money(cancellation.paidCents,locale)}</p>
+       <p>{pt?'Valor a devolver':'Refund due'}: {cancellation.refundDueCents===null?
+        (pt?'Revisão da política necessária':'Policy review required'):money(cancellation.refundDueCents,locale)}</p>
+       <p>{pt?'Transferência automática indisponível até a integração com provedor de pagamentos.':
+        'Automatic transfer unavailable until a payment provider is integrated.'}</p>
+      </div>}
+     </section>}
      <h4>{pt?'Histórico de revisões':'Revision history'}</h4>
      <div className="rf-contract-workspace-history">
       {detail.history.map(x=><p key={x.id}>v{x.version} · {x.status} · {String(x.createdAt).slice(0,10)}</p>)}
