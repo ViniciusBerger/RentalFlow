@@ -288,3 +288,21 @@ test('property selection and guest search filter contracts on the client without
  next.props.onChange({target:{value:'ALL'}});view.render();
  assert.ok(find(view.tree,n=>n.type==='button'&&String(n.props.className).includes('rf-contract-workspace-item')));
 });
+
+test('draft PDF preview rejects wrong MIME, empty PDF and missing access without exposing content',async()=>{
+ global.fetch=async()=>({ok:true,status:200,
+  blob:async()=>new Blob(['Hello'],{type:'text/plain'})});
+ await assert.rejects(downloadDraftPdf(key),/Invalid PDF preview/);
+ global.fetch=async()=>({ok:true,status:200,
+  blob:async()=>new Blob(['%PDF'],{type:'application/pdf'})});
+ await assert.rejects(downloadDraftPdf(key),/Invalid PDF preview/);
+ global.fetch=async()=>({ok:false,status:403,
+  json:async()=>({message:'Not authorized to read draft'})});
+ await assert.rejects(downloadDraftPdf(key),/Not authorized to read draft/);
+});
+test('private contract API displays safe HTTP fallback when error body cannot be decoded',async()=>{
+ global.fetch=async()=>({ok:false,status:502,
+  json:async()=>{throw Error('non-JSON proxy response')}});
+ await assert.rejects(listContracts(),/HTTP 502/);
+ await assert.rejects(getContract(key),/HTTP 502/);
+});
