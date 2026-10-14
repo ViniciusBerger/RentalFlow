@@ -462,3 +462,23 @@ test('landlord approval errors presented as non-Error values cannot be mistaken 
  assert.match(JSON.stringify(ui.tree),/Amendment transaction refused/);
  assert.equal(button(ui,'Approve as landlord'),undefined);
 });
+
+test('legacy installment with omitted receipt metadata remains unpaid until a receipt is recorded',async()=>{
+ network();
+ const ui=await show({detail:{installments:[{
+  sequence:1,agreedCents:40000,isDeposit:false,dueEvent:'CHECKIN',
+  paymentMethod:'PIX'
+ }]}});
+ const schedule=nodes(ui.tree,n=>n.type==='input'&&n.props.type==='checkbox')[0];
+ assert.ok(schedule);
+ assert.equal(schedule.props.disabled,false);
+ schedule.props.onChange({target:{checked:true}});ui.render();
+ assert.ok(button(ui,'Add installment'));
+ const payment=nodes(ui.tree,n=>n.type==='input'&&n.props.step==='0.01')
+  .find(n=>n.props.value===400);
+ assert.ok(payment);
+ payment.props.onChange({target:{value:'350'}});ui.render();
+ const selected=nodes(ui.tree,n=>n.type==='input'&&n.props.step==='0.01')
+  .find(n=>n.props.value===350);
+ assert.ok(selected);
+});
