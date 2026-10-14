@@ -20,9 +20,29 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = HttpStatus.BAD_REQUEST;
       message = exception.message;
     } else {
-      // Never serialize arbitrary exception objects: SQL/query parameters may contain PII.
-      console.error('Unhandled request failure', { type: exception instanceof Error ? exception.name : 'UnknownError' });
-    }
+      // Avoid logging SQL, parameters or personal information.
+      const error = exception as {code?:unknown;constraint?:unknown;cause?:{code?:unknown;constraint?:unknown}};
+      const code = error?.cause?.code ?? error?.code;
+      const constraint = error?.cause?.constraint ?? error?.constraint;
+      const safeConstraints = ['contract_template_versions_one_draft',
+        'contract_template_versions_number_unique','contract_templates_one_default_owner'];
+      console.error('Unhandled request failure', {
+        type: exception instanceof Error ? exception.name : 'UnknownError',
+        code: typeof code === 'string' && /^[A-Z0-9]{5}$/.test(code) ? code : undefined,
+        constraint: typeof constraint === 'string' && safeConstraints.includes(constraint) ? constraint : undefined,
+        path: request.path
+      });
+      if (request.path === '/contracts/template/draft') {
+        if (code === '23505' && safeConstraints.includes(String(constraint))) {
+          status = HttpStatus.CONFLICT;
+          message = 'Contract draft was changed or already exists. Reload the template and try again.';
+        } else if (code === '23503') {
+          status = HttpStatus.CONFLICT;
+          message = 'Contract template account reference is missing. Reload and try again.';
+        } else {
+          message = 'Unable to save contract clauses. The server could not confirm your changes. Try again.';
+        }
+      } }
 
     response.status(status).json({
       statusCode: status,
