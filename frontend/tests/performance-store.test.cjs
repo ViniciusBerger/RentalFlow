@@ -53,3 +53,87 @@ test('background reload failure keeps existing bookings and shows a recoverable 
  assert.equal(st.getSnapshot().isLoading,false);assert.equal(st.getSnapshot().refreshError,'Network unavailable');
  assert.deepEqual(st.getSnapshot().nextRentals,[{id:'r1'}]);
 });
+
+test('a detached dashboard subscriber stops receiving account-scoped updates',async()=>{
+ const store=createRentalDataStore(fake());
+ let changes=0;
+ const unsubscribe=store.subscribe(()=>changes++);
+ await store.initialize();
+ assert.ok(changes>0);
+ const initialCount=changes;unsubscribe();
+ store.resetError();store.reset();
+ assert.equal(changes,initialCount,'unsubscribed view cannot consume newer session changes');
+ assert.equal(store.getSnapshot().userData,null);
+});
+test('reset while a booking refresh is in flight prevents old-session bookings returning',async()=>{
+ const gate=wait();let rentCalls=0;
+ const store=createRentalDataStore({
+  dashboard:async()=>[null,null],
+  rentals:async()=>++rentCalls===1?[{id:'old'}]:gate.promise,
+  user:async()=>({firstName:'Old user'})
+ });
+ await store.initialize();
+ const refresh=store.loadRentals();assert.equal(store.getSnapshot().isRefreshing,true);
+ store.reset();gate.resolve([{id:'private-after-signout'}]);await refresh;
+ assert.equal(store.getSnapshot().isLoading,true);
+ assert.equal(store.getSnapshot().refreshError,null);
+ assert.deepEqual(store.getSnapshot().nextRentals,[]);
+});
+test('reset while background mutation reload is pending discards stale financial reports',async()=>{
+ const dash=wait(),rent=wait();let loadCalls=0;
+ const store=createRentalDataStore({
+  dashboard:async()=>++loadCalls===1?[{totalRevenue:1},null]:dash.promise,
+  rentals:async()=>loadCalls===1?[{id:'old'}]:rent.promise,
+  user:async()=>({firstName:'prior'})
+ });
+ await store.initialize();
+ const running=store.refreshAfterMutation();
+ store.reset();
+ dash.resolve([{totalRevenue:500000},null,[{label:'old-private-month'}]]);
+ rent.resolve([{id:'private-stay'}]);
+ await running;
+ const state=store.getSnapshot();
+ assert.equal(state.userData,null);
+ assert.deepEqual(state.balances,[]);
+ assert.deepEqual(state.nextRentals,[]);
+ assert.equal(state.isLoading,true);
+});
+test('all failed balance and rental mutation refreshes are recoverable and never invent revenue',async()=>{
+ let failed=false;
+ const store=createRentalDataStore({
+  dashboard:async()=>{if(failed)throw {status:500};return [{totalRevenue:100},null];},
+  rentals:async()=>{if(failed)throw null;return [{id:'safe'}]},
+  user:async()=>({firstName:'Owner'})
+ });
+ await store.initialize();failed=true;
+ await store.refreshAfterMutation();
+ assert.equal(store.getSnapshot().balances[0].totalRevenue,100);
+ assert.deepEqual(store.getSnapshot().nextRentals,[{id:'safe'}]);
+ assert.equal(store.getSnapshot().refreshError,'Unable to load rental data');
+ assert.equal(store.getSnapshot().isRefreshing,false);
+ store.resetError();assert.equal(store.getSnapshot().refreshError,null);
+});
+test('null initial load error uses safe message and numeric status defaults',async()=>{
+ const store=createRentalDataStore({
+  dashboard:async()=>[null,null],rentals:async()=>{throw null;},user:async()=>({})
+ });
+ await assert.rejects(store.initialize());
+ assert.deepEqual(store.getSnapshot().loadingError,{
+  message:'Unable to load rental data',status:0
+ });
+ assert.equal(store.getSnapshot().isLoading,false);
+});
+test('failed booking reload after account reset cannot install stale warning',async()=>{
+ const gate=wait();let count=0;
+ const store=createRentalDataStore({
+  dashboard:async()=>[null,null],
+  rentals:async()=>++count===1?[]:gate.promise,
+  user:async()=>({firstName:'Previous'})
+ });
+ await store.initialize();
+ const running=store.loadRentals();store.reset();
+ gate.resolve(Promise.reject({message:'stale network error',status:503}));
+ await assert.rejects(running);
+ assert.equal(store.getSnapshot().refreshError,null);
+ assert.equal(store.getSnapshot().isLoading,true);
+});
