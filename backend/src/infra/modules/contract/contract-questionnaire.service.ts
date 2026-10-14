@@ -82,9 +82,24 @@ export class ContractQuestionnaireService {
     eq(ContractTemplateVersionSchema.userId,uid),eq(ContractTemplateVersionSchema.templateId,template.id),
     eq(ContractTemplateVersionSchema.status,'DRAFT'))).limit(1);
    if(draft){
-     await tx.update(ContractTemplateVersionSchema).set({clauses:validated}).where(and(
-      eq(ContractTemplateVersionSchema.id,draft.id),eq(ContractTemplateVersionSchema.userId,uid),
-      eq(ContractTemplateVersionSchema.status,'DRAFT')));
+     try {
+       const updated=await tx.update(ContractTemplateVersionSchema).set({clauses:validated}).where(and(
+        eq(ContractTemplateVersionSchema.id,draft.id),eq(ContractTemplateVersionSchema.userId,uid),
+        eq(ContractTemplateVersionSchema.status,'DRAFT'))).returning({id:ContractTemplateVersionSchema.id});
+       if(updated.length!==1)throw new ConflictException('O rascunho foi alterado. Atualize a página antes de salvar novamente.');
+     } catch(error) {
+       // Drizzle can wrap PostgreSQL errors. Never log the query, parameters or clauses.
+       let cause:unknown=error;
+       const codes:string[]=[];
+       for(let depth=0;depth<4&&cause&&typeof cause==='object';depth++){
+         const data=cause as {code?:unknown;cause?:unknown;constraint?:unknown};
+         if(typeof data.code==='string'&&/^[A-Z0-9]{5}$/.test(data.code))codes.push(data.code);
+         cause=data.cause;
+       }
+       console.error('contract_draft_update_failed', {codes, operation:'UPDATE_DRAFT'});
+       if(error instanceof ConflictException)throw error;
+       throw new ConflictException('Não foi possível atualizar as cláusulas do rascunho. Suas alterações não foram confirmadas. Tente novamente.');
+     }
      return {id:draft.id,versionNumber:draft.versionNumber};
    }
    const [last]=await tx.select({number:ContractTemplateVersionSchema.versionNumber,clauses:ContractTemplateVersionSchema.clauses})
