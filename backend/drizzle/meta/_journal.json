@@ -64,6 +64,13 @@
       "when": 1791730000000,
       "tag": "0008_finalized_contract_terms_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791731000000,
+      "tag": "0009_contract_cancellation_accounting",
+      "breakpoints": true
     }
   ]
 }

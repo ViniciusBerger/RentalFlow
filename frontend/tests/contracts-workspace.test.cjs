@@ -42,3 +42,95 @@ test('contract workspace status filter hides unmatched records',async()=>{
  assert.equal(find(view.tree,x=>x.type==='button'&&
   typeof x.props.className==='string'&&x.props.className.includes('rf-contract-workspace-item')),null);
 });
+
+test('contract search and property filters distinguish separate properties and preserve cancelled history',async()=>{
+ const first={...item,cancelled:false,propertyId:'11111111-1111-4111-8111-111111111111'};
+ const second={...item,id:'44444444-4444-4444-8444-444444444444',
+  propertyId:'55555555-5555-4555-8555-555555555555',propertyName:'Cobertura',
+  firstName:'Bruno',lastName:'Mendes',status:'FINALIZED',cancelled:false};
+ const third={...item,id:'66666666-6666-4666-8666-666666666666',
+  propertyId:second.propertyId,propertyName:'Cobertura',firstName:'Carlos',cancelled:true};
+ global.fetch=async(url)=>ok(String(url).endsWith('/workspace')?{items:[first,second,third]}:detail);
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<6;i++){await next();view.render();}
+ const options=(view.tree.props?.children||[]);
+ const all=(x,p,acc=[])=>{
+  if(!x||typeof x!=='object')return acc;
+  if(Array.isArray(x)){x.forEach(v=>all(v,p,acc));return acc;}
+  if(p(x))acc.push(x);
+  all(x.props?.children,p,acc);return acc;
+ };
+ const count=()=>all(view.tree,n=>n.type==='button'&&
+  typeof n.props.className==='string'&&n.props.className.includes('rf-contract-workspace-item')).length;
+ assert.equal(count(),3);
+ const dropdown=all(view.tree,n=>n.type==='select'&&n.props.value==='ALL')[1];
+ assert.ok(dropdown);dropdown.props.onChange({target:{value:second.propertyId}});view.render();
+ assert.equal(count(),2);
+ const query=all(view.tree,n=>n.type==='input'&&n.props.type==='search')[0];
+ query.props.onChange({target:{value:'BRUNO'}});view.render();
+ assert.equal(count(),1);
+ query.props.onChange({target:{value:'does not exist'}});view.render();
+ assert.equal(count(),0);
+});
+test('cancelled filter keeps cancelled records while active finalized view excludes them',async()=>{
+ global.fetch=async(url)=>ok(String(url).endsWith('/workspace')?{items:[
+  {...item,cancelled:true,status:'FINALIZED'}, {...item,id:'44444444-4444-4444-8444-444444444444',cancelled:false,status:'FINALIZED'}
+ ]}:detail);
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<6;i++){await next();view.render();}
+ const options=(x,p,out=[])=>{if(!x||typeof x!=='object')return out;
+  if(Array.isArray(x)){x.forEach(v=>options(v,p,out));return out;}
+  if(p(x))out.push(x);options(x.props?.children,p,out);return out;};
+ const count=()=>options(view.tree,n=>n.type==='button'&&
+  typeof n.props.className==='string'&&n.props.className.includes('rf-contract-workspace-item')).length;
+ const status=options(view.tree,n=>n.type==='select'&&n.props.value==='ALL')[0];
+ status.props.onChange({target:{value:'CANCELLED'}});view.render();
+ assert.equal(count(),1);
+ status.props.onChange({target:{value:'FINALIZED'}});view.render();
+ assert.equal(count(),1);
+});
+
+test('workspace refresh surfaces backend errors instead of claiming booking or money success',async()=>{
+ let refresh=false;
+ global.fetch=async(url)=>{
+  const path=String(url);
+  if(path.endsWith('/workspace')&&refresh)
+   return {ok:false,status:503,json:async()=>({message:'Unable to refresh contracts'})};
+  return ok(path.endsWith('/workspace')?{items:[item]}:detail);
+ };
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<5;i++){await next();view.render();}
+ const get=(node,p,acc=[])=>{
+  if(!node||typeof node!=='object')return acc;
+  if(Array.isArray(node)){node.forEach(x=>get(x,p,acc));return acc;}
+  if(p(node))acc.push(node);get(node.props?.children,p,acc);return acc;
+ };
+ refresh=true;
+ const button=get(view.tree,n=>n.type==='button'&&n.props.className==='rf-button')[0];
+ assert.ok(button);
+ button.props.onClick();
+ for(let i=0;i<5;i++){await next();view.render();}
+ assert.match(JSON.stringify(view.tree),/Unable to refresh contracts/);
+ assert.ok(get(view.tree,n=>n.type==='button'&&typeof n.props.className==='string'&&
+  n.props.className.includes('rf-contract-workspace-item')).length);
+});
+test('a refreshed contract list redirects selection when a previous contract disappears',async()=>{
+ const nextItem={...item,id:'44444444-4444-4444-8444-444444444444'};
+ let newer=false;
+ global.fetch=async(url)=>ok(String(url).endsWith('/workspace')?{items:[newer?nextItem:item]}:
+  {...detail,id:newer?nextItem.id:item.id});
+ const view=mount(ContractsWorkspacePage);
+ for(let i=0;i<5;i++){await next();view.render();}
+ newer=true;
+ const findAll=(node,p,acc=[])=>{
+  if(!node||typeof node!=='object')return acc;
+  if(Array.isArray(node)){node.forEach(x=>findAll(x,p,acc));return acc;}
+  if(p(node))acc.push(node);findAll(node.props?.children,p,acc);return acc;
+ };
+ findAll(view.tree,n=>n.type==='button'&&n.props.className==='rf-button')[0].props.onClick();
+ for(let i=0;i<7;i++){await next();view.render();}
+ const selected=findAll(view.tree,n=>n.type==='button'&&
+  typeof n.props.className==='string'&&n.props.className.includes('rf-contract-workspace-item'))[0];
+ assert.ok(selected);
+ assert.equal(selected.props['aria-pressed'],true);
+});

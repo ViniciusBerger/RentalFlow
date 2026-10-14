@@ -287,3 +287,23 @@ test('new unsaved guest identity invalidates any earlier successful finalization
  assert.equal(button(view.tree,'Confirm unsigned finalization'),undefined);
  assert.equal(button(view.tree,'Validate for finalization').props.disabled,true);
 });
+
+test('archived PDF refuses server denial and corrupt or short content',async()=>{
+ const success=(body,type)=>({ok:true,status:200,blob:async()=>new Blob([body],{type})});
+ const id=key;
+ global.fetch=async()=>({ok:false,status:404,json:async()=>({message:'Not your archived contract'})});
+ await assert.rejects(downloadFinalContractPdf(id,rev),/Not your archived contract/);
+ global.fetch=async()=>success('Not PDF data','text/plain');
+ await assert.rejects(downloadFinalContractPdf(id,rev),/Invalid finalized PDF/);
+ global.fetch=async()=>success('%PDF-too-short','application/pdf');
+ await assert.rejects(downloadFinalContractPdf(id,rev),/Invalid finalized PDF/);
+});
+test('private PDF error fallback and valid long file require correct MIME',async()=>{
+ global.fetch=async()=>({ok:false,status:503,json:async()=>{throw Error('invalid json')}});
+ await assert.rejects(downloadFinalContractPdf(key,rev),/HTTP 503/);
+ global.fetch=async()=>({ok:true,status:200,
+  blob:async()=>new Blob(['%PDF-1.7\n'+'.'.repeat(220)],{type:'application/pdf'})});
+ const blob=await downloadFinalContractPdf(key,rev);
+ assert.ok(blob.size>100);
+ assert.equal(blob.type,'application/pdf');
+});

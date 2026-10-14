@@ -8,6 +8,8 @@ import {ContractTemplateVersionSchema} from '../../persistence/schemas/contract-
 import {PropertySchema} from '../../persistence/schemas/property-schema';
 import {PropertyContractSettingsSchema} from '../../persistence/schemas/property-contract-settings-schema';
 import {ContractRevisionSchema} from '../../persistence/schemas/contract-revision-schema';
+import {ContractSchema} from '../../persistence/schemas/contract-schema';
+import {RentalSchema} from '../../persistence/schemas/rental-schema';
 import {ContractDataCrypto} from '../../security/encrypted-data';
 import {defaultPayment,defaultPolicy,type LandlordProfile,type ContractClause,type ContractPayment,type ContractPolicy} from '../../../core/domain/contract/contract-questionnaire';
 import {readinessIssues} from '../../../core/domain/contract/contract-readiness';
@@ -36,8 +38,13 @@ export class ContractReadinessService {
    this.db.select({id:PropertySchema.id,name:PropertySchema.name,address:PropertySchema.address}).from(PropertySchema)
     .where(and(eq(PropertySchema.userId,uid),eq(PropertySchema.isActive,true))),
    this.db.select().from(PropertyContractSettingsSchema).where(eq(PropertyContractSettingsSchema.userId,uid)),
-   this.db.select({total:count()}).from(ContractRevisionSchema).where(and(
-    eq(ContractRevisionSchema.userId,uid),inArray(ContractRevisionSchema.status,['DRAFT','READY'])))
+   this.db.select({total:count()}).from(ContractRevisionSchema)
+    .innerJoin(ContractSchema,and(eq(ContractRevisionSchema.contractId,ContractSchema.id),
+     eq(ContractSchema.userId,uid)))
+    .innerJoin(RentalSchema,and(eq(ContractSchema.rentalId,RentalSchema.id),
+     eq(RentalSchema.userId,uid)))
+    .where(and(eq(ContractRevisionSchema.userId,uid),
+     inArray(ContractRevisionSchema.status,['DRAFT','READY']),eq(RentalSchema.isActive,true)))
   ]);
   const byProperty=new Map(rows.map(r=>[r.propertyId,r]));
   const issues=readinessIssues({

@@ -22,6 +22,7 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
     const code=(error as {code?:string,cause?:{code?:string}})?.code ?? (error as {cause?:{code?:string}})?.cause?.code;
     if(code==='23P01') throw new ConflictException('Date already booked for this property');
     if(code==='23503') throw new NotFoundException('Property not found in this account');
+    if(code==='23514') throw new ConflictException('Linked contract requires an approved cancellation or amendment');
     throw error;
   }
 
@@ -90,8 +91,10 @@ export class DrizzleOrmRentalAdapter implements IRentalRepository {
    * @returns Promise resolving to true if deleted, false if ID not found.
    */
   async delete(userId: string, id: string): Promise<boolean> {
-    const operationResult = await this.db.delete(RentalSchema).where(and(eq(RentalSchema.id,id),eq(RentalSchema.userId,userId)))
-    if (operationResult.rowCount === 0) throw new PersistenceError('cannot delete item')
+    let operationResult;
+    try{operationResult=await this.db.delete(RentalSchema).where(and(eq(RentalSchema.id,id),eq(RentalSchema.userId,userId)));}
+    catch(error){this.throwBookingConstraint(error)}
+    if (operationResult!.rowCount === 0) throw new PersistenceError('cannot delete item')
     return true;
   }
 
