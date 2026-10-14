@@ -410,3 +410,54 @@ test('unusual server exceptions remain visible in amendment preview without crea
  assert.match(JSON.stringify(ui.tree),/Review unavailable/);
  assert.equal(button(ui,'Approve as landlord'),undefined);
 });
+
+test('missing property from active list keeps historical property option without inventing a replacement',async()=>{
+ const ui=await show({detail:{property:{id:'99999999-9999-4999-8999-999999999999',name:'Inactive historical property'}}});
+ const menu=nodes(ui.tree,n=>n.type==='select'&&n.props.value==='99999999-9999-4999-8999-999999999999')[0];
+ assert.ok(menu);
+ const options=nodes(menu,n=>n.type==='option');
+ assert.equal(options.some(x=>x.props.value==='99999999-9999-4999-8999-999999999999'),true);
+ assert.equal(options.some(x=>x.props.value===p2),true);
+ assert.equal(options.some(x=>x.props.value==='33333333-3333-4333-8333-333333333333'),false);
+});
+test('approval is not silently retried when a stale UI confirmation control is clicked',async()=>{
+ let writes=0;
+ network(url=>{if(url.endsWith('/amendment-review'))return respond(review);
+  if(url.endsWith('/amend'))writes++;
+  return respond({applied:true});
+ });
+ global.window={confirm:()=>true};
+ const ui=await show();
+ const guests=nodes(ui.tree,n=>n.type==='input'&&n.props.max==='999')[0];
+ guests.props.onChange({target:{value:'3'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ const oldApprove=button(ui,'Approve as landlord');
+ assert.ok(oldApprove);
+ guests.props.onChange({target:{value:'4'}});ui.render();
+ assert.equal(button(ui,'Approve as landlord'),undefined);
+ oldApprove.props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ // A previously captured action cannot assume new booking details are approved.
+ assert.equal(writes,0);
+});
+test('landlord approval errors presented as non-Error values cannot be mistaken for success',async()=>{
+ let dashboardRefreshes=0;
+ rentalDataStore.refreshAfterMutation=async()=>{dashboardRefreshes++};
+ global.window={confirm:()=>true};
+ network(url=>{
+  if(url.endsWith('/amendment-review'))return respond(review);
+  if(url.endsWith('/amend'))throw 'Amendment transaction refused';
+  return respond({});
+ });
+ const ui=await show();
+ const guests=nodes(ui.tree,n=>n.type==='input'&&n.props.max==='999')[0];
+ guests.props.onChange({target:{value:'3'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ button(ui,'Approve as landlord').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ assert.equal(dashboardRefreshes,0);
+ assert.match(JSON.stringify(ui.tree),/Amendment transaction refused/);
+ assert.equal(button(ui,'Approve as landlord'),undefined);
+});
