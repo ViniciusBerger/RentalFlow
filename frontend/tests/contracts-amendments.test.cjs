@@ -369,3 +369,44 @@ test('recorded paidAt prevents installment rewrites even when received amount is
  assert.ok(schedule.props.disabled);
  assert.match(JSON.stringify(ui.tree),/Payments are recorded/);
 });
+
+test('amendment review API fails safely for missing messages, invalid JSON and denied sessions',async()=>{
+ const {reviewContractAmendment}=require('../src/features/contracts/contract-workspace-api.ts');
+ const sample={propertyId:p1,startDate:'2027-04-01',endDate:'2027-04-03',
+  guests:2,baseRevenueCents:40000,guestFee:{mode:'AUTOMATIC'}};
+ let writes=0;
+ global.fetch=async(url)=>{
+  if(String(url).endsWith('/auth/csrf'))return respond({csrfToken:'secure-csrf'});
+  writes++;return {ok:false,status:409,json:async()=>({message:'Conflicting booking'})};
+ };
+ await assert.rejects(reviewContractAmendment(id,sample),/Conflicting booking/);
+ assert.equal(writes,1);
+ clearCsrfToken();
+ global.fetch=async(url)=>String(url).endsWith('/auth/csrf')?respond({csrfToken:'secure-csrf'}):
+  ({ok:false,status:503,json:async()=>{throw new Error('invalid JSON')}});
+ await assert.rejects(reviewContractAmendment(id,sample),/HTTP 503/);
+});
+test('amendment approval API rejects malformed error bodies without claiming success',async()=>{
+ const {approveContractAmendment}=require('../src/features/contracts/contract-workspace-api.ts');
+ clearCsrfToken();
+ global.fetch=async(url)=>String(url).endsWith('/auth/csrf')?respond({csrfToken:'secure-csrf'}):
+  ({ok:false,status:422,json:async()=>({error:'not ready'})});
+ await assert.rejects(approveContractAmendment(id,{
+  propertyId:p1,startDate:'2027-04-01',endDate:'2027-04-03',guests:2,
+  baseRevenueCents:40000,guestFee:{mode:'AUTOMATIC'}
+ },'a'.repeat(64)),/HTTP 422/);
+});
+test('unusual server exceptions remain visible in amendment preview without creating false confirmation',async()=>{
+ const ui=await show();
+ global.fetch=async(url)=>{
+  if(String(url).endsWith('/auth/csrf'))return respond({csrfToken:'trusted'});
+  if(String(url).endsWith('/amendment-review'))throw 'Review unavailable';
+  return respond([]);
+ };
+ const guests=nodes(ui.tree,n=>n.type==='input'&&n.props.max==='999')[0];
+ guests.props.onChange({target:{value:'3'}});ui.render();
+ button(ui,'Review amendment').props.onClick();
+ for(let i=0;i<5;i++){await next();ui.render();}
+ assert.match(JSON.stringify(ui.tree),/Review unavailable/);
+ assert.equal(button(ui,'Approve as landlord'),undefined);
+});
