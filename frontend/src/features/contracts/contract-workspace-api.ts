@@ -20,7 +20,7 @@ export type ContractPreview={
 export type ContractDetail={
  id:string;rentalId:string;property:{id:string;name:string;address:string|null};
  booking:{clientFirstName:string;clientLastName:string;startDate:string;endDate:string;guests:number;totalCents:number};
- status:string;cancelled:boolean;revisionId:string;revisionVersion:number;
+ status:string;cancelled:boolean;cancellationEligible?:boolean;revisionId:string;revisionVersion:number;
  history:{id:string;status:string;version:number;finalizedAt:string|null;createdAt:string}[];
  guest:Record<string,string>;installments:DraftInstallment[];editToken:string;
  pricing:{baseRevenueCents:number|null;calculatedExtraCents:number|null;chargedExtraCents:number|null;guestFeeMode:string|null;guestFeeReason:string|null};
@@ -113,6 +113,18 @@ export async function confirmContractCancellation(id:string,reviewToken:string):
   headers:{'Content-Type':'application/json'},body:JSON.stringify({reviewToken,confirm:true})
  });
  return checked(response);
+}
+
+export const contractChangesEnabled=contractsWorkspaceEnabled&&import.meta.env.VITE_CONTRACT_CHANGES_ENABLED==='true';
+export type CancellationPreview={contractId:string;bookingId:string;revisionId:string;
+ paidCents:number;refundDueCents:number|null;retainedCents:number|null;deadlineMet:boolean;
+ automaticTransferAvailable:false;refundState:'NO_PAYMENT'|'FULL_REFUND_DUE'|'POLICY_REVIEW_REQUIRED';
+ requiresLandlordConfirmation:true;refundExecutionStatus:'NOT_AVAILABLE';cancellationStatus:'PREVIEW_ONLY'};
+export async function getCancellationPreview(id:string):Promise<CancellationPreview>{
+ const response=await fetch(root+'/'+encodeURIComponent(id)+'/cancellation-preview',{
+  credentials:'include',cache:'no-store'
+ });
+ return checked<CancellationPreview>(response);
 }
 
 export const contractAmendmentsEnabled=contractsWorkspaceEnabled&&import.meta.env.VITE_CONTRACT_AMENDMENTS_ENABLED==='true';
