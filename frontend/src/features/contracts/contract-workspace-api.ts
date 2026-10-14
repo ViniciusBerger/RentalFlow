@@ -114,3 +114,15 @@ export async function confirmContractCancellation(id:string,reviewToken:string):
  });
  return checked(response);
 }
+
+export const contractChangesEnabled=contractsWorkspaceEnabled&&import.meta.env.VITE_CONTRACT_CHANGES_ENABLED==='true';
+export type CancellationPreview={contractId:string;bookingId:string;revisionId:string;
+ paidCents:number;refundDueCents:number|null;retainedCents:number|null;deadlineMet:boolean;
+ automaticTransferAvailable:false;refundState:'NO_PAYMENT'|'FULL_REFUND_DUE'|'POLICY_REVIEW_REQUIRED';
+ requiresLandlordConfirmation:true;refundExecutionStatus:'NOT_AVAILABLE';cancellationStatus:'PREVIEW_ONLY'};
+export async function getCancellationPreview(id:string):Promise<CancellationPreview>{
+ const response=await fetch(root+'/'+encodeURIComponent(id)+'/cancellation-preview',{
+  credentials:'include',cache:'no-store'
+ });
+ return checked<CancellationPreview>(response);
+}
