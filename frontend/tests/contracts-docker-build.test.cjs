@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 
 const docker=fs.readFileSync(path.join(__dirname,'../Dockerfile'),'utf8');
-const flags=['QUESTIONNAIRE','WORKSPACE','FINALIZATION','CANCELLATIONS','AMENDMENTS','CHANGES'];
+const flags=['QUESTIONNAIRE','WORKSPACE','FINALIZATION','CANCELLATIONS','AMENDMENTS','CHANGES','BOOKING_DRAFTS'];
 
 test('Docker builder forwards every contract flag to the Vite production build',()=>{
  const buildStage=docker.split(/^FROM\s+nginx\b/m)[0];
