@@ -105,7 +105,7 @@ export const ContractQuestionnairePage=()=>{
  },[propertyId,t.requestError]);
  const action=async (fn:()=>Promise<void>)=>{
   setSaving(true);setError('');setMessage('');
-  try{await fn();}catch(e){setError(e instanceof Error?e.message:t.requestError);}finally{setSaving(false);}
+  try{await fn();}catch(e){const message=e instanceof Error?e.message:'';setError(locale==='pt-BR'?(message.startsWith('Não ')||message.startsWith('O rascunho')?message:'Não foi possível concluir a operação de contrato. Confira os dados e tente novamente.'):message||t.requestError);}finally{setSaving(false);}
  };
  const saveAccount=()=>action(async()=>{await saveSettings(landlord,policy,payment);setMessage(t.saved)});
  const saveProperty=()=>action(async()=>{if(!propertyId)return;await savePropertySetup(propertyId,{...prop,houseRules:rules.split('\n').map(s=>s.trim()).filter(Boolean)});setMessage(t.propertySaved)});
