@@ -38,6 +38,7 @@ const texts={
   enabled:'Cláusula ativa',empty:'A cláusula ainda não possui texto.',version:'Versão',
   unpublished:'Publicação bloqueada até o cadastro completo e aprovação do texto.',
   requestError:'Não foi possível carregar os dados de contrato. Confira as migrações e as configurações de segurança.',
+  draftError:'Não foi possível salvar as cláusulas. Nenhuma alteração foi confirmada. Tente novamente; se persistir, contate o suporte.',
  },
  en:{
   title:'Contract template',subtitle:'Configure landlord details, policies, and your seasonal rental contract.',
@@ -68,7 +69,8 @@ const texts={
   rules:'Property rules (one per line)',newVersion:'Editing a published template will create a new draft version.',
   enabled:'Clause enabled',empty:'Clause wording not supplied yet.',version:'Version',
   unpublished:'Publication remains blocked until all required details and text are approved.',
-  requestError:'Could not load contract configuration. Check migrations and security settings.'
+  requestError:'Could not load contract configuration. Check migrations and security settings.',
+  draftError:'Could not save contract clauses. Changes were not confirmed. Try again or contact support.'
  }
 } as const;
 const steps=['landlord','payment','policy','property','clauses','review'] as const;
@@ -107,7 +109,7 @@ export const ContractQuestionnairePage=()=>{
  };
  const saveAccount=()=>action(async()=>{await saveSettings(landlord,policy,payment);setMessage(t.saved)});
  const saveProperty=()=>action(async()=>{if(!propertyId)return;await savePropertySetup(propertyId,{...prop,houseRules:rules.split('\n').map(s=>s.trim()).filter(Boolean)});setMessage(t.propertySaved)});
- const saveClauses=()=>action(async()=>{const result=await saveTemplateDraft(clauses);setDraftId(result.id);setApproved(false);setMessage(t.draftSaved)});
+ const saveClauses=()=>action(async()=>{try{const result=await saveTemplateDraft(clauses);setDraftId(result.id);setApproved(false);setMessage(t.draftSaved);}catch(e){const message=e instanceof Error?e.message:'';throw new Error(!message||/^(Internal server error|HTTP 5\d\d)$/i.test(message)?t.draftError:message);}});
  const publish=()=>action(async()=>{
   if(!draftId||!approved||!window.confirm(t.confirm))return;
   const result=await publishTemplate(draftId);setPublished(result.versionNumber);setDraftId(null);setApproved(false);setMessage(t.published);
