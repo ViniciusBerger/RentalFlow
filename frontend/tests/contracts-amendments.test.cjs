@@ -328,3 +328,44 @@ test('empty or invalid extra-guest override amounts remain server-reviewed rathe
  assert.equal(JSON.parse(req.init.body).guestFee.cents,-100);
  // Backend validation rejects this negative amount; client response cannot override it.
 });
+
+test('each missing amendment field blocks a landlord review before any server mutation',async()=>{
+ const cases=[
+  {name:'blank guest count',target:n=>n.type==='input'&&n.props.max==='999',value:''},
+  {name:'zero guests',target:n=>n.type==='input'&&n.props.max==='999',value:'0'},
+  {name:'missing check-in',target:n=>n.type==='input'&&n.props.type==='date'&&n.props.value==='2027-04-01',value:''},
+  {name:'missing check-out',target:n=>n.type==='input'&&n.props.type==='date'&&n.props.value==='2027-04-03',value:''},
+  {name:'missing property',target:n=>n.type==='select'&&n.props.value===p1,value:''},
+  {name:'nonfinite base price',target:n=>n.type==='input'&&n.props.step==='0.01'&&n.props.value==='400',value:'Infinity'},
+  {name:'empty base price',target:n=>n.type==='input'&&n.props.step==='0.01'&&n.props.value==='400',value:''}
+ ];
+ for(const scenario of cases){
+  const calls=network();
+  const ui=await show();
+  const field=nodes(ui.tree,scenario.target)[0];
+  assert.ok(field,scenario.name);
+  field.props.onChange({target:{value:scenario.value}});ui.render();
+  const reviewAction=button(ui,'Review amendment');
+  assert.ok(reviewAction,scenario.name);
+  reviewAction.props.onClick();
+  for(let i=0;i<3;i++){await next();ui.render();}
+  assert.match(JSON.stringify(ui.tree),/Check all required fields/,scenario.name);
+  assert.equal(calls.some(x=>x.url.endsWith('/amendment-review')),false,scenario.name);
+  assert.equal(calls.some(x=>x.url.endsWith('/amend')),false,scenario.name);
+ }
+});
+test('English property-list loading failures do not create phantom landlord options',async()=>{
+ global.fetch=async()=>({ok:false,status:503,json:async()=>({message:'Temporarily unavailable'})});
+ const ui=await show();
+ assert.match(JSON.stringify(ui.tree),/Unable to load properties/);
+ assert.ok(button(ui,'Review amendment'));
+});
+test('recorded paidAt prevents installment rewrites even when received amount is zero',async()=>{
+ network();
+ const ui=await show({detail:{installments:[{sequence:1,agreedCents:40000,
+  receivedCents:0,paidAt:'2026-10-01T18:00:00.000Z',isDeposit:false,
+  dueEvent:'CHECKIN',paymentMethod:'PIX'}]}});
+ const schedule=nodes(ui.tree,n=>n.type==='input'&&n.props.type==='checkbox')[0];
+ assert.ok(schedule.props.disabled);
+ assert.match(JSON.stringify(ui.tree),/Payments are recorded/);
+});
