@@ -1,4 +1,4 @@
-import {BadRequestException, ConflictException, Injectable, Inject, NotFoundException} from '@nestjs/common';
+import {BadRequestException, ConflictException, Injectable, Inject, NotFoundException, InternalServerErrorException} from '@nestjs/common';
 import {and, desc, eq, sql} from 'drizzle-orm';
 import {NodePgDatabase} from 'drizzle-orm/node-postgres';
 import {DRIZZLE} from '../../persistence/database.module';
@@ -98,7 +98,7 @@ export class ContractQuestionnaireService {
        }
        console.error('contract_draft_update_failed', {codes, operation:'UPDATE_DRAFT'});
        if(error instanceof ConflictException)throw error;
-       throw new ConflictException('Não foi possível atualizar as cláusulas do rascunho. Suas alterações não foram confirmadas. Tente novamente.');
+       throw new InternalServerErrorException('Não foi possível atualizar as cláusulas do rascunho. Suas alterações não foram confirmadas. Tente novamente.');
      }
      return {id:draft.id,versionNumber:draft.versionNumber};
    }
