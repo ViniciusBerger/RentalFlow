@@ -12,6 +12,7 @@ for (const ext of ['.ts', '.tsx']) {
       .replaceAll('import.meta.env.VITE_CONTRACT_WORKSPACE_ENABLED', 'process.env.VITE_CONTRACT_WORKSPACE_ENABLED')
       .replaceAll('import.meta.env.VITE_CONTRACT_FINALIZATION_ENABLED', 'process.env.VITE_CONTRACT_FINALIZATION_ENABLED')
       .replaceAll('import.meta.env.VITE_CONTRACT_CANCELLATIONS_ENABLED', 'process.env.VITE_CONTRACT_CANCELLATIONS_ENABLED')
+      .replaceAll('import.meta.env.VITE_CONTRACT_CHANGES_ENABLED', 'process.env.VITE_CONTRACT_CHANGES_ENABLED')
       .replaceAll('import.meta.env.VITE_CONTRACT_AMENDMENTS_ENABLED', 'process.env.VITE_CONTRACT_AMENDMENTS_ENABLED');
     const output = ts.transpileModule(source, {
       fileName: filename,
