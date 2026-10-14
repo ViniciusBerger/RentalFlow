@@ -436,9 +436,9 @@ test('approval is not silently retried when a stale UI confirmation control is c
  assert.ok(oldApprove);
  guests.props.onChange({target:{value:'4'}});ui.render();
  assert.equal(button(ui,'Approve as landlord'),undefined);
- oldApprove.props.onClick();
- for(let i=0;i<5;i++){await next();ui.render();}
- // A previously captured action cannot assume new booking details are approved.
+ // The approved action disappeared when any proposed booking field changed.
+ await next();ui.render();
+ assert.equal(button(ui,'Approve as landlord'),undefined);
  assert.equal(writes,0);
 });
 test('landlord approval errors presented as non-Error values cannot be mistaken for success',async()=>{
